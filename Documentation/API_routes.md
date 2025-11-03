@@ -69,7 +69,8 @@ Request Body:
 {
   "email": "user@example.com",
   "password": "password",
-  "username": "user"
+  "username": "user",
+  "invitationToken": "ABCD-EFGH"
 }
 ```
 
@@ -109,3 +110,122 @@ Response:
 ```
 
 This endpoint logs out the user by invalidating the refresh token.
+
+## User Management
+
+### Get User
+
+```
+GET /users/me
+```
+
+Response:
+```json
+{
+  "user": {
+    "id": "123",
+    "email": "user@example.com",
+    "username": "user",
+    "devices": String[], # list of device IDs
+    "posts": String[], # list of post IDs
+  }
+}
+```
+
+This endpoint returns the current user's information.
+
+### Get User by ID
+
+```
+GET /users/{id}
+```
+
+Response:
+```json
+{
+  "user": {
+    "id": "123",
+    "email": "user@example.com",
+    "username": "user",
+    "devices"?: String[], # list of device IDs (only if user is the owner)
+    "posts"?: String[], # list of post IDs (only public posts if user is not the owner)
+  }
+}
+```
+
+This endpoint returns the user's information by ID.
+
+### update User username
+
+```
+PUT /users/me/username
+```
+
+Request Body:
+```json
+{
+  "username": "new_username"
+}
+```
+
+Response:
+```json
+{
+  "message": "Username updated successfully"
+}
+```
+
+This endpoint updates the current user's username.
+
+### update User email
+
+This is a two-step process that requires email verification for security.
+
+#### Request Email Change
+
+```
+POST /users/me/email/request-change
+```
+
+Request Body:
+```json
+{
+  "newEmail": "newemail@example.com"
+}
+```
+
+Response:
+```json
+{
+  "message": "Verification code sent to new email"
+}
+```
+
+This endpoint sends a verification code to the new email address. The user must verify this code before the email can be updated.
+
+#### Verify and Update Email
+
+```
+PUT /users/me/email
+```
+
+Request Body:
+```json
+{
+  "newEmail": "newemail@example.com",
+  "verificationCode": "123456"
+}
+```
+
+Response:
+```json
+{
+  "message": "Email updated successfully",
+  "user": {
+    "email": "newemail@example.com"
+  }
+}
+```
+
+This endpoint verifies the code sent to the new email address and updates the user's email if the code is valid.
+
