@@ -19,11 +19,20 @@ This document outlines the API routes for the project.
     - [Request Email Change](#request-email-change)
     - [Verify and Update Email](#verify-and-update-email)
   - [Update User Password](#update-user-password)
+  - [Register Pod](#register-pod)
+  - [Update Pod](#update-pod)
+  - [Unregister Pod](#unregister-pod)
 - [User Management (Admin)](#user-management-admin)
   - [Get All Users](#get-all-users)
   - [Generate Invitation Token](#generate-invitation-token)
   - [Revoke Invitation Token](#revoke-invitation-token)
   - [Deactivate User](#deactivate-user)
+- [Pod Data](#pod-data)
+  - [Get Pod Locations](#get-pod-locations)
+  - [Get Pod Data](#get-pod-data)
+  - [Upload Pod Data](#upload-pod-data)
+  - [Delete Pod Data](#delete-pod-data)
+
 
 ## Authentication
 
@@ -35,11 +44,18 @@ All API routes should require authentication. Routes that do not require authent
 POST /auth/login
 ```
 
+Request Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| email | string | Yes | User email address |
+| password | string | Yes | User password |
+
 Request Body:
 ```json
 {
-    "email": "user@example.com",
-    "password": "password"
+    "email": "user@example.com", // Required
+    "password": "password" // Required
 }
 ```
 
@@ -78,10 +94,16 @@ This endpoint verifies user credientials and issues both an access token and a r
 POST /auth/refresh
 ```
 
+Request Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| refreshToken | string | Yes | Refresh token |
+
 Request Body:
 ```json
 {
-  "refreshToken": "refresh_token"
+  "refreshToken": "refresh_token" // Required
 }
 ```
 
@@ -89,7 +111,7 @@ Response (200 OK):
 ```json
 {
   "accessToken": "access_token",
-  "refreshToken": "new_refresh_token" # refresh token rotation
+  "refreshToken": "new_refresh_token" // Refresh token rotation
 }
 ```
 
@@ -115,13 +137,22 @@ This endpoint issues a new access token using the refresh token.
 POST /auth/register
 ```
 
+Request Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| email | string | Yes | User email address |
+| password | string | Yes | User password |
+| username | string | Yes | Username |
+| invitationToken | string | Yes | Invitation token for registration |
+
 Request Body:
 ```json
 {
-  "email": "user@example.com",
-  "password": "password",
-  "username": "user",
-  "invitationToken": "ABCD-EFGH"
+  "email": "user@example.com", // Required
+  "password": "password", // Required
+  "username": "user", // Required
+  "invitationToken": "ABCD-EFGH" // Required
 }
 ```
 
@@ -160,10 +191,16 @@ This endpoint creates a new user account.
 POST /auth/logout
 ```
 
+Request Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| refreshToken | string | Yes | Refresh token to invalidate |
+
 Request Body:
 ```json
 {
-  "refreshToken": "refresh_token"
+  "refreshToken": "refresh_token" // Required
 }
 ```
 
@@ -196,10 +233,16 @@ This endpoint logs out the user by invalidating the refresh token.
 POST /auth/forgot-password
 ```
 
+Request Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| email | string | Yes | User email address |
+
 Request Body:
 ```json
 {
-  "email": "user@example.com"
+  "email": "user@example.com" // Required
 }
 ```
 
@@ -232,12 +275,20 @@ This endpoint sends a password reset email to the user's email address.
 POST /auth/reset-password
 ```
 
+Request Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| email | string | Yes | User email address |
+| newPassword | string | Yes | New password |
+| token | string | Yes | Password reset token |
+
 Request Body:
 ```json
 {
-  "email": "user@example.com",
-  "newPassword": "new_password",
-  "token": "123456"
+  "email": "user@example.com", // Required
+  "newPassword": "new_password", // Required
+  "token": "123456" // Required
 }
 ```
 
@@ -277,8 +328,8 @@ Response (200 OK):
     "id": "123",
     "email": "user@example.com",
     "username": "user",
-    "devices": String[], # list of device IDs
-    "posts": String[], # list of post IDs
+    "pods": ["pod_id_1", "pod_id_2"], // Array of pod IDs
+    "podData": ["pod_data_id_1", "pod_data_id_2"] // Array of pod data IDs
   }
 }
 ```
@@ -299,8 +350,8 @@ Response (200 OK):
     "email": "user@example.com",
     "username": "user",
     "createdAt": "2021-01-01T00:00:00.000Z",
-    "devices"?: String[], # list of device IDs (only if user is the owner or admin)
-    "posts"?: String[], # list of post IDs (only public posts if user is not the owner or admin)
+    "devices": ["device_id_1", "device_id_2"], // Optional: Array of device IDs (only if user is the owner or admin)
+    "posts": ["post_id_1", "post_id_2"] // Optional: Array of post IDs (only public posts if user is not the owner or admin)
   }
 }
 ```
@@ -320,10 +371,16 @@ This endpoint returns the user's information by ID.
 PUT /users/me/username
 ```
 
+Request Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| username | string | Yes | New username |
+
 Request Body:
 ```json
 {
-  "username": "new_username"
+  "username": "new_username" // Required
 }
 ```
 
@@ -360,10 +417,16 @@ This is a two-step process that requires email verification for security.
 POST /users/me/email/request-change
 ```
 
+Request Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| newEmail | string | Yes | New email address |
+
 Request Body:
 ```json
 {
-  "newEmail": "newemail@example.com"
+  "newEmail": "newemail@example.com" // Required
 }
 ```
 
@@ -396,11 +459,18 @@ This endpoint sends a verification code to the new email address. The user must 
 PUT /users/me/email
 ```
 
+Request Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| newEmail | string | Yes | New email address |
+| verificationCode | string | Yes | Verification code sent to the new email |
+
 Request Body:
 ```json
 {
-  "newEmail": "newemail@example.com",
-  "verificationCode": "123456"
+  "newEmail": "newemail@example.com", // Required
+  "verificationCode": "123456" // Required
 }
 ```
 
@@ -436,11 +506,18 @@ This endpoint verifies the code sent to the new email address and updates the us
 PUT /users/me/password
 ```
 
+Request Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| oldPassword | string | Yes | Current password |
+| newPassword | string | Yes | New password |
+
 Request Body:
 ```json
 {
-  "oldPassword": "old_password",
-  "newPassword": "new_password"
+  "oldPassword": "old_password", // Required
+  "newPassword": "new_password" // Required
 }
 ```
 
@@ -459,6 +536,126 @@ Response (400 Bad Request):
 ```
 
 This endpoint updates the current user's password.
+
+### Register Pod
+
+```
+POST /users/me/register-pod
+```
+
+Request Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| podId | string | Yes | The pod ID |
+| nickname | string | Yes | Nickname for the pod |
+| visibility | string | Yes | Pod visibility: "public" or "private" |
+| latitude | number | No | Optional latitude coordinate |
+| longitude | number | No | Optional longitude coordinate |
+
+Request Body:
+```json
+{
+  "podId": "123", // Required
+  "nickname": "nickname", // Required
+  "visibility": "public", // Required: "public" or "private"
+  "latitude": 123.456, // Optional
+  "longitude": 123.456 // Optional
+}
+```
+
+Response (200 OK):
+```json
+{
+  "message": "Pod registered successfully"
+}
+```
+
+Response (409 Conflict):
+```json
+{
+  "message": "Pod already registered"
+}
+```
+
+This endpoint registers a new pod for the current user.
+
+Note: Data cannot be uploaded to the pod until latitude and longitude are provided. Do so after registering the pod with `/users/me/update-pod`.
+
+### Update Pod
+
+```
+PUT /users/me/update-pod
+```
+
+Request Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| podId | string | Yes | The pod ID |
+| nickname | string | No | Optional nickname for the pod |
+| visibility | string | No | Pod visibility: "public" or "private" |
+| latitude | number | No | Optional latitude coordinate |
+| longitude | number | No | Optional longitude coordinate |
+
+Request Body:
+```json
+{
+  "podId": "123", // Required
+  "nickname": "nickname", // Optional
+  "visibility": "public", // Optional: "public" or "private"
+  "latitude": 123.456, // Optional
+  "longitude": 123.456 // Optional
+}
+```
+
+Response (200 OK):
+
+```json
+{
+  "message": "Pod updated successfully"
+}
+```
+
+Response (404 Not Found):
+
+```json
+{
+  "error": "Pod not found"
+}
+```
+
+Response (400 Bad Request):
+```json
+{
+  "error": "One or more required parameters are invalid or missing"
+}
+```
+
+This endpoint updates the current user's pod.
+
+### Unregister Pod
+
+```
+DELETE /users/me/unregister-pod
+```
+
+Response (200 OK):
+
+```json
+{
+  "message": "Pod unregistered successfully"
+}
+```
+
+Response (404 Not Found):
+```json
+{
+  "error": "Pod not registered or found"
+}
+```
+
+This endpoint deletes the current user's pod.
 
 ## User Management (Admin)
 
@@ -508,10 +705,16 @@ This endpoint generates a new invitation token for a user. The invitation token 
 DELETE /admin/users/invitation-token
 ```
 
+Request Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| invitationToken | string | Yes | Invitation token to revoke |
+
 Request Body:
 ```json
 {
-  "invitationToken": "ABCD-EFGH"
+  "invitationToken": "ABCD-EFGH" // Required
 }
 ```
 
@@ -537,11 +740,18 @@ This endpoint revokes an invitation token.
 PUT /admin/users/{id}/deactivate
 ```
 
+Request Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| deactivate | boolean | Yes | Whether to deactivate the user |
+| removeData | boolean | Yes | Whether to remove user data |
+
 Request Body:
 ```json
 {
-  "deactivate": true,
-  "removeData": true
+  "deactivate": true, // Required
+  "removeData": true // Required
 }
 ```
 
@@ -559,3 +769,182 @@ Response (404 Not Found):
 }
 ```
 
+## Pod Data
+
+Users can only update their own pod data. Admins can update any pod data.
+
+### Get Pod Locations
+
+```
+GET /pods/locations
+```
+
+Request Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| latitude | number | Yes | Latitude coordinate for search center |
+| longitude | number | Yes | Longitude coordinate for search center |
+| radius | number | Yes | Search radius in meters |
+| fromDate | string | Yes | Start date in ISO 8601 format |
+| toDate | string | Yes | End date in ISO 8601 format |
+
+Request Body:
+```json
+{
+  "latitude": 123.456, // Required
+  "longitude": 123.456, // Required
+  "radius": 1000, // Required
+  "fromDate": "2021-01-01T00:00:00.000Z", // Required
+  "toDate": "2021-01-01T00:00:00.000Z" // Required
+}
+```
+
+Response (200 OK):
+```json
+{
+  "pods": [
+    {
+      "id": "123",
+      "nickname": "nickname",
+      "latitude": 123.456,
+      "longitude": 123.456,
+      "visibility": "public", // "public" or "private"
+      "lastUpdated": "2021-01-01T00:00:00.000Z"
+    }
+  ]
+}
+```
+
+Response (400 Bad Request):
+```json
+{
+  "error": "One or more required parameters are invalid or missing"
+}
+```
+
+This endpoint returns all pod names and their locations. Will return all pods if the user is an admin, otherwise will return only return public pods and user's own pods.
+
+### Get Pod Data
+
+```
+GET /pods/{id}/data
+```
+
+Response (200 OK):
+```json
+{
+  "data": [
+    {
+      "id": "123",
+      "timestamp": "2021-01-01T00:00:00.000Z",
+      "data": {}, // TBD: will be a JSON object with the sensor data
+      "visibility": "public" // "public" or "private"
+    }
+  ]
+}
+```
+
+Response (404 Not Found):
+```json
+{
+  "error": "Pod not found"
+}
+```
+
+This endpoint returns all recorded data for a specific pod sorted by timestamp in descending order.
+
+### Upload Pod Data
+
+```
+POST /pods/upload-pod-data
+```
+
+Request Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| podId | string | Yes | The pod ID |
+| data | object | Yes | JSON object containing the pod data (structure TBD) |
+
+Request Body:
+```json
+{
+  "podId": "123", // Required: The pod ID
+  "data": {} // Required: JSON object with the pod data (structure TBD)
+}
+```
+
+Response (200 OK):
+```json
+{
+  "podDataId": "123",
+  "message": "Pod data uploaded successfully"
+}
+```
+
+Response (400 Bad Request):
+```json
+{
+  "error": "Invalid pod data"
+}
+```
+
+Response (404 Not Found):
+```json
+{
+  "error": "Pod not registered"
+}
+```
+
+Response (403 Forbidden):
+```json
+{
+  "error": "Pod location not set"
+}
+```
+
+This endpoint uploads pod data to the database.
+
+### Delete Pod Data
+
+```
+DELETE /pods/delete-pod-data
+```
+
+Request Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| podDataId | string | Yes | The pod data ID |
+
+Request Body:
+```json
+{
+  "podDataId": "123" // Required
+}
+```
+
+Response (200 OK):
+```json
+{
+  "message": "Pod data deleted successfully",
+  "podDataId": "123"
+}
+```
+
+Response (404 Not Found):
+```json
+{
+  "error": "Pod data not found"
+}
+```
+
+Response (400 Bad Request):
+```json
+{
+  "error": "Invalid pod data ID"
+}
+```
+
+This endpoint deletes a specific pod data entry from the database.
