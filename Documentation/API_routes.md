@@ -86,7 +86,7 @@ Response (401 Unauthorized):
 }
 ```
 
-This endpoint verifies user credientials and issues both an access token and a refresh token.
+This endpoint verifies user credentials and issues both an access token and a refresh token.
 
 ### Refresh
 
