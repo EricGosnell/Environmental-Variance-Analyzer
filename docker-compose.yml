@@ -4,6 +4,6 @@ services:
     ports:
       - "3000:3000"
     volumes:
-      - ./backend:/app
-      - /app/node_modules
+      - ./backend:/app/backend
       - ./Pages:/app/Pages
+
