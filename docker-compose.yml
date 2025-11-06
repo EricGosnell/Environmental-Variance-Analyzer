@@ -1,9 +1,8 @@
 services:
   eva:
-    build: ./backend
+    build: ./Backend
     ports:
       - "3000:3000"
     volumes:
-      - ./backend:/app/backend
+      - ./Backend:/app/backend
       - ./Pages:/app/Pages
-
