@@ -19,8 +19,6 @@ CREATE TABLE IF NOT EXISTS pod (
     user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     pod_name TEXT,
     description TEXT,
-    longitude DOUBLE PRECISION,
-    latitude DOUBLE PRECISION,
     pod_data_public BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW()
 );
@@ -29,6 +27,8 @@ CREATE TABLE IF NOT EXISTS pod_data (
     pod_data_id SERIAL PRIMARY KEY,
     pod_id INT NOT NULL REFERENCES pod(pod_id) ON DELETE CASCADE,
     date_collected DATE NOT NULL DEFAULT CURRENT_DATE,
+    longitude DOUBLE PRECISION NOT NULL,
+    latitude DOUBLE PRECISION NOT NULL,
     created_at TIMESTAMP DEFAULT NOW()
 );
 
