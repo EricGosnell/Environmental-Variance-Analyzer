@@ -1,3 +1,3 @@
 sudo service docker start
 sudo docker build -t eva-app .
-sudo docker run -p 3000:3000 eva-app
+docker run -p 3000:3000 -v "$(pwd):/app" eva-app

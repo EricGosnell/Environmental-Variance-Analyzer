@@ -1,15 +1,8 @@
 FROM node:20-alpine
-
-# Set working directory
 WORKDIR /app
-
-# for dependencies
 COPY package*.json ./
-RUN npm ci --omit=dev
+RUN npm install
+RUN npm install -g nodemon
 COPY . .
-
-# port
 EXPOSE 3000
-
-# Start the server
-CMD ["npm", "start"]
+CMD ["nodemon", "server.js"]
