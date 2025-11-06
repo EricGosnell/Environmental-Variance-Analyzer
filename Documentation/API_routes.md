@@ -771,7 +771,7 @@ Response (404 Not Found):
 
 ## Pod Data
 
-Users can only update their own pod data. Admins can update any pod data.
+Users can only update their own pod data. Admins can update any pod data. Users can view public pods without authentication.
 
 ### Get Pod Locations
 
@@ -852,7 +852,7 @@ Response (404 Not Found):
 }
 ```
 
-This endpoint returns all recorded data for a specific pod sorted by timestamp in descending order.
+This endpoint returns all recorded data for a specific pod sorted by timestamp in descending order. Only accessible if pod is public or the user is the owner of the pod.
 
 ### Upload Pod Data
 
