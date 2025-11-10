@@ -5,30 +5,36 @@ CREATE TABLE IF NOT EXISTS users (
     password_hash TEXT NOT NULL
 );
 
+-- 1 to 1 with users
 CREATE TABLE IF NOT EXISTS user_contact (
     contact_id SERIAL PRIMARY KEY,
-    user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    user_id INT UNIQUE NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     user_name TEXT NOT NULL,
     phone_number TEXT,
-    email TEXT UNIQUE,
-    date_of_birth DATE
+    email TEXT UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS pod (
     pod_id SERIAL PRIMARY KEY,
-    user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     pod_name TEXT,
     description TEXT,
-    longitude DOUBLE PRECISION,
-    latitude DOUBLE PRECISION,
     pod_data_public BOOLEAN DEFAULT FALSE,
     created_at TIMESTAMP DEFAULT NOW()
+);
+
+-- many to many for users to pod
+CREATE TABLE IF NOT EXISTS user_pod (
+    user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    pod_id INT NOT NULL REFERENCES pod(pod_id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, pod_id)
 );
 
 CREATE TABLE IF NOT EXISTS pod_data (
     pod_data_id SERIAL PRIMARY KEY,
     pod_id INT NOT NULL REFERENCES pod(pod_id) ON DELETE CASCADE,
     date_collected DATE NOT NULL DEFAULT CURRENT_DATE,
+    longitude DOUBLE PRECISION NOT NULL,
+    latitude DOUBLE PRECISION NOT NULL,
     created_at TIMESTAMP DEFAULT NOW()
 );
 
@@ -44,7 +50,8 @@ CREATE TABLE IF NOT EXISTS sensor_data (
 );
 
 CREATE INDEX idx_user_contact_user_id ON user_contact(user_id);
-CREATE INDEX idx_pod_user_id ON pod(user_id);
+CREATE INDEX idx_user_pod_user_id ON user_pod(user_id);
+CREATE INDEX idx_user_pod_pod_id ON user_pod(pod_id);
 CREATE INDEX idx_pod_data_pod_id ON pod_data(pod_id);
 CREATE INDEX idx_pod_data_date ON pod_data(date_collected);
 CREATE INDEX idx_sensor_data_pod_data_id ON sensor_data(pod_data_id);
