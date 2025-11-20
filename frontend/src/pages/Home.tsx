@@ -1,3 +1,5 @@
+import MapView from "../components/Map.tsx";
+
 export default function Home() {
     return (
         <div className="homepage-container">
@@ -12,7 +14,7 @@ export default function Home() {
                 </div>
             </div>
             <div className="map-container">
-                <p>Map Here</p>
+                <MapView />
             </div>
         </div>
     )

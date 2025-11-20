@@ -44,8 +44,8 @@ body {
 
 .map-container {
   background-color: #555;
-  padding: 24px 32px;
   border-radius: 16px;
+  overflow: hidden;
   width: 80%;
   color: #ffffff;
 }
