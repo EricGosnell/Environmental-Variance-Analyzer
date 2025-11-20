@@ -24,3 +24,59 @@ body {
   background-color: #303533;
   color: white;
 }
+
+.homepage-container {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  margin: 32px 40px;
+  height: 100%;
+}
+
+.controls-container {
+  background-color: #204835;
+  padding: 24px 32px;
+  border-radius: 16px;
+  width: 20%;
+  height: 100%;
+  color: #ffffff;
+}
+
+.map-container {
+  background-color: #555;
+  padding: 24px 32px;
+  border-radius: 16px;
+  width: 75%;
+  height: 100%;
+  color: #ffffff;
+}
+
+.primary-btn {
+  background-color: #30A46C;
+  border: 1px transparent;
+  border-radius: 24px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.primary-btn:hover {
+  background-color: #30A46C80;
+}
+
+.secondary-btn {
+  background-color: #204835;
+  border: 1px #30A46C solid;
+  border-radius: 24px;
+  padding: 10px 20px;
+  font-size: 1rem;
+  color: white;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.secondary-btn:hover {
+  opacity: 0.8;
+}
