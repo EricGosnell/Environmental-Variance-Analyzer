@@ -14,10 +14,11 @@ services:
 
   eva-backend-prod:
     build:
-      context: .                   
+      context: .
       dockerfile: ./Backend/Dockerfile.prod
     ports:
-      - "3001:3000"
+      - "3001:3001"
     environment:
       - NODE_ENV=production
+      - PORT=3001
     command: ["node", "server.js"]
