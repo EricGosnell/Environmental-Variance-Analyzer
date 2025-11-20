@@ -1,8 +1,23 @@
 services:
-  eva:
-    build: ./Backend
+  eva-backend-dev:
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile.dev
     ports:
       - "3000:3000"
     volumes:
-      - ./Backend:/app/backend
+      - ./Backend:/app
       - ./Pages:/app/Pages
+    environment:
+      - NODE_ENV=development
+    command: ["nodemon", "server.js"]
+
+  eva-backend-prod:
+    build:
+      context: .                   
+      dockerfile: ./Backend/Dockerfile.prod
+    ports:
+      - "3001:3000"
+    environment:
+      - NODE_ENV=production
+    command: ["node", "server.js"]
