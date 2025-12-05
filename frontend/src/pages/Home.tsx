@@ -5,9 +5,9 @@ export default function Home() {
         <div className="homepage-container">
             <div className="controls-container">
                 <p>Controls</p>
-                <button className="btn primary-btn">Add EVA Pod</button>
+                <button className="btn primary-btn">Upload EVA Data</button>
                 <br/>
-                <button className="btn secondary-btn">Edit EVA Pod</button>
+                <button className="btn secondary-btn">Manage EVA Pods</button>
 
                 <div className="filters-container">
                     <p>Filters</p>
