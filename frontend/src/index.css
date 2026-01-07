@@ -11,6 +11,7 @@
   --dark-background: #303533;
   --primary-green: #30A46C;
   --secondary-green: #204835;
+  --disabled-button: #71ca9f88;
 }
 
 a {
@@ -72,3 +73,11 @@ body {
   background-color: var(--secondary-green);
   border: 1px var(--primary-green) solid;
 }
+
+.btn:disabled {
+  background-color: var(--disabled-button);
+  border: 1px transparent;
+  cursor: not-allowed;
+  color: #ffffff88;
+}
+
