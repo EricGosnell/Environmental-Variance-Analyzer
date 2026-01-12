@@ -5,6 +5,12 @@
  */
 
 // ----------------------------
+// Shared, reusable shapes
+// ----------------------------
+
+export type MessageResponse = { message: string };
+
+// ----------------------------
 // Core models
 // ----------------------------
 
@@ -18,6 +24,9 @@ export type User = {
   updatedAt?: string;
 };
 
+export type UserResponse = { user: User };
+export type UsersResponse = { users: User[] };
+
 export type PodLocation = {
   id: string;
   nickname: string;
@@ -27,12 +36,16 @@ export type PodLocation = {
   lastUpdated?: string;
 };
 
+export type PodLocationsResponse = { pods: PodLocation[] };
+
 export type PodDataEntry = {
   id: string;
   timestamp: string;
   data: Record<string, unknown>;
   visibility: "public" | "private";
 };
+
+export type PodDataResponse = { data: PodDataEntry[] };
 
 // ----------------------------
 // Authentication
@@ -48,32 +61,21 @@ export type AuthRegisterRequest = { email: string; password: string; username: s
 export type AuthRegisterResponse = { user: User; accessToken: string; refreshToken: string };
 
 export type AuthLogoutRequest = { refreshToken: string };
-export type AuthLogoutResponse = { message: string };
-
 export type AuthForgotPasswordRequest = { email: string };
-export type AuthForgotPasswordResponse = { message: string };
-
 export type AuthResetPasswordRequest = { email: string; newPassword: string; token: string };
-export type AuthResetPasswordResponse = { message: string };
 
 // ----------------------------
 // User Management
 // ----------------------------
 
-export type GetMeResponse = { user: User };
-export type GetUserByIdResponse = { user: User };
-
 export type UpdateUsernameRequest = { username: string };
-export type UpdateUsernameResponse = { message: string };
 
 export type RequestEmailChangeRequest = { newEmail: string };
-export type RequestEmailChangeResponse = { message: string };
 
 export type VerifyAndUpdateEmailRequest = { newEmail: string; verificationCode: string };
 export type VerifyAndUpdateEmailResponse = { message: string; user: Pick<User, "email"> };
 
 export type UpdatePasswordRequest = { oldPassword: string; newPassword: string };
-export type UpdatePasswordResponse = { message: string };
 
 export type RegisterPodRequest = {
   podId: string;
@@ -82,7 +84,6 @@ export type RegisterPodRequest = {
   latitude?: number;
   longitude?: number;
 };
-export type RegisterPodResponse = { message: string };
 
 export type UpdatePodRequest = {
   podId: string;
@@ -91,16 +92,12 @@ export type UpdatePodRequest = {
   latitude?: number;
   longitude?: number;
 };
-export type UpdatePodResponse = { message: string };
 
 export type UnregisterPodRequest = { podId: string };
-export type UnregisterPodResponse = { message: string };
 
 // ----------------------------
 // Admin
 // ----------------------------
-
-export type AdminGetAllUsersResponse = { users: User[] };
 
 export type AdminGenerateInvitationTokenResponse = {
   invitationToken: string;
@@ -109,10 +106,8 @@ export type AdminGenerateInvitationTokenResponse = {
 };
 
 export type AdminRevokeInvitationTokenRequest = { invitationToken: string };
-export type AdminRevokeInvitationTokenResponse = { message: string };
 
 export type AdminDeactivateUserRequest = { deactivate: boolean; removeData: boolean };
-export type AdminDeactivateUserResponse = { message: string };
 
 // ----------------------------
 // Pod Data
@@ -125,14 +120,10 @@ export type GetPodLocationsRequest = {
   fromDate: string;
   toDate: string;
 };
-export type GetPodLocationsResponse = { pods: PodLocation[] };
-
-export type GetPodDataResponse = { data: PodDataEntry[] };
-
 export type UploadPodDataRequest = { podId: string; data: Record<string, unknown> };
-export type UploadPodDataResponse = { podDataId: string; message: string };
+export type UploadPodDataResponse = MessageResponse & { podDataId: string };
 
 export type DeletePodDataRequest = { podDataId: string };
-export type DeletePodDataResponse = { message: string; podDataId: string };
+export type DeletePodDataResponse = MessageResponse & { podDataId: string };
 
 

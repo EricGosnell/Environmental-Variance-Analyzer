@@ -8,44 +8,33 @@
 
 import type {
   AdminDeactivateUserRequest,
-  AdminDeactivateUserResponse,
   AdminGenerateInvitationTokenResponse,
-  AdminGetAllUsersResponse,
   AdminRevokeInvitationTokenRequest,
-  AdminRevokeInvitationTokenResponse,
   AuthForgotPasswordRequest,
-  AuthForgotPasswordResponse,
   AuthLoginRequest,
   AuthLoginResponse,
   AuthLogoutRequest,
-  AuthLogoutResponse,
   AuthRefreshRequest,
   AuthRefreshResponse,
   AuthRegisterRequest,
   AuthRegisterResponse,
   AuthResetPasswordRequest,
-  AuthResetPasswordResponse,
   DeletePodDataRequest,
   DeletePodDataResponse,
-  GetMeResponse,
-  GetPodDataResponse,
+  MessageResponse,
+  PodDataResponse,
   GetPodLocationsRequest,
-  GetPodLocationsResponse,
-  GetUserByIdResponse,
+  PodLocationsResponse,
   RegisterPodRequest,
-  RegisterPodResponse,
   RequestEmailChangeRequest,
-  RequestEmailChangeResponse,
   UnregisterPodRequest,
-  UnregisterPodResponse,
   UpdatePasswordRequest,
-  UpdatePasswordResponse,
   UpdatePodRequest,
-  UpdatePodResponse,
   UpdateUsernameRequest,
-  UpdateUsernameResponse,
   UploadPodDataRequest,
   UploadPodDataResponse,
+  UserResponse,
+  UsersResponse,
   VerifyAndUpdateEmailRequest,
   VerifyAndUpdateEmailResponse,
 } from "./apiTypes";
@@ -54,7 +43,7 @@ import type {
 // Config + token storage
 // ----------------------------
 
-const DEFAULT_API_BASE_URL = "http://localhost:5050";
+const DEFAULT_API_BASE_URL = "http://localhost:5000";
 export const API_BASE_URL: string =
   (import.meta as any)?.env?.VITE_API_BASE_URL?.toString?.() || DEFAULT_API_BASE_URL;
 
@@ -256,10 +245,10 @@ export async function authRegister(payload: AuthRegisterRequest, signal?: AbortS
 export async function authLogout(
   payload?: Partial<AuthLogoutRequest>,
   signal?: AbortSignal,
-): Promise<AuthLogoutResponse> {
+): Promise<MessageResponse> {
   // allow caller to omit payload; we’ll use stored refresh token if present
   const refreshToken = payload?.refreshToken ?? getRefreshToken() ?? undefined;
-  const res = await request<AuthLogoutResponse>({
+  const res = await request<MessageResponse>({
     method: "POST",
     path: "/auth/logout",
     body: refreshToken ? { refreshToken } : undefined,
@@ -273,8 +262,8 @@ export async function authLogout(
 export async function authForgotPassword(
   payload: AuthForgotPasswordRequest,
   signal?: AbortSignal,
-): Promise<AuthForgotPasswordResponse> {
-  return await request<AuthForgotPasswordResponse>({
+): Promise<MessageResponse> {
+  return await request<MessageResponse>({
     method: "POST",
     path: "/auth/forgot-password",
     body: payload,
@@ -286,8 +275,8 @@ export async function authForgotPassword(
 export async function authResetPassword(
   payload: AuthResetPasswordRequest,
   signal?: AbortSignal,
-): Promise<AuthResetPasswordResponse> {
-  return await request<AuthResetPasswordResponse>({
+): Promise<MessageResponse> {
+  return await request<MessageResponse>({
     method: "POST",
     path: "/auth/reset-password",
     body: payload,
@@ -296,20 +285,20 @@ export async function authResetPassword(
   });
 }
 
-export async function getMe(signal?: AbortSignal): Promise<GetMeResponse> {
-  return await request<GetMeResponse>({ method: "GET", path: "/users/me", auth: true, signal });
+export async function getMe(signal?: AbortSignal): Promise<UserResponse> {
+  return await request<UserResponse>({ method: "GET", path: "/users/me", auth: true, signal });
 }
 
-export async function getUserById(id: string, signal?: AbortSignal): Promise<GetUserByIdResponse> {
-  return await request<GetUserByIdResponse>({
+export async function getUserById(id: string, signal?: AbortSignal): Promise<UserResponse> {
+  return await request<UserResponse>({
     method: "GET",
     path: `/users/${encodeURIComponent(id)}`,
     auth: true,
     signal,
   });
 }
-export async function updateMyUsername(payload: UpdateUsernameRequest, signal?: AbortSignal): Promise<UpdateUsernameResponse> {
-  return await request<UpdateUsernameResponse>({
+export async function updateMyUsername(payload: UpdateUsernameRequest, signal?: AbortSignal): Promise<MessageResponse> {
+  return await request<MessageResponse>({
     method: "PUT",
     path: "/users/me/username",
     body: payload,
@@ -320,8 +309,8 @@ export async function updateMyUsername(payload: UpdateUsernameRequest, signal?: 
 export async function requestEmailChange(
   payload: RequestEmailChangeRequest,
   signal?: AbortSignal,
-): Promise<RequestEmailChangeResponse> {
-  return await request<RequestEmailChangeResponse>({
+): Promise<MessageResponse> {
+  return await request<MessageResponse>({
     method: "POST",
     path: "/users/me/email/request-change",
     body: payload,
@@ -341,8 +330,8 @@ export async function verifyAndUpdateEmail(
     signal,
   });
 }
-export async function updateMyPassword(payload: UpdatePasswordRequest, signal?: AbortSignal): Promise<UpdatePasswordResponse> {
-  return await request<UpdatePasswordResponse>({
+export async function updateMyPassword(payload: UpdatePasswordRequest, signal?: AbortSignal): Promise<MessageResponse> {
+  return await request<MessageResponse>({
     method: "PUT",
     path: "/users/me/password",
     body: payload,
@@ -350,8 +339,8 @@ export async function updateMyPassword(payload: UpdatePasswordRequest, signal?: 
     signal,
   });
 }
-export async function registerPod(payload: RegisterPodRequest, signal?: AbortSignal): Promise<RegisterPodResponse> {
-  return await request<RegisterPodResponse>({
+export async function registerPod(payload: RegisterPodRequest, signal?: AbortSignal): Promise<MessageResponse> {
+  return await request<MessageResponse>({
     method: "POST",
     path: "/users/me/register-pod",
     body: payload,
@@ -359,8 +348,8 @@ export async function registerPod(payload: RegisterPodRequest, signal?: AbortSig
     signal,
   });
 }
-export async function updatePod(payload: UpdatePodRequest, signal?: AbortSignal): Promise<UpdatePodResponse> {
-  return await request<UpdatePodResponse>({
+export async function updatePod(payload: UpdatePodRequest, signal?: AbortSignal): Promise<MessageResponse> {
+  return await request<MessageResponse>({
     method: "PUT",
     path: "/users/me/update-pod",
     body: payload,
@@ -368,8 +357,8 @@ export async function updatePod(payload: UpdatePodRequest, signal?: AbortSignal)
     signal,
   });
 }
-export async function unregisterPod(payload: UnregisterPodRequest, signal?: AbortSignal): Promise<UnregisterPodResponse> {
-  return await request<UnregisterPodResponse>({
+export async function unregisterPod(payload: UnregisterPodRequest, signal?: AbortSignal): Promise<MessageResponse> {
+  return await request<MessageResponse>({
     method: "DELETE",
     path: "/users/me/unregister-pod",
     body: payload,
@@ -378,8 +367,8 @@ export async function unregisterPod(payload: UnregisterPodRequest, signal?: Abor
   });
 }
 
-export async function adminGetAllUsers(signal?: AbortSignal): Promise<AdminGetAllUsersResponse> {
-  return await request<AdminGetAllUsersResponse>({ method: "GET", path: "/admin/users", auth: true, signal });
+export async function adminGetAllUsers(signal?: AbortSignal): Promise<UsersResponse> {
+  return await request<UsersResponse>({ method: "GET", path: "/admin/users", auth: true, signal });
 }
 
 export async function adminGenerateInvitationToken(
@@ -395,8 +384,8 @@ export async function adminGenerateInvitationToken(
 export async function adminRevokeInvitationToken(
   payload: AdminRevokeInvitationTokenRequest,
   signal?: AbortSignal,
-): Promise<AdminRevokeInvitationTokenResponse> {
-  return await request<AdminRevokeInvitationTokenResponse>({
+): Promise<MessageResponse> {
+  return await request<MessageResponse>({
     method: "DELETE",
     path: "/admin/users/invitation-token",
     body: payload,
@@ -408,8 +397,8 @@ export async function adminDeactivateUser(
   id: string,
   payload: AdminDeactivateUserRequest,
   signal?: AbortSignal,
-): Promise<AdminDeactivateUserResponse> {
-  return await request<AdminDeactivateUserResponse>({
+): Promise<MessageResponse> {
+  return await request<MessageResponse>({
     method: "PUT",
     path: `/admin/users/${encodeURIComponent(id)}/deactivate`,
     body: payload,
@@ -424,8 +413,8 @@ export async function adminDeactivateUser(
 export async function getPodLocations(
   params: GetPodLocationsRequest,
   signal?: AbortSignal,
-): Promise<GetPodLocationsResponse> {
-  return await request<GetPodLocationsResponse>({
+): Promise<PodLocationsResponse> {
+  return await request<PodLocationsResponse>({
     method: "GET",
     path: "/pods/locations",
     query: params,
@@ -433,8 +422,8 @@ export async function getPodLocations(
     signal,
   });
 }
-export async function getPodData(podId: string, signal?: AbortSignal): Promise<GetPodDataResponse> {
-  return await request<GetPodDataResponse>({
+export async function getPodData(podId: string, signal?: AbortSignal): Promise<PodDataResponse> {
+  return await request<PodDataResponse>({
     method: "GET",
     path: `/pods/${encodeURIComponent(podId)}/data`,
     auth: true,
