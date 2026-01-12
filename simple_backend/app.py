@@ -109,6 +109,39 @@ def unregister_pod():
     return jsonify({"message": "Pod unregistered successfully"}), 200
 
 
+@app.route("/pods/locations", methods=["GET"])
+def get_pod_locations():
+    """GET /pods/locations -> returns dummy pod locations"""
+    # This test endpoint ignores query params and returns fixed sample pods
+    pods = [
+        {
+            "id": "pod-1",
+            "nickname": "Station Alpha",
+            "latitude": 40.005928,
+            "longitude": -105.267548,
+            "visibility": "public",
+            "lastUpdated": "2026-01-01T00:00:00.000Z",
+        },
+        {
+            "id": "pod-2",
+            "nickname": "Station Beta",
+            "latitude": 40.011139,
+            "longitude": -105.268776,
+            "visibility": "public",
+            "lastUpdated": "2026-01-02T00:00:00.000Z",
+        },
+        {
+            "id": "pod-3",
+            "nickname": "Station Gamma",
+            "latitude": 39.993723,
+            "longitude": -105.285723,
+            "visibility": "private",
+            "lastUpdated": "2026-01-03T00:00:00.000Z",
+        },
+    ]
+    return jsonify({"pods": pods}), 200
+
+
 if __name__ == "__main__":
     # Run in debug mode for local testing
     app.run(host="0.0.0.0", port=5050, debug=True)
