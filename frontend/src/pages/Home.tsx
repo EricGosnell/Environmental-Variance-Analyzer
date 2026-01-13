@@ -1,8 +1,9 @@
-import React, { useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 import MapView from "../components/Map.tsx";
 
 import { getMe } from "../utils/api.ts";
 import type { User } from "../utils/apiTypes.ts";
+import AuthPanel from "../components/AuthPanel.tsx";
 
 export default function Home() {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
@@ -25,22 +26,30 @@ export default function Home() {
 
     return (
         <div className="homepage-container">
-            <div className="controls-container">
-                {isAuthenticated && user && (
+            <div className={`controls-container ${isAuthenticated === false ? "controls-container--unauthenticated" : ""}`}>
+                {isAuthenticated && user ? (
                     <>
-                        <p>Controls</p>
                         {(user.pods?.length ?? 0) === 0 && (
-                            <div className="warning-message">You currently have no pods registered. Register a pod to upload data.</div>
+                            <div className="warning-message"><p>You currently have no pods registered. Register a pod to upload data.</p></div>
                         )}
                         <button className="btn primary-btn" disabled={(user.pods?.length ?? 0) === 0}>Upload EVA Data</button>
                         <br/>
                         <button className="btn secondary-btn">Manage EVA Pods</button>
-                    </>
-                )}
 
-                <div className="filters-container">
-                    <p>Filters</p>
-                </div>
+                        <div className="filters-container">
+                            <p>Filters</p>
+                        </div>
+                    </>
+                ) : null}
+
+                {isAuthenticated === false ? (
+                    <AuthPanel
+                        onAuthSuccess={(authedUser) => {
+                            setUser(authedUser);
+                            setIsAuthenticated(true);
+                        }}
+                    />
+                ) : null}
             </div>
             <div className="map-container">
                 <MapView />

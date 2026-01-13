@@ -43,7 +43,7 @@ import type {
 // Config + token storage
 // ----------------------------
 
-const DEFAULT_API_BASE_URL = "http://localhost:5000";
+const DEFAULT_API_BASE_URL = "http://localhost:5050";
 export const API_BASE_URL: string =
   (import.meta as any)?.env?.VITE_API_BASE_URL?.toString?.() || DEFAULT_API_BASE_URL;
 
@@ -81,6 +81,31 @@ export function clearTokens(): void {
     localStorage.removeItem(REFRESH_TOKEN_KEY);
   } catch {
     // ignore
+  }
+}
+
+// ----------------------------
+// Global auth-lost handler
+// ----------------------------
+
+let authLostHandler: (() => void) | null = null;
+
+/**
+ * Register a single global handler to run when the API layer determines the user is no longer authenticated
+ * (e.g. refresh token missing/invalid).
+ *
+ * Intended to be set once from a top-level UI component (e.g. layout) to perform navigation.
+ */
+export function setAuthLostHandler(handler: (() => void) | null): void {
+  authLostHandler = handler;
+}
+
+function triggerAuthLost(): void {
+  clearTokens();
+  try {
+    authLostHandler?.();
+  } catch {
+    // avoid secondary crashes during navigation
   }
 }
 
@@ -186,7 +211,10 @@ async function request<T>(opts: RequestOptions): Promise<T> {
     if (opts.path.startsWith("/auth/refresh")) throw err;
 
     const refreshToken = getRefreshToken();
-    if (!refreshToken) throw err;
+    if (!refreshToken) {
+      triggerAuthLost();
+      throw err;
+    }
 
     // de-dupe refresh calls across concurrent requests
     if (!refreshInFlight) {
@@ -200,9 +228,14 @@ async function request<T>(opts: RequestOptions): Promise<T> {
       });
     }
 
-    const refreshed = await refreshInFlight;
-    setTokens(refreshed);
-    return await rawRequest<T>(opts);
+    try {
+      const refreshed = await refreshInFlight;
+      setTokens(refreshed);
+      return await rawRequest<T>(opts);
+    } catch (refreshErr) {
+      triggerAuthLost();
+      throw refreshErr;
+    }
   }
 }
 

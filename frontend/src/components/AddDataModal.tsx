@@ -3,13 +3,14 @@ import React, { useState } from "react";
 type AddDataModalProps = {
   show: boolean;
   onCancel: () => void;
-  onUpload?: (payload: { file: File | null; podId: string; podLocation: string }) => void;
+  onUpload?: (payload: { file: File | null; podId: string; podLocation: string; podDataNotes: string }) => void;
 };
 
 const AddDataModal: React.FC<AddDataModalProps> = ({ show, onCancel, onUpload }) => {
   const [file, setFile] = useState<File | null>(null);
   const [podId, setPodId] = useState<string>("");
   const [podLocation, setPodLocation] = useState<string>("");
+  const [podDataNotes, setPodDataNotes] = useState<string>("");
 
   if (!show) return null;
 
@@ -17,11 +18,12 @@ const AddDataModal: React.FC<AddDataModalProps> = ({ show, onCancel, onUpload })
     const selected = e.target.files && e.target.files.length > 0 ? e.target.files[0] : null;
     setFile(selected);
   };
+  
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (onUpload) {
-      onUpload({ file, podId, podLocation });
+      onUpload({ file, podId, podLocation, podDataNotes });
     }
   };
 
@@ -57,6 +59,17 @@ const AddDataModal: React.FC<AddDataModalProps> = ({ show, onCancel, onUpload })
                 name="podLocation"
                 value={podLocation}
                 onChange={(e) => setPodLocation(e.target.value)}
+              />
+            </label>
+          </div>
+          <div className="form-row">
+            <label>
+              Notes
+              <textarea
+                name="podDataNotes"
+                value={podDataNotes}
+                onChange={(e) => setPodDataNotes(e.target.value)}
+                rows={3}
               />
             </label>
           </div>

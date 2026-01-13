@@ -786,8 +786,8 @@ Request Parameters:
 | latitude | number | Yes | Latitude coordinate for search center |
 | longitude | number | Yes | Longitude coordinate for search center |
 | radius | number | Yes | Search radius in meters |
-| fromDate | string | Yes | Start date in ISO 8601 format |
-| toDate | string | Yes | End date in ISO 8601 format |
+| fromDate | string | No | Start date in ISO 8601 format |
+| toDate | string | No | End date in ISO 8601 format |
 
 Request Body:
 ```json
@@ -795,8 +795,8 @@ Request Body:
   "latitude": 123.456, // Required
   "longitude": 123.456, // Required
   "radius": 1000, // Required
-  "fromDate": "2021-01-01T00:00:00.000Z", // Required
-  "toDate": "2021-01-01T00:00:00.000Z" // Required
+  "fromDate": "2021-01-01T00:00:00.000Z", 
+  "toDate": "2021-01-01T00:00:00.000Z" 
 }
 ```
 

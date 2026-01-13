@@ -117,8 +117,8 @@ export type GetPodLocationsRequest = {
   latitude: number;
   longitude: number;
   radius: number;
-  fromDate: string;
-  toDate: string;
+  fromDate?: string;
+  toDate?: string;
 };
 export type UploadPodDataRequest = { podId: string; data: Record<string, unknown> };
 export type UploadPodDataResponse = MessageResponse & { podDataId: string };
