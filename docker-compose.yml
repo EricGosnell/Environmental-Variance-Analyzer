@@ -7,6 +7,7 @@ services:
       - "3000:3000"
     volumes:
       - ./Backend:/app
+      - /app/node_modules
       - ./Pages:/app/Pages
     environment:
       - NODE_ENV=development
@@ -14,8 +15,8 @@ services:
 
   eva-backend-prod:
     build:
-      context: .
-      dockerfile: ./Backend/Dockerfile.prod
+      context: ./Backend
+      dockerfile: Dockerfile.prod
     ports:
       - "3001:3001"
     environment:
