@@ -1,58 +1,58 @@
 CREATE TABLE IF NOT EXISTS users ( 
-    user_id SERIAL PRIMARY KEY,
+    user_id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW(),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     password_hash TEXT NOT NULL
 );
 
 -- 1 to 1 with users
 CREATE TABLE IF NOT EXISTS user_contact (
-    contact_id SERIAL PRIMARY KEY,
-    user_id INT UNIQUE NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    contact_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER UNIQUE NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     user_name TEXT NOT NULL,
     phone_number TEXT,
     email TEXT UNIQUE
 );
 
 CREATE TABLE IF NOT EXISTS pod (
-    pod_id SERIAL PRIMARY KEY,
+    pod_id INTEGER PRIMARY KEY AUTOINCREMENT,
     pod_name TEXT,
     description TEXT,
     pod_data_public BOOLEAN DEFAULT FALSE,
-    created_at TIMESTAMP DEFAULT NOW()
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 -- many to many for users to pod
 CREATE TABLE IF NOT EXISTS user_pod (
-    user_id INT NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-    pod_id INT NOT NULL REFERENCES pod(pod_id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    pod_id INTEGER NOT NULL REFERENCES pod(pod_id) ON DELETE CASCADE,
     PRIMARY KEY (user_id, pod_id)
 );
 
 CREATE TABLE IF NOT EXISTS pod_data (
-    pod_data_id SERIAL PRIMARY KEY,
-    pod_id INT NOT NULL REFERENCES pod(pod_id) ON DELETE CASCADE,
+    pod_data_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    pod_id INTEGER NOT NULL REFERENCES pod(pod_id) ON DELETE CASCADE,
     date_collected DATE NOT NULL DEFAULT CURRENT_DATE,
-    longitude DOUBLE PRECISION NOT NULL,
-    latitude DOUBLE PRECISION NOT NULL,
-    created_at TIMESTAMP DEFAULT NOW()
+    longitude REAL NOT NULL,
+    latitude REAL NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE IF NOT EXISTS sensor_data (
-    sensor_data_id SERIAL PRIMARY KEY,
-    pod_data_id INT NOT NULL REFERENCES pod_data(pod_data_id) ON DELETE CASCADE,
+    sensor_data_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    pod_data_id INTEGER NOT NULL REFERENCES pod_data(pod_data_id) ON DELETE CASCADE,
     sensor_type TEXT NOT NULL,
-    reading_value DOUBLE PRECISION,
+    reading_value REAL,
     reading_units TEXT,
-    reading_timestamp TIMESTAMP DEFAULT NOW(),
-    raw_data JSONB,
-    created_at TIMESTAMP DEFAULT NOW()
+    reading_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    raw_data TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
-CREATE INDEX idx_user_contact_user_id ON user_contact(user_id);
-CREATE INDEX idx_user_pod_user_id ON user_pod(user_id);
-CREATE INDEX idx_user_pod_pod_id ON user_pod(pod_id);
-CREATE INDEX idx_pod_data_pod_id ON pod_data(pod_id);
-CREATE INDEX idx_pod_data_date ON pod_data(date_collected);
-CREATE INDEX idx_sensor_data_pod_data_id ON sensor_data(pod_data_id);
-CREATE INDEX idx_sensor_data_timestamp ON sensor_data(reading_timestamp);
+CREATE INDEX IF NOT EXISTS idx_user_contact_user_id ON user_contact(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_pod_user_id ON user_pod(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_pod_pod_id ON user_pod(pod_id);
+CREATE INDEX IF NOT EXISTS idx_pod_data_pod_id ON pod_data(pod_id);
+CREATE INDEX IF NOT EXISTS idx_pod_data_date ON pod_data(date_collected);
+CREATE INDEX IF NOT EXISTS idx_sensor_data_pod_data_id ON sensor_data(pod_data_id);
+CREATE INDEX IF NOT EXISTS idx_sensor_data_timestamp ON sensor_data(reading_timestamp);
