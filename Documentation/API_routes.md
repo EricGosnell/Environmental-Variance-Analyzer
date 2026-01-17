@@ -15,7 +15,7 @@ This document outlines the API routes for the project.
   - [Get User: `/users/me`](#get-user)
   - [Get User by ID: `/users/{id}`](#get-user-by-id)
   - [Update User Username: `/users/me/username`](#update-user-username)
-  - [Update User Email: `/users/me/email/request-change` / `/users/me/email`](#update-user-email)
+  - [Update User Email:](#update-user-email)
     - [Request Email Change: `/users/me/email/request-change`](#request-email-change)
     - [Verify and Update Email: `/users/me/email`](#verify-and-update-email)
   - [Update User Phone Number: `/users/me/phone-number`](#update-user-phone-number)
