@@ -2,38 +2,37 @@
 
 This document outlines the API routes for the project.
 
-# Table of Contents
+ # Table of Contents
 
 - [Authentication](#authentication)
-  - [Login](#login)
-  - [Refresh](#refresh)
-  - [Register](#register)
-  - [Logout](#logout)
-  - [Forgot Password](#forgot-password)
-  - [Reset Password](#reset-password)
+  - [Login: `/auth/login`](#login-authlogin)
+  - [Refresh: `/auth/refresh`](#refresh-authrefresh)
+  - [Register: `/auth/register`](#register-authregister)
+  - [Logout: `/auth/logout`](#logout)
+  - [Forgot Password: `/auth/forgot-password`](#forgot-password)
+  - [Reset Password: `/auth/reset-password`](#reset-password)
 - [User Management](#user-management)
-  - [Get User](#get-user)
-  - [Get User by ID](#get-user-by-id)
-  - [Update User Username](#update-user-username)
-  - [Update User Email](#update-user-email)
-    - [Request Email Change](#request-email-change)
-    - [Verify and Update Email](#verify-and-update-email)
-  - [Update User Password](#update-user-password)
-  - [Register Pod](#register-pod)
-  - [Update Pod](#update-pod)
-  - [Unregister Pod](#unregister-pod)
+  - [Get User: `/users/me`](#get-user)
+  - [Get User by ID: `/users/{id}`](#get-user-by-id)
+  - [Update User Username: `/users/me/username`](#update-user-username)
+  - [Update User Email: `/users/me/email/request-change` / `/users/me/email`](#update-user-email)
+    - [Request Email Change: `/users/me/email/request-change`](#request-email-change)
+    - [Verify and Update Email: `/users/me/email`](#verify-and-update-email)
+  - [Update User Phone Number: `/users/me/phone-number`](#update-user-phone-number)
+  - [Update User Password: `/users/me/password`](#update-user-password)
+  - [Register Pod: `/users/me/register-pod`](#register-pod)
+  - [Update Pod: `/users/me/update-pod`](#update-pod)
+  - [Unregister Pod: `/users/me/unregister-pod`](#unregister-pod)
 - [User Management (Admin)](#user-management-admin)
-  - [Get All Users](#get-all-users)
-  - [Generate Invitation Token](#generate-invitation-token)
-  - [Revoke Invitation Token](#revoke-invitation-token)
-  - [Deactivate User](#deactivate-user)
+  - [Get All Users: `/admin/users`](#get-all-users)
+  - [Generate Invitation Token: `/admin/users/invitation-token`](#generate-invitation-token)
+  - [Revoke Invitation Token: `/admin/users/invitation-token`](#revoke-invitation-token)
+  - [Deactivate User: `/admin/users/{id}/deactivate`](#deactivate-user)
 - [Pod Data](#pod-data)
-  - [Get Pod Locations](#get-pod-locations)
-  - [Get Pod Data](#get-pod-data)
-  - [Upload Pod Data](#upload-pod-data)
-  - [Delete Pod Data](#delete-pod-data)
-
-
+  - [Get Pod Locations: `/pods/locations`](#get-pod-locations)
+  - [Get Pod Data: `/pods/{id}/data`](#get-pod-data)
+  - [Upload Pod Data: `/pods/upload-pod-data`](#upload-pod-data)
+  - [Delete Pod Data: `/pods/delete-pod-data`](#delete-pod-data)
 ## Authentication
 
 All API routes should require authentication. Routes that do not require authentication are marked with `[public]`.
@@ -144,6 +143,7 @@ Request Parameters:
 | email | string | Yes | User email address |
 | password | string | Yes | User password |
 | username | string | Yes | Username |
+| phone_number | string | Yes | User phone number |
 | invitationToken | string | Yes | Invitation token for registration |
 
 Request Body:
@@ -152,6 +152,7 @@ Request Body:
   "email": "user@example.com", // Required
   "password": "password", // Required
   "username": "user", // Required
+  "phone_number": "1234567890", // Required
   "invitationToken": "ABCD-EFGH" // Required
 }
 ```
@@ -327,6 +328,7 @@ Response (200 OK):
   "user": {
     "id": "123",
     "email": "user@example.com",
+    "phone_number": "1234567890",
     "username": "user",
     "pods": ["pod_id_1", "pod_id_2"], // Array of pod IDs
     "podData": ["pod_data_id_1", "pod_data_id_2"] // Array of pod data IDs
@@ -347,11 +349,12 @@ Response (200 OK):
 {
   "user": {
     "id": "123",
-    "email": "user@example.com",
     "username": "user",
     "createdAt": "2021-01-01T00:00:00.000Z",
     "devices": ["device_id_1", "device_id_2"], // Optional: Array of device IDs (only if user is the owner or admin)
-    "posts": ["post_id_1", "post_id_2"] // Optional: Array of post IDs (only public posts if user is not the owner or admin)
+    "posts": ["post_id_1", "post_id_2"], // Optional: Array of post IDs (only public posts if user is not the owner or admin)
+    "email": "user@example.com", // Optional: User email address (only if user is the owner or admin)
+    "phone_number": "1234567890", // Optional: User phone number (only if user is the owner or admin)
   }
 }
 ```
@@ -499,6 +502,41 @@ Response (404 Not Found):
 ```
 
 This endpoint verifies the code sent to the new email address and updates the user's email if the code is valid.
+
+### Update user phone number
+
+```
+PUT /users/me/phone-number
+```
+
+Request Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| phone_number | string | Yes | New phone number |
+
+Request Body:
+```json
+{
+  "phone_number": "1234567890" // Required
+}
+```
+
+Response (200 OK):
+```json
+{
+  "message": "Phone number updated successfully"
+}
+```
+
+Response (400 Bad Request):
+```json
+{
+  "error": "Invalid phone number format"
+}
+```
+
+This endpoint updates the current user's phone number. Note: Currently, no verification is required for the updated number, but this may be added in the future (e.g., via SMS verification).
 
 ### Update user password
 
