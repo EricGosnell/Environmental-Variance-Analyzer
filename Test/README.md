@@ -1,1 +1,0 @@
-required dependencies: (Mocha + Chai)
