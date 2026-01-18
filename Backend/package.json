@@ -4,7 +4,8 @@
   "description": "EVA server",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "test": "mocha \"test/**/*.test.js\" --timeout 5000"
   },
   "dependencies": {
     "express": "^5.1.0",

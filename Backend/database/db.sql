@@ -14,6 +14,14 @@ CREATE TABLE IF NOT EXISTS user_contact (
     email TEXT UNIQUE
 );
 
+CREATE TABLE IF NOT EXISTS refresh_tokens (
+    token TEXT PRIMARY KEY,
+    user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    expires_at INTEGER NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+
 CREATE TABLE IF NOT EXISTS pod (
     pod_id INTEGER PRIMARY KEY AUTOINCREMENT,
     pod_name TEXT,
@@ -56,3 +64,5 @@ CREATE INDEX IF NOT EXISTS idx_pod_data_pod_id ON pod_data(pod_id);
 CREATE INDEX IF NOT EXISTS idx_pod_data_date ON pod_data(date_collected);
 CREATE INDEX IF NOT EXISTS idx_sensor_data_pod_data_id ON sensor_data(pod_data_id);
 CREATE INDEX IF NOT EXISTS idx_sensor_data_timestamp ON sensor_data(reading_timestamp);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);
+CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);
