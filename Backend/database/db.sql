@@ -18,7 +18,7 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     token TEXT PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     expires_at INTEGER NOT NULL,
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
 );
 
 

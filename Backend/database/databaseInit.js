@@ -1,7 +1,7 @@
-const path = require('path');
-const sqlite3 = require('sqlite3').verbose();
-const { promisify } = require('util');
-const fs = require('fs');
+const path = require("path");
+const sqlite3 = require("sqlite3").verbose();
+const { promisify } = require("util");
+const fs = require("fs");
 
 // Helper function to promisify db methods
 const promisifyDb = (database) => {
@@ -26,27 +26,33 @@ const initializeDatabase = async (db, dbFilePath, schemaFilePath) => {
       try {
         // Try to read the file header to verify it's a valid SQLite database
         const buffer = Buffer.alloc(16);
-        const fd = fs.openSync(dbFilePath, 'r');
+        const fd = fs.openSync(dbFilePath, "r");
         fs.readSync(fd, buffer, 0, 16, 0);
         fs.closeSync(fd);
 
         // SQLite database files start with "SQLite format 3\0"
-        const header = buffer.toString('utf8', 0, 13);
-        if (header !== 'SQLite format') {
-          console.log('Database file is corrupted (invalid header), will recreate it...');
+        const header = buffer.toString("utf8", 0, 13);
+        if (header !== "SQLite format") {
+          console.log(
+            "Database file is corrupted (invalid header), will recreate it..."
+          );
           needsInitialization = true;
         } else {
           // Try to query to make sure db is accessible
-          await db.get("SELECT name FROM sqlite_master WHERE type='table' AND name='users' LIMIT 1");
-          console.log('Database already initialized and valid');
+          await db.get(
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='users' LIMIT 1"
+          );
+          console.log("Database already initialized and valid");
           return db;
         }
       } catch (error) {
-        console.log('Database file is corrupted or inaccessible, will recreate it...');
+        console.log(
+          "Database file is corrupted or inaccessible, will recreate it..."
+        );
         needsInitialization = true;
       }
     } else {
-      console.log('Database file does not exist, will create it...');
+      console.log("Database file does not exist, will create it...");
       needsInitialization = true;
     }
 
@@ -59,7 +65,7 @@ const initializeDatabase = async (db, dbFilePath, schemaFilePath) => {
       // Delete corrupted file if it exists
       if (fs.existsSync(dbFilePath)) {
         fs.unlinkSync(dbFilePath);
-        console.log('Removed corrupted database file');
+        console.log("Removed corrupted database file");
       }
 
       // Create new database instance
@@ -67,21 +73,26 @@ const initializeDatabase = async (db, dbFilePath, schemaFilePath) => {
       newDb = promisifyDb(newDb);
 
       // Read and execute schema
-      console.log('Initializing database from schema...');
-      const schema = fs.readFileSync(schemaFilePath, 'utf-8');
-      const statements = schema.split(';').filter((stmt) => stmt.trim());
+      console.log("Initializing database from schema...");
+      const schema = fs.readFileSync(schemaFilePath, "utf-8");
+
+      // Split into statements & run them
+      const statements = schema
+        .split(";")
+        .map((stmt) => stmt.trim())
+        .filter((stmt) => stmt.length > 0);
 
       for (const statement of statements) {
         await newDb.run(statement);
       }
 
-      console.log('Database initialized successfully');
+      console.log("Database initialized successfully");
       return newDb;
     }
 
     return db;
   } catch (error) {
-    console.error('Error initializing database:', error);
+    console.error("Error initializing database:", error);
     throw error;
   }
 };
@@ -93,41 +104,21 @@ const verifyDatabase = async (db) => {
   );
 
   if (!usersTable) {
-    throw new Error('Users table not found in database');
+    throw new Error("Users table not found in database");
   }
 
-  console.log('Database schema verified successfully');
-};
-
-// Create refresh tokens table
-const createRefreshTokensTable = async (db) => {
-  await db.run(`
-    CREATE TABLE IF NOT EXISTS refresh_tokens (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      token TEXT UNIQUE NOT NULL,
-      user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      expires_at DATETIME NOT NULL
-    )
-  `);
-
-  await db.run('CREATE INDEX IF NOT EXISTS idx_refresh_tokens_token ON refresh_tokens(token)');
-  await db.run('CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id)');
-  await db.run('CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires_at ON refresh_tokens(expires_at)');
-
-  console.log('Refresh tokens table ready');
+  console.log("Database schema verified successfully");
 };
 
 const createDB = async () => {
-  const dbFilePath = path.join(__dirname, 'db.sqlite');
-  const schemaFilePath = path.join(__dirname, 'db.sql');
+  const dbFilePath = path.join(__dirname, "db.sqlite");
+  const schemaFilePath = path.join(__dirname, "db.sql");
 
   let db = new sqlite3.Database(dbFilePath);
   db = promisifyDb(db);
 
   db = await initializeDatabase(db, dbFilePath, schemaFilePath);
   await verifyDatabase(db);
-  await createRefreshTokensTable(db);
 
   return db;
 };
