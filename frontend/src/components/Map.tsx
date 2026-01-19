@@ -1,5 +1,7 @@
 import { useEffect, useRef, useState } from "react";
-import { Circle, LayersControl, MapContainer, TileLayer, ZoomControl, useMapEvents } from "react-leaflet";
+import {Circle, LayersControl, MapContainer, TileLayer, ZoomControl, useMapEvents, useMap, } from "react-leaflet";
+import L from "leaflet";
+import 'leaflet-control-geocoder';
 
 import { getPodLocations } from "../utils/api";
 import type { PodLocation } from "../utils/apiTypes";
@@ -85,6 +87,22 @@ function PodMarkers() {
   );
 }
 
+function Geocoder() {
+    const map = useMap();
+
+    useEffect(() => {
+        const geocoder = L.Control.geocoder({
+            defaultMarkGeocode: true,
+            position: 'topleft',
+            collapsed: false,
+        }).addTo(map);
+
+        return () => {map.removeControl(geocoder);};
+    }, [map]);
+
+    return null;
+}
+
 export default function MapView() {
     // Work around leafet/react-leaflet type resolution issues in this repo (missing Leaflet type declarations).
     const MapContainerAny = MapContainer as any;
@@ -115,6 +133,8 @@ export default function MapView() {
         </LayersControlAny>
 
         <PodMarkers />
+
+        <Geocoder />
 
         </MapContainerAny>
     );
