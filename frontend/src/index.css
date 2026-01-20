@@ -13,6 +13,7 @@
   --secondary-green: #204835;
   --disabled-button: #71ca9f88;
   --warning-red: #FF7665;
+  --tooltip-background: hsl(156, 5%, 20%, 0.8);
 }
 
 a {
@@ -25,35 +26,6 @@ body {
   min-height: 100vh;
   background-color: var(--dark-background);
   color: white;
-}
-
-/* Home (Map) Page */
-.homepage-container {
-  display: flex;
-  justify-content: center;
-  gap: 24px;
-  margin: 32px 40px;
-  min-height: 80vh;
-}
-
-.controls-container {
-  background-color: var(--secondary-green);
-  padding: 24px 32px;
-  border-radius: 16px;
-  width: 20%;
-  color: #ffffff;
-}
-
-.controls-container.controls-container--unauthenticated {
-  width: 47.5%;
-}
-
-.map-container {
-  background-color: #555;
-  border-radius: 16px;
-  overflow: hidden;
-  width: 75%;
-  color: #ffffff;
 }
 
 /* Buttons */

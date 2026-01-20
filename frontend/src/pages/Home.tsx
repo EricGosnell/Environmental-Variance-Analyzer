@@ -5,6 +5,8 @@ import { getMe } from "../utils/api.ts";
 import type { User } from "../utils/apiTypes.ts";
 import AuthPanel from "../components/AuthPanel.tsx";
 
+import "../styles/Home.css";
+
 export default function Home() {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
     const [user, setUser] = useState<User | null>(null);

@@ -41,7 +41,16 @@ export type PodLocationsResponse = { pods: PodLocation[] };
 export type PodDataEntry = {
   id: string;
   timestamp: string;
-  data: Record<string, unknown>;
+  data: {
+    sensor_data_id: string;
+    pod_data_id: string;
+    sensor_type: string;
+    reading_value: number;
+    reading_units: string;
+    reading_timestamp: string;
+    raw_data: Record<string, unknown>; // JSONB raw sensor payload
+    created_at: string;
+  };
   visibility: "public" | "private";
 };
 
@@ -120,7 +129,7 @@ export type GetPodLocationsRequest = {
   fromDate?: string;
   toDate?: string;
 };
-export type UploadPodDataRequest = { podId: string; data: Record<string, unknown> };
+export type UploadPodDataRequest = { podId: string; data: File; notes?: string };
 export type UploadPodDataResponse = MessageResponse & { podDataId: string };
 
 export type DeletePodDataRequest = { podDataId: string };

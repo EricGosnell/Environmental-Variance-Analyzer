@@ -464,10 +464,16 @@ export async function getPodData(podId: string, signal?: AbortSignal): Promise<P
   });
 }
 export async function uploadPodData(payload: UploadPodDataRequest, signal?: AbortSignal): Promise<UploadPodDataResponse> {
+  const formData = new FormData();
+  formData.append("podId", payload.podId);
+  formData.append("data", payload.data);
+  if (payload.notes !== undefined) {
+    formData.append("notes", payload.notes);
+  }
   return await request<UploadPodDataResponse>({
     method: "POST",
     path: "/pods/upload-pod-data",
-    body: payload,
+    body: formData,
     auth: true,
     signal,
   });

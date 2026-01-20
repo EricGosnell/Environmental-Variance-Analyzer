@@ -13,8 +13,8 @@ _DUMMY_USER = {
     "id": "123",
     "email": "user@example.com",
     "username": "user",
-    "pods": [],
-    "podData": []
+    "pods": ["pod-3"],
+    "podData": ["data-3-1"],
 }
 
 
@@ -140,6 +140,84 @@ def get_pod_locations():
         },
     ]
     return jsonify({"pods": pods}), 200
+
+
+@app.route("/pods/<pod_id>/data", methods=["GET"])
+def get_pod_data(pod_id: str):
+    """GET /pods/{id}/data -> returns dummy pod data"""
+    # Return different fake data based on pod ID
+    if pod_id == "pod-1":
+        data = [
+            {
+                "id": "data-1-1",
+                "timestamp": "2026-01-01T12:00:00.000Z",
+                "data": {
+                    "sensor_data_id": "sensor-1-1",
+                    "pod_data_id": "pod_data_1",
+                    "sensor_type": "temperature",
+                    "reading_value": 22.5,
+                    "reading_units": "C",
+                    "reading_timestamp": "2026-01-01T12:00:00.000Z",
+                    "raw_data": {"device_id": "temp-sensor-001", "calibration": 0.1},
+                    "created_at": "2026-01-01T12:00:00.000Z",
+                },
+                "visibility": "public",
+            },
+            {
+                "id": "data-1-2",
+                "timestamp": "2026-01-01T11:00:00.000Z",
+                "data": {
+                    "sensor_data_id": "sensor-1-2",
+                    "pod_data_id": "pod_data_1",
+                    "sensor_type": "humidity",
+                    "reading_value": 65.3,
+                    "reading_units": "%",
+                    "reading_timestamp": "2026-01-01T11:00:00.000Z",
+                    "raw_data": {"device_id": "humidity-sensor-001", "calibration": 0.0},
+                    "created_at": "2026-01-01T11:00:00.000Z",
+                },
+                "visibility": "public",
+            },
+            {
+                "id": "data-1-3",
+                "timestamp": "2026-01-01T10:00:00.000Z",
+                "data": {
+                    "sensor_data_id": "sensor-1-3",
+                    "pod_data_id": "pod_data_1",
+                    "sensor_type": "air_quality",
+                    "reading_value": 45.2,
+                    "reading_units": "AQI",
+                    "reading_timestamp": "2026-01-01T10:00:00.000Z",
+                    "raw_data": {"device_id": "aq-sensor-001", "pm2_5": 12.3, "pm10": 18.7},
+                    "created_at": "2026-01-01T10:00:00.000Z",
+                },
+                "visibility": "public",
+            },
+        ]
+    elif pod_id == "pod-2":
+        data = []
+    elif pod_id == "pod-3":
+        data = [
+            {
+                "id": "data-3-1",
+                "timestamp": "2026-01-03T16:00:00.000Z",
+                "data": {
+                    "sensor_data_id": "sensor-3-1",
+                    "pod_data_id": "pod_data_3",
+                    "sensor_type": "temperature",
+                    "reading_value": 21.2,
+                    "reading_units": "C",
+                    "reading_timestamp": "2026-01-03T16:00:00.000Z",
+                    "raw_data": {"device_id": "temp-sensor-003", "calibration": -0.1},
+                    "created_at": "2026-01-03T16:00:00.000Z",
+                },
+                "visibility": "private",
+            },
+        ]
+    else:
+        return jsonify({"error": "Pod not found"}), 404
+    
+    return jsonify({"data": data}), 200
 
 
 if __name__ == "__main__":
