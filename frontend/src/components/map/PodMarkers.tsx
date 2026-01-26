@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Circle, Tooltip, useMapEvents } from "react-leaflet";
+import { useNavigate } from "react-router-dom";
 
 import { getPodData, getPodLocations } from "../../utils/api";
 import type { PodLocation } from "../../utils/apiTypes";
@@ -57,6 +58,7 @@ function formatDate(dateString: string | undefined | null): string {
 }
 
 export default function PodMarkers() {
+  const navigate = useNavigate();
   const [pods, setPods] = useState<PodLocation[]>([]);
   const abortRef = useRef<AbortController | null>(null);
   const podDataAbortRef = useRef<AbortController | null>(null);
@@ -250,6 +252,16 @@ export default function PodMarkers() {
                       ? "Loading…"
                       : (selectedPodData?.length ?? "—")}
                 </div>
+                <button
+                  className="btn primary-btn"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    navigate(`/pod/${p.id}`);
+                  }}
+                  style={{ marginTop: "8px", marginBottom: "0", padding: "8px 16px", fontSize: "0.875rem", width: "100%" }}
+                >
+                  View Full Data
+                </button>
               </div>
             </Tooltip>
           ) : null}

@@ -147,6 +147,14 @@ def get_pod_data(pod_id: str):
     """GET /pods/{id}/data -> returns dummy pod data"""
     # Return different fake data based on pod ID
     if pod_id == "pod-1":
+        pod_info = {
+            "id": "pod-1",
+            "nickname": "Station Alpha",
+            "latitude": 40.005928,
+            "longitude": -105.267548,
+            "visibility": "public",
+            "lastUpdated": "2026-01-01T00:00:00.000Z",
+        }
         data = [
             {
                 "id": "data-1-1",
@@ -195,8 +203,24 @@ def get_pod_data(pod_id: str):
             },
         ]
     elif pod_id == "pod-2":
+        pod_info = {
+            "id": "pod-2",
+            "nickname": "Station Beta",
+            "latitude": 40.011139,
+            "longitude": -105.268776,
+            "visibility": "public",
+            "lastUpdated": "2026-01-02T00:00:00.000Z",
+        }
         data = []
     elif pod_id == "pod-3":
+        pod_info = {
+            "id": "pod-3",
+            "nickname": "Station Gamma",
+            "latitude": 39.993723,
+            "longitude": -105.285723,
+            "visibility": "private",
+            "lastUpdated": "2026-01-03T00:00:00.000Z",
+        }
         data = [
             {
                 "id": "data-3-1",
@@ -217,7 +241,9 @@ def get_pod_data(pod_id: str):
     else:
         return jsonify({"error": "Pod not found"}), 404
     
-    return jsonify({"data": data}), 200
+    response = dict(pod_info)
+    response["data"] = data
+    return jsonify(response), 200
 
 
 if __name__ == "__main__":

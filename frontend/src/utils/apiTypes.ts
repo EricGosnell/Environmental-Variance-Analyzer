@@ -54,7 +54,15 @@ export type PodDataEntry = {
   visibility: "public" | "private";
 };
 
-export type PodDataResponse = { data: PodDataEntry[] };
+export type PodDataResponse = {
+  id: string;
+  nickname: string;
+  latitude: number;
+  longitude: number;
+  visibility: "public" | "private";
+  lastUpdated: string;
+  data: PodDataEntry[];
+};
 
 // ----------------------------
 // Authentication

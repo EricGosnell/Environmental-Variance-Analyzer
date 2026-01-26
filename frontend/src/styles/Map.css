@@ -4,8 +4,8 @@
     overflow: hidden;
     width: 75%;
     color: #ffffff;
-  }
-  
+}
+
 
 .leaflet-tooltip {
     background-color: var(--tooltip-background);
@@ -20,6 +20,7 @@
 .leaflet-tooltip:before {
     display: none;
 }
+
 .leaflet-tooltip::before {
     display: none;
 }
@@ -48,7 +49,8 @@
     transition: all 0.1s ease;
 }
 
-.leaflet-touch .leaflet-control-layers, .leaflet-touch .leaflet-bar {
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
     border: 1px solid rgba(255, 255, 255, 0.2);
 }
 
@@ -86,19 +88,19 @@
 .leaflet-bar a:focus,
 .leaflet-bar a:active,
 .leaflet-bar a:focus-visible {
-  color: white;
-  background: var(--tooltip-background);
+    color: white;
+    background: var(--tooltip-background);
 }
 
 .leaflet-bar a:focus,
 .leaflet-bar a:focus-visible {
-  outline: none;
-  box-shadow: none;
+    outline: none;
+    box-shadow: none;
 }
 
 .leaflet-bar a:focus:hover,
 .leaflet-bar a:focus-visible:hover {
-  background: var(--secondary-green);
+    background: var(--secondary-green);
 }
 
 .leaflet-bar a.leaflet-disabled {
@@ -218,6 +220,7 @@
 .leaflet-control-geocoder-alternatives li {
     border-bottom: 1px solid rgba(255, 255, 255, 0.2);
     font-size: 0.85rem;
+    transition: all 0.1s ease;
 }
 
 .leaflet-control-geocoder-alternatives li:hover {
@@ -238,4 +241,21 @@
     background-size: contain;
     background-repeat: no-repeat;
     background-position: center;
+}
+
+.leaflet-control-geocoder .leaflet-control-geocoder-alternatives {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: max-height 180ms ease, opacity 180ms ease, transform 180ms ease;
+    /* If the plugin sets display:none, you may need this override: */
+    display: block;
+}
+
+.leaflet-control-geocoder.leaflet-control-geocoder-options-open .leaflet-control-geocoder-alternatives {
+    max-height: 320px;
+    /* set to something >= your typical expanded height */
+    opacity: 1;
+    transform: translateY(0);
 }

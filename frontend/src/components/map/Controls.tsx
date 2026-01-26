@@ -16,7 +16,35 @@ function Geocoder() {
       collapsed: false,
     }).addTo(map);
 
+    let container: HTMLElement | undefined;
+    let input: HTMLInputElement | null = null;
+    const clearResultsIfEmpty = () => {
+      if (!container || !input) return;
+      if (input.value.trim() !== "") return;
+
+      const alts = container.querySelector(".leaflet-control-geocoder-alternatives") as HTMLElement | null;
+      if (alts) alts.innerHTML = "";
+    };
+
+    try {
+      container = (geocoder as any)?.getContainer?.() as HTMLElement | undefined;
+      input = container?.querySelector('input[type="search"], input') as HTMLInputElement | null;
+
+      // Clear stale results when the input is cleared (backspace or the native "x" clear button).
+      input?.addEventListener("input", clearResultsIfEmpty);
+      input?.addEventListener("search", clearResultsIfEmpty);
+    } catch {
+      // no-op
+    }
+
     return () => {
+      try {
+        // Ensure we don't leave listeners behind.
+        input?.removeEventListener("input", clearResultsIfEmpty);
+        input?.removeEventListener("search", clearResultsIfEmpty);
+      } catch {
+        // no-op
+      }
       map.removeControl(geocoder);
     };
   }, [map]);

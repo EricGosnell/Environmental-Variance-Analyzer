@@ -872,6 +872,12 @@ GET /pods/{id}/data
 Response (200 OK):
 ```json
 {
+  "id": "123",
+  "nickname": "nickname",
+  "latitude": 123.456,
+  "longitude": 123.456,
+  "visibility": "public", // "public" or "private"
+  "lastUpdated": "2021-01-01T00:00:00.000Z",
   "data": [
     {
       "id": "123",
