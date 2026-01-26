@@ -1,36 +1,360 @@
-// API/data.js
+// API/user.js
 const express = require("express");
+const bcrypt = require("bcryptjs");
+const { body, validationResult } = require("express-validator");
 const { sanitizeRequestBody } = require("./middleware/sanitize");
+const { authenticateToken } = require("../Util/Tokens");
+
+//USING THESE FOR VALIDATION RESTRICTIONS FOR NOW, 
+//CAN BE CHANGED LATER IF WE DECIDE TO - Ryan
+const MIN_USERNAME_LENGTH = 4;
+const MAX_USERNAME_LENGTH = 16;
+const MIN_PASSWORD_LENGTH = 8;
+const MAX_PASSWORD_LENGTH = 128;
+const MAX_EMAIL_LENGTH = 255;
 
 module.exports = (db) => {
     const router = express.Router();
 
-    router.get("/me", sanitizeRequestBody, async (req, res) => {
-        // TODO
+    // -------------------------
+    // GET /me - Get current user's full information
+    // -------------------------
+    router.get("/me", authenticateToken, async (req, res) => {
+        try {
+            const userId = req.user.id;
+
+            const user = await db.get(
+                `
+                SELECT u.user_id, u.username, uc.email, uc.phone_number
+                FROM users u
+                LEFT JOIN user_contact uc ON u.user_id = uc.user_id
+                WHERE u.user_id = ?
+                `,
+                [userId]
+            );
+
+            if (!user) {
+                return res.status(404).json({ error: "User not found" });
+            }
+
+            // Get pod IDs
+            const pods = await db.all(
+                `SELECT pod_id FROM user_pod WHERE user_id = ?`,
+                [userId]
+            );
+
+            // Get pod data IDs
+            const podData = await db.all(
+                `
+                SELECT DISTINCT pd.pod_data_id
+                FROM pod_data pd
+                JOIN user_pod up ON pd.pod_id = up.pod_id
+                WHERE up.user_id = ?
+                `,
+                [userId]
+            );
+
+            return res.status(200).json({
+                user: {
+                    id: user.user_id,
+                    email: user.email,
+                    phone_number: user.phone_number,
+                    username: user.username,
+                    pods: pods.map(p => p.pod_id),
+                    podData: podData.map(pd => pd.pod_data_id),
+                }
+            });
+        } catch (error) {
+            return res.status(500).json({
+                error: "Internal server error",
+                message: error?.message,
+            });
+        }
     });
 
-    router.get("/:id", sanitizeRequestBody, async (req, res) => {
-        // TODO
+    // -------------------------
+    // GET /:id - Get user info by ID
+    // -------------------------
+    router.get("/:id", authenticateToken, async (req, res) => {
+        try {
+            const id = parseInt(req.params.id);
+            if (isNaN(id) || id <= 0) {
+                return res.status(400).json({ error: "Invalid user ID" });
+            }
+            const requestingUserId = req.user.id;
+
+            const user = await db.get(
+                `
+                SELECT u.user_id, u.username, u.created_at, uc.email, uc.phone_number
+                FROM users u
+                LEFT JOIN user_contact uc ON u.user_id = uc.user_id
+                WHERE u.user_id = ?
+                `,
+                [id]
+            );
+
+            if (!user) {
+                return res.status(404).json({ error: "User not found" });
+            }
+
+            const isOwner = parseInt(id) === requestingUserId;
+            const isAdmin = false; // TODO: Implement admin role check when admin system is added
+
+            const responseUser = {
+                id: user.user_id,
+                username: user.username,
+                createdAt: user.created_at,
+            };
+
+            // Only owner or admin can see email and phone_number
+            if (isOwner || isAdmin) {
+                responseUser.email = user.email;
+                responseUser.phone_number = user.phone_number;
+            }
+
+            // TODO: Add devices and posts when those features are implemented
+
+            return res.status(200).json({ user: responseUser });
+        } catch (error) {
+            return res.status(500).json({
+                error: "Internal server error",
+                message: error?.message,
+            });
+        }
     });
 
-    router.put("/me/username", sanitizeRequestBody, async (req, res) => {
-        const { username } = req.body
-        // TODO
+    // -------------------------
+    // PUT /me/username - Update current user's username
+    // -------------------------
+    router.put("/me/username", authenticateToken, sanitizeRequestBody, [
+        body("username")
+            .isLength({ min: MIN_USERNAME_LENGTH, max: MAX_USERNAME_LENGTH })
+            .withMessage(`Username must be between ${MIN_USERNAME_LENGTH} and ${MAX_USERNAME_LENGTH} characters`)
+            .matches(/^[a-zA-Z0-9_-]+$/)
+            .withMessage("Username can only contain letters, numbers, underscores, and hyphens")
+            .trim()
+            .escape(),
+    ], async (req, res) => {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({ error: "Invalid username format" });
+            }
+
+            const { username } = req.body;
+            const userId = req.user.id;
+
+            // Check if username already exists
+            const existingUser = await db.get(
+                "SELECT user_id FROM users WHERE username = ?",
+                [username]
+            );
+
+            if (existingUser) {
+                return res.status(409).json({ error: "Username already taken" });
+            }
+
+            await db.run(
+                "UPDATE users SET username = ? WHERE user_id = ?",
+                [username, userId]
+            );
+
+            return res.status(200).json({ message: "Username updated successfully" });
+        } catch (error) {
+            return res.status(500).json({
+                error: "Internal server error",
+                message: error?.message,
+            });
+        }
     });
 
-    router.post("/me/email/request-change", sanitizeRequestBody, async (req, res) => {
-        const { newEmail } = req.body
-        // TODO
+    // -------------------------
+    // POST /me/email/request-change - Request email change
+    // -------------------------
+    router.post("/me/email/request-change", authenticateToken, sanitizeRequestBody, [
+        body("newEmail")
+            .isEmail()
+            .withMessage("Invalid email format")
+            .normalizeEmail()
+            .isLength({ max: MAX_EMAIL_LENGTH })
+            .withMessage(`Email must be less than ${MAX_EMAIL_LENGTH} characters`),
+    ], async (req, res) => {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({ error: "Invalid email format" });
+            }
+
+            const { newEmail } = req.body;
+            const userId = req.user.id;
+
+            // Check if email already in use
+            const existingEmail = await db.get(
+                "SELECT user_id FROM user_contact WHERE email = ?",
+                [newEmail]
+            );
+
+            if (existingEmail) {
+                return res.status(409).json({ error: "Email already in use" });
+            }
+
+            // Generate verification code (6-digit)
+            const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+            // Store pending email change with verification code
+            // TODO: Create table for pending_email_changes or use an existing one
+            // For now, storing verification code with 15 minute expiry
+            const expiresAt = Math.floor(Date.now() / 1000) + (15 * 60);
+
+            await db.run(
+                `
+                INSERT INTO pending_email_changes (user_id, new_email, verification_code, expires_at)
+                VALUES (?, ?, ?, ?)
+                ON CONFLICT(user_id) DO UPDATE SET new_email = ?, verification_code = ?, expires_at = ?
+                `,
+                [userId, newEmail, verificationCode, expiresAt, newEmail, verificationCode, expiresAt]
+            );
+
+            // TODO: Send verification code to newEmail via email service
+            console.log(`[DEV] Verification code for ${newEmail}: ${verificationCode}`);
+
+            return res.status(200).json({ message: "Verification code sent to new email" });
+        } catch (error) {
+            return res.status(500).json({
+                error: "Internal server error",
+                message: error?.message,
+            });
+        }
     });
 
-    router.put("/me/email", sanitizeRequestBody, async (req, res) => {
-        const { newEmail, verificationCode } = req.body
-        // TODO
+    // -------------------------
+    // PUT /me/email - Verify and update email
+    // -------------------------
+    router.put("/me/email", authenticateToken, sanitizeRequestBody, [
+        body("newEmail")
+            .isEmail()
+            .withMessage("Invalid email format")
+            .normalizeEmail(),
+        body("verificationCode")
+            .trim()
+            .notEmpty()
+            .withMessage("Verification code is required"),
+    ], async (req, res) => {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({ error: "Invalid or expired verification code" });
+            }
+
+            const { newEmail, verificationCode } = req.body;
+            const userId = req.user.id;
+
+            // Get pending email change
+            const pendingChange = await db.get(
+                `
+                SELECT * FROM pending_email_changes 
+                WHERE user_id = ? AND expires_at > strftime('%s','now')
+                `,
+                [userId]
+            );
+
+            if (!pendingChange) {
+                return res.status(404).json({ error: "No pending email change request found" });
+            }
+
+            // Verify code matches
+            if (pendingChange.verification_code !== verificationCode) {
+                return res.status(400).json({ error: "Invalid or expired verification code" });
+            }
+
+            // Verify newEmail matches the pending change email
+            if (pendingChange.new_email !== newEmail) {
+                return res.status(400).json({ error: "Email does not match pending change request" });
+            }
+
+            // Update email in user_contact
+            const updateResult = await db.run(
+                "UPDATE user_contact SET email = ? WHERE user_id = ?",
+                [newEmail, userId]
+            );
+
+            if (!updateResult || updateResult.changes === 0) {
+                return res.status(500).json({ error: "Failed to update email" });
+            }
+
+            // Delete pending email change
+            await db.run(
+                "DELETE FROM pending_email_changes WHERE user_id = ?",
+                [userId]
+            );
+
+            return res.status(200).json({
+                message: "Email updated successfully",
+                user: { email: newEmail }
+            });
+        } catch (error) {
+            return res.status(500).json({
+                error: "Internal server error",
+                message: error?.message,
+            });
+        }
     });
 
-    router.put("/me/password", sanitizeRequestBody, async (req, res) => {
-        const { oldPassword, newPassword } = req.body
-        // TODO
+    // -------------------------
+    // PUT /me/password - Update password
+    // -------------------------
+    router.put("/me/password", authenticateToken, sanitizeRequestBody, [
+        body("oldPassword")
+            .trim()
+            .notEmpty()
+            .withMessage("Old password is required"),
+        body("newPassword")
+            .isLength({ min: MIN_PASSWORD_LENGTH, max: MAX_PASSWORD_LENGTH })
+            .withMessage(`Password must be between ${MIN_PASSWORD_LENGTH} and ${MAX_PASSWORD_LENGTH} characters`)
+            .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
+            .withMessage("Password must contain at least one lowercase letter, one uppercase letter, and one number"),
+    ], async (req, res) => {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({ error: "Invalid old password" });
+            }
+
+            const { oldPassword, newPassword } = req.body;
+            const userId = req.user.id;
+
+            // Get user's current password hash
+            const user = await db.get(
+                "SELECT password_hash FROM users WHERE user_id = ?",
+                [userId]
+            );
+
+            if (!user) {
+                return res.status(404).json({ error: "User not found" });
+            }
+
+            // Verify old password
+            const validPassword = await bcrypt.compare(oldPassword, user.password_hash);
+            if (!validPassword) {
+                return res.status(400).json({ error: "Issue verifying password" });
+            }
+
+            // Hash new password
+            const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+            // Update password
+            await db.run(
+                "UPDATE users SET password_hash = ? WHERE user_id = ?",
+                [hashedPassword, userId]
+            );
+
+            return res.status(200).json({ message: "Password updated successfully" });
+        } catch (error) {
+            return res.status(500).json({
+                error: "Internal server error",
+                message: error?.message,
+            });
+        }
     });
 
     return router;
