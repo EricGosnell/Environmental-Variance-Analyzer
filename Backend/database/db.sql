@@ -21,6 +21,14 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
 );
 
+CREATE TABLE IF NOT EXISTS pending_email_changes (
+    user_id INTEGER PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
+    new_email TEXT NOT NULL,
+    verification_code TEXT NOT NULL,
+    expires_at INTEGER NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+);
+
 
 CREATE TABLE IF NOT EXISTS pod (
     pod_id INTEGER PRIMARY KEY AUTOINCREMENT,
