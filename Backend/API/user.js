@@ -442,7 +442,7 @@ module.exports = (db) => {
             // Insert pod location data if provided
             if (latitude !== undefined && longitude !== undefined) {
                 const today = new Date().toISOString().split('T')[0];
-                
+
                 await db.run(
                     "INSERT INTO pod_data (pod_id, date_collected, latitude, longitude) VALUES (?, ?, ?, ?)",
                     [podId, today, latitude, longitude]
@@ -540,10 +540,10 @@ module.exports = (db) => {
                 if (lonDecimals.length < 3) {
                     return res.status(400).json({ error: "Longitude must have at least three decimal places" });
                 }
-                
+
                 // Insert or update pod location data in pod_data table for today
                 const today = new Date().toISOString().split('T')[0];
-                
+
                 // Check if pod_data exists for today
                 const existingPodData = await db.get(
                     "SELECT pod_data_id FROM pod_data WHERE pod_id = ? AND date_collected = ?",

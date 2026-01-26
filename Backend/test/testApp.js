@@ -1,7 +1,10 @@
+// test/testApp.js
 const express = require("express");
 const sqlite3 = require("sqlite3").verbose();
 const { promisify } = require("util");
+
 const authRoutes = require("../API/auth");
+const podRoutes = require("../API/pod");
 
 function promisifyDb(database) {
   const runOriginal = database.run.bind(database);
@@ -26,15 +29,18 @@ async function createTestDb() {
   let db = new sqlite3.Database(":memory:");
   db = promisifyDb(db);
 
+  // ----- USERS (with admin BOOL) -----
   await db.run(`
     CREATE TABLE users (
       user_id INTEGER PRIMARY KEY AUTOINCREMENT,
       username TEXT UNIQUE NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-      password_hash TEXT NOT NULL
+      password_hash TEXT NOT NULL,
+      admin BOOLEAN DEFAULT FALSE
     );
   `);
 
+  // ----- USER CONTACT -----
   await db.run(`
     CREATE TABLE user_contact (
       contact_id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -45,13 +51,59 @@ async function createTestDb() {
     );
   `);
 
+  // ----- REFRESH TOKENS (match your real db.sql) -----
   await db.run(`
     CREATE TABLE refresh_tokens (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      token TEXT UNIQUE NOT NULL,
+      token TEXT PRIMARY KEY,
       user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-      expires_at DATETIME NOT NULL
+      expires_at INTEGER NOT NULL,
+      created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+    );
+  `);
+
+  // ----- POD -----
+  await db.run(`
+    CREATE TABLE pod (
+      pod_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      pod_name TEXT,
+      description TEXT,
+      pod_data_public BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  // ----- USER_POD -----
+  await db.run(`
+    CREATE TABLE user_pod (
+      user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+      pod_id INTEGER NOT NULL REFERENCES pod(pod_id) ON DELETE CASCADE,
+      PRIMARY KEY (user_id, pod_id)
+    );
+  `);
+
+  // ----- POD_DATA -----
+  await db.run(`
+    CREATE TABLE pod_data (
+      pod_data_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      pod_id INTEGER NOT NULL REFERENCES pod(pod_id) ON DELETE CASCADE,
+      date_collected DATE NOT NULL DEFAULT CURRENT_DATE,
+      longitude REAL NOT NULL,
+      latitude REAL NOT NULL,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    );
+  `);
+
+  // ----- SENSOR_DATA -----
+  await db.run(`
+    CREATE TABLE sensor_data (
+      sensor_data_id INTEGER PRIMARY KEY AUTOINCREMENT,
+      pod_data_id INTEGER NOT NULL REFERENCES pod_data(pod_data_id) ON DELETE CASCADE,
+      sensor_type TEXT NOT NULL,
+      reading_value REAL,
+      reading_units TEXT,
+      reading_timestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+      raw_data TEXT,
+      created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
   `);
 
@@ -61,7 +113,11 @@ async function createTestDb() {
 function makeTestApp(db) {
   const app = express();
   app.use(express.json());
+
+  // mount what you're testing
   app.use("/api/auth", authRoutes(db));
+  app.use("/api/pods", podRoutes(db));
+
   return app;
 }
 

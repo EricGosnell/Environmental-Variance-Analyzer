@@ -4,6 +4,7 @@ const path = require("path");
 const { createDB } = require("./database/databaseInit");
 const authRoutes = require("./API/auth");
 const userRoutes = require("./API/user");
+const podRoutes = require("./API/pod")
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -31,9 +32,9 @@ createDB()
   .then((database) => {
     db = database;
 
-    // mount route files directly
     app.use("/api/auth", authRoutes(db));
     app.use("/api/users", userRoutes(db));
+    app.use("/api/pods", podRoutes(db));
 
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);

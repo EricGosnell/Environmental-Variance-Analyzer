@@ -39,9 +39,26 @@ const authenticateToken = (req, res, next) => {
     });
 };
 
+// Allows anonymous access (req.user undefined) 
+// // If a valid Bearer token is provided, sets req.user
+const optionalAuth = (req, res, next) => {
+    const authHeader = req.headers["authorization"];
+    const token = authHeader && authHeader.split(" ")[1];
+
+    if (!token) return next();
+
+    jwt.verify(token, JWT_CONFIG.accessTokenSecret, (err, user) => {
+        if (!err) req.user = user;
+        return next();
+    });
+};
+
+
+
 module.exports = {
     generateAccessToken,
     generateRefreshToken,
     getRefreshTokenExpiry,
     authenticateToken,
+    optionalAuth,
 };

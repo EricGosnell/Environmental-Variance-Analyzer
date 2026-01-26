@@ -2,7 +2,8 @@ CREATE TABLE IF NOT EXISTS users (
     user_id INTEGER PRIMARY KEY AUTOINCREMENT,
     username TEXT UNIQUE NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    password_hash TEXT NOT NULL
+    password_hash TEXT NOT NULL,
+    admin BOOLEAN DEFAULT FALSE
 );
 
 -- 1 to 1 with users
@@ -17,14 +18,6 @@ CREATE TABLE IF NOT EXISTS user_contact (
 CREATE TABLE IF NOT EXISTS refresh_tokens (
     token TEXT PRIMARY KEY,
     user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
-    expires_at INTEGER NOT NULL,
-    created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
-);
-
-CREATE TABLE IF NOT EXISTS pending_email_changes (
-    user_id INTEGER PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
-    new_email TEXT NOT NULL,
-    verification_code TEXT NOT NULL,
     expires_at INTEGER NOT NULL,
     created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
 );
