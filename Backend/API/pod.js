@@ -310,10 +310,7 @@ module.exports = (db) => {
     // -------------------------
     // POST /pods/upload-pod-data
     // -------------------------
-    router.post(
-        "/upload-pod-data",
-        authenticateToken,
-        sanitizeRequestBody,
+    router.post("/upload-pod-data", authenticateToken, sanitizeRequestBody,
         [
             body("podId").isInt({ gt: 0 }).withMessage("podId must be a positive integer"),
             body("data").isObject().withMessage("data must be an object"),
