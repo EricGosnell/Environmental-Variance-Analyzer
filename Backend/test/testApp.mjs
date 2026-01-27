@@ -1,10 +1,10 @@
-// test/testApp.js
-const express = require("express");
-const sqlite3 = require("sqlite3").verbose();
-const { promisify } = require("util");
+// test/testApp.mjs
+import express from "express";
+import sqlite3 from "sqlite3";
+import { promisify } from "util";
 
-const authRoutes = require("../API/auth");
-const podRoutes = require("../API/pod");
+import authRoutes from "../API/auth.js";
+import podRoutes from "../API/pod.js";
 
 function promisifyDb(database) {
   const runOriginal = database.run.bind(database);
@@ -25,8 +25,8 @@ function promisifyDb(database) {
   return database;
 }
 
-async function createTestDb() {
-  let db = new sqlite3.Database(":memory:");
+export async function createTestDb() {
+  let db = new (sqlite3.verbose()).Database(":memory:");
   db = promisifyDb(db);
 
   // ----- USERS (with admin BOOL) -----
@@ -110,7 +110,7 @@ async function createTestDb() {
   return db;
 }
 
-function makeTestApp(db) {
+export function makeTestApp(db) {
   const app = express();
   app.use(express.json());
 
@@ -121,4 +121,3 @@ function makeTestApp(db) {
   return app;
 }
 
-module.exports = { createTestDb, makeTestApp };
