@@ -43,7 +43,7 @@ import type {
 // Config + token storage
 // ----------------------------
 
-const DEFAULT_API_BASE_URL = "http://localhost:5050";
+const DEFAULT_API_BASE_URL = "http://localhost:3000";
 export const API_BASE_URL: string =
   (import.meta as any)?.env?.VITE_API_BASE_URL?.toString?.() || DEFAULT_API_BASE_URL;
 
