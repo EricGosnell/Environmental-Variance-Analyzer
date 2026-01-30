@@ -1,0 +1,66 @@
+.navbar {
+    padding: 16px 0;
+    width: 100%;
+    /*background-color: #444;*/
+    }
+
+.nav-container {
+    padding: 0 40px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.navbar-home a {
+    font-size: 1.5rem;
+    font-weight: bold;
+    color: #ffffff;
+}
+
+
+.navbar-links {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    color: #ffffff;
+}
+
+.navbar-links .active {
+    border: 1px solid #ffffff;
+    border-radius: 6px;
+    padding: 6px 12px;
+    box-sizing: border-box;
+}
+
+.navbar-links a {
+    text-decoration: none;
+    border: 1px solid transparent;
+    border-radius: 6px;
+    padding: 6px 12px;
+    color: #ffffff;
+    font-weight: 500;
+    box-sizing: border-box;
+}
+
+.navbar-links a:hover {
+    opacity: 0.8;
+}
+
+.nav-separator {
+    width: 1px;
+    height: 40px;
+    background-color: #ffffff;
+}
+
+
+.nasa-logo {
+    height: 50px;
+    width: auto;
+    padding: 0px 0px;
+}
+
+.cosgc-logo {
+     height: 50px;
+     width: auto;
+    padding: 0px 0px;
+ }

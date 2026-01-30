@@ -1,0 +1,156 @@
+.auth-panel {
+  width: 100%;
+}
+
+.auth-header {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.auth-title {
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.auth-link {
+  display: inline-flex;
+  align-self: flex-start;
+  gap: 8px;
+  align-items: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  opacity: 0.9;
+}
+
+.auth-link:hover {
+  opacity: 0.75;
+}
+
+.auth-link:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.auth-form {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.auth-label {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-weight: 600;
+}
+
+.auth-input {
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  padding: 10px 12px;
+  background: rgba(0, 0, 0, 0.15);
+  color: white;
+  outline: none;
+}
+
+.auth-input:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.auth-error {
+  color: var(--warning-red);
+  font-weight: 600;
+  font-size: 0.95rem;
+}
+
+.auth-submit {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.auth-secondary {
+  width: 100%;
+  margin-bottom: 0;
+}
+
+.auth-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.auth-back {
+  flex: 1;
+  margin-bottom: 0;
+}
+
+/* Signup stepper */
+.auth-stepper {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+.auth-stepper-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.auth-step {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-weight: 700;
+  opacity: 0.8;
+}
+
+.auth-step.active {
+  opacity: 1;
+}
+
+.auth-step.done {
+  opacity: 1;
+}
+
+.auth-step-circle {
+  width: 22px;
+  height: 22px;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid var(--primary-green);
+  color: white;
+  font-size: 0.85rem;
+  line-height: 1;
+}
+
+.auth-step.active .auth-step-circle,
+.auth-step.done .auth-step-circle {
+  background-color: var(--primary-green);
+}
+
+.auth-progress {
+  height: 8px;
+  border-radius: 999px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.15);
+}
+
+.auth-progress-fill {
+  height: 100%;
+  background-color: var(--primary-green);
+  transition: width 0.2s ease;
+}
+
+

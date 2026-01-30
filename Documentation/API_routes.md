@@ -872,11 +872,26 @@ GET /pods/{id}/data
 Response (200 OK):
 ```json
 {
+  "id": "123",
+  "nickname": "nickname",
+  "latitude": 123.456,
+  "longitude": 123.456,
+  "visibility": "public", // "public" or "private"
+  "lastUpdated": "2021-01-01T00:00:00.000Z",
   "data": [
     {
       "id": "123",
       "timestamp": "2021-01-01T00:00:00.000Z",
-      "data": {}, // TBD: will be a JSON object with the sensor data
+      "data": {
+        "sensor_data_id": "123",
+        "pod_data_id": "pod_data_id_1",
+        "sensor_type": "temperature",
+        "reading_value": 23.5,
+        "reading_units": "C",
+        "reading_timestamp": "2021-01-01T00:00:00.000Z",
+        "raw_data": {}, // JSONB raw sensor payload
+        "created_at": "2021-01-01T00:00:00.000Z"
+      },
       "visibility": "public" // "public" or "private"
     }
   ]
@@ -892,6 +907,8 @@ Response (404 Not Found):
 
 This endpoint returns all recorded data for a specific pod sorted by timestamp in descending order. Only accessible if pod is public or the user is the owner of the pod.
 
+TODO: Location history of pod.
+
 ### Upload Pod Data
 
 ```
@@ -903,13 +920,15 @@ Request Parameters:
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | podId | string | Yes | The pod ID |
-| data | object | Yes | JSON object containing the pod data (structure TBD) |
+| data | file | Yes | CSV file containing the pod data |
+| notes | string | No | Optional notes for the pod data upload |
 
 Request Body:
 ```json
 {
   "podId": "123", // Required: The pod ID
-  "data": {} // Required: JSON object with the pod data (structure TBD)
+  "data": "<csv_file>", // Required: CSV file with the pod data
+  "notes": "Optional notes" // Optional: Notes for the pod data upload
 }
 ```
 
