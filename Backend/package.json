@@ -1,0 +1,23 @@
+{
+  "name": "hello-docker-node",
+  "version": "1.0.0",
+  "description": "EVA server",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "test": "mocha \"test/**/*.test.mjs\" --timeout 5000"
+  },
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "express": "^5.1.0",
+    "express-validator": "^7.0.0",
+    "jsonwebtoken": "^9.0.0",
+    "sqlite3": "^5.1.7",
+    "xss": "^1.0.14"
+  },
+  "devDependencies": {
+    "chai": "^6.2.2",
+    "mocha": "^11.7.5",
+    "supertest": "^7.2.2"
+  }
+}
