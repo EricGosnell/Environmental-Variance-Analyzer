@@ -1,0 +1,261 @@
+.map-container {
+    background-color: #555;
+    border-radius: 16px;
+    overflow: hidden;
+    width: 75%;
+    color: #ffffff;
+}
+
+
+.leaflet-tooltip {
+    background-color: var(--tooltip-background);
+    color: white;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 12px;
+    backdrop-filter: blur(20px);
+}
+
+/* Hide the tooltip tip/arrow to match the popup styling. */
+.leaflet-tooltip:before {
+    display: none;
+}
+
+.leaflet-tooltip::before {
+    display: none;
+}
+
+/* Fade in/out (0.15s) for the pod tooltip */
+.leaflet-tooltip {
+    transition: opacity 0.15s ease !important;
+}
+
+/* Leaflet can apply transform transitions via .leaflet-zoom-animated; force opacity-only transitions. */
+.leaflet-tooltip.leaflet-zoom-animated {
+    transition: opacity 0.15s ease !important;
+}
+
+.pod-tooltip--closing {
+    pointer-events: none;
+    /* Avoid the "shrinking bubble/circle" artifact some browsers show with backdrop-filter while fading */
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+}
+
+.leaflet-control-layers {
+    background: var(--tooltip-background);
+    backdrop-filter: blur(20px);
+    border-radius: 12px;
+    transition: all 0.1s ease;
+}
+
+.leaflet-touch .leaflet-control-layers,
+.leaflet-touch .leaflet-bar {
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.leaflet-bar {
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.leaflet-bar a {
+    color: white;
+    background: var(--tooltip-background);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(20px);
+}
+
+.leaflet-container a {
+    -webkit-tap-highlight-color: var(--secondary-green);
+    transition: all 0.1s ease;
+}
+
+.leaflet-bar a:hover {
+    background: var(--secondary-green);
+}
+
+.leaflet-touch .leaflet-bar a:first-child {
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+}
+
+.leaflet-touch .leaflet-bar a:last-child {
+    border-bottom-left-radius: 12px;
+    border-bottom-right-radius: 12px;
+}
+
+.leaflet-bar a:focus,
+.leaflet-bar a:active,
+.leaflet-bar a:focus-visible {
+    color: white;
+    background: var(--tooltip-background);
+}
+
+.leaflet-bar a:focus,
+.leaflet-bar a:focus-visible {
+    outline: none;
+    box-shadow: none;
+}
+
+.leaflet-bar a:focus:hover,
+.leaflet-bar a:focus-visible:hover {
+    background: var(--secondary-green);
+}
+
+.leaflet-bar a.leaflet-disabled {
+    color: rgba(255, 255, 255, 0.5);
+    background: var(--tooltip-background);
+    cursor: not-allowed;
+}
+
+.leaflet-control-layers-expanded {
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    color: white;
+    background: var(--tooltip-background);
+    backdrop-filter: blur(20px);
+}
+
+/* Legend (top-right) */
+.eva-legend {
+    padding: 10px 12px;
+}
+
+.eva-legend-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 1rem;
+}
+
+.eva-legend-row span {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.eva-legend-swatch {
+    width: 12px;
+    height: 12px;
+    border-radius: 999px;
+    background: rgba(255, 0, 0, 0.5);
+    border: 2px solid red;
+    display: inline-block;
+    box-sizing: border-box;
+    opacity: 0.9;
+}
+
+/* Search Area Button (top-left) */
+.eva-search-area {
+    padding: 0;
+}
+
+.eva-search-area-button {
+    padding: 10px 12px;
+    background: none;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.1s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.eva-search-area-button:hover {
+    background: var(--secondary-green);
+}
+
+/* .eva-search-area-button:focus,
+.eva-search-area-button:active,
+.eva-search-area-button:focus-visible {
+    outline: none;
+    box-shadow: none;
+    background: var(--tooltip-background);
+} */
+
+/* .eva-search-area-button:focus:hover,
+.eva-search-area-button:focus-visible:hover {
+    background: var(--secondary-green);
+} */
+
+.leaflet-control-geocoder-icon {
+    border-radius: 12px;
+    background-color: transparent;
+    filter: invert(1) !important;
+    -webkit-filter: invert(1) !important;
+}
+
+.leaflet-control-geocoder {
+    background: var(--tooltip-background);
+    backdrop-filter: blur(20px);
+    padding: 4px 6px;
+}
+
+.leaflet-control-geocoder input {
+    background: none;
+    border: none;
+    color: white;
+    font-size: 1rem;
+}
+
+.leaflet-control-geocoder input::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+}
+
+.leaflet-control-geocoder .leaflet-control-geocoder-alternatives li a {
+    background: none;
+    backdrop-filter: none;
+}
+
+.leaflet-control-geocoder-address-context {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.leaflet-control-geocoder-alternatives li {
+    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    font-size: 0.85rem;
+    transition: all 0.1s ease;
+}
+
+.leaflet-control-geocoder-alternatives li:hover {
+    background: var(--secondary-green);
+}
+
+.leaflet-control-geocoder-alternatives li:last-child {
+    margin-bottom: 0.2rem;
+}
+
+.leaflet-control-geocoder input::-webkit-search-cancel-button {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    cursor: pointer;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z'/%3E%3C/svg%3E");
+    background-size: contain;
+    background-repeat: no-repeat;
+    background-position: center;
+}
+
+.leaflet-control-geocoder .leaflet-control-geocoder-alternatives {
+    overflow: hidden;
+    max-height: 0;
+    opacity: 0;
+    transform: translateY(-4px);
+    transition: max-height 180ms ease, opacity 180ms ease, transform 180ms ease;
+    /* If the plugin sets display:none, you may need this override: */
+    display: block;
+}
+
+.leaflet-control-geocoder.leaflet-control-geocoder-options-open .leaflet-control-geocoder-alternatives {
+    max-height: 320px;
+    /* set to something >= your typical expanded height */
+    opacity: 1;
+    transform: translateY(0);
+}
