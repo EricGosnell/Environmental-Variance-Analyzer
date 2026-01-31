@@ -1,6 +1,8 @@
 const express = require("express");
 const path = require("path");
 
+const cors = require("cors");
+
 const { createDB } = require("./database/databaseInit");
 const authRoutes = require("./API/auth");
 const userRoutes = require("./API/user");
@@ -12,6 +14,9 @@ const PORT = process.env.PORT || 3000;
 // ====== middleware ======
 app.use(express.static(path.join(__dirname, "Pages")));
 app.use(express.json());
+if (process.env.NODE_ENV === "development") {
+  app.use(cors({ origin: "http://localhost:5173" }));
+}
 
 // Security headers middleware
 app.use((req, res, next) => {
