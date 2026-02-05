@@ -173,9 +173,14 @@ const loadTestData = async (db) => {
       userId = existingUser.user_id;
     } else {
       const hashedPassword = await bcrypt.hash(person.password, 12);
+      const count = await db.get("SELECT COUNT(*) as c FROM users");
+
+      const isFirstUser = count.c === 0;
+
       const user = await db.run(
-        `INSERT INTO users (username, password_hash) VALUES (?, ?)`,
-        [person.email, hashedPassword]
+        `INSERT INTO users (username, password_hash, admin)
+   VALUES (?, ?, ?)`,
+        [person.email, hashedPassword, isFirstUser ? 1 : 0]
       );
       userId = user.lastID;
     }

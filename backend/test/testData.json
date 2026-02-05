@@ -1,12 +1,12 @@
 {
     "people": [
         {
-            "first": "Avery",
-            "last": "Anderson",
+            "first": "EvaAdmin",
+            "last": "EvaAdminLast",
             "dob": "1981-10-27",
-            "email": "Avery.Anderson@gmail.com",
+            "email": "Admin@gmail.com",
             "phone": "3104432156",
-            "password": "09YwVocENlSB",
+            "password": "Admin",
             "pods": [
                 {
                     "name": "big-683",
