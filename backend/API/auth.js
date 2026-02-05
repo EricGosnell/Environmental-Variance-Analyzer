@@ -21,26 +21,28 @@ module.exports = (db) => {
     const router = express.Router();
 
     // -------------------------
-    // POST /login  (EMAIL BASED)
+    // POST /login
     // -------------------------
-    router.post("/login", sanitizeRequestBody, async (req, res) => {
+    router.post("/login", sanitizeRequestBody, loginValidation, async (req, res) => {
         try {
-            const { email, password } = req.body;
-
-            if (!email || !password) {
-                return res.status(400).json({ error: "Email and password are required" });
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({
+                    error: "Validation failed",
+                    details: errors.array(),
+                });
             }
 
+            const { email, password } = req.body;
             const user = await db.get(
                 `
       SELECT u.user_id, u.username, u.password_hash, uc.email, uc.phone_number
       FROM users u
       JOIN user_contact uc ON u.user_id = uc.user_id
-      WHERE uc.email = ?
+      WHERE LOWER(uc.email) = LOWER(?)
       `,
                 [email]
             );
-
             if (!user) {
                 return res.status(401).json({ error: "Invalid credentials" });
             }
@@ -70,6 +72,7 @@ module.exports = (db) => {
                 accessToken,
                 refreshToken,
             });
+
         } catch (error) {
             return res.status(500).json({
                 error: "Internal server error",
@@ -78,7 +81,6 @@ module.exports = (db) => {
             });
         }
     });
-
 
     // -------------------------
     // POST /register
@@ -289,7 +291,5 @@ module.exports = (db) => {
         }
     }
     );
-
-
     return router;
 };
