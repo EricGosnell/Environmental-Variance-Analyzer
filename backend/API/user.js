@@ -3,7 +3,7 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const { body, validationResult } = require("express-validator");
 const { sanitizeRequestBody } = require("./middleware/sanitize");
-const { authenticateToken } = require("../Util/Tokens");
+const { authenticateToken } = require("../util/Tokens");
 
 //USING THESE FOR VALIDATION RESTRICTIONS FOR NOW, 
 //CAN BE CHANGED LATER IF WE DECIDE TO - Ryan

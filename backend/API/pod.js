@@ -3,7 +3,7 @@ const express = require("express");
 const { body, validationResult, param, query } = require("express-validator");
 
 const { sanitizeRequestBody } = require("./middleware/sanitize");
-const { authenticateToken, optionalAuth } = require("../Util/Tokens");
+const { authenticateToken, optionalAuth } = require("../util/Tokens");
 
 const {
     getPodById,
@@ -14,7 +14,7 @@ const {
     deletePodDataById,
     insertPodData,
     insertSensorData,
-} = require("../Util/podQueries");
+} = require("../util/podQueries");
 
 module.exports = (db) => {
     const router = express.Router();
