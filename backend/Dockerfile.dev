@@ -1,9 +1,5 @@
-# Dockerfile.dev
-FROM node:20-alpine
+FROM node:20-slim
 WORKDIR /app
-
-# Install build dependencies for native modules (sqlite3)
-RUN apk add --no-cache python3 make g++ sqlite-dev
 
 COPY package*.json ./
 RUN npm install
