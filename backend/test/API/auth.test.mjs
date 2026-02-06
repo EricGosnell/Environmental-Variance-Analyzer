@@ -37,10 +37,17 @@ describe("Auth API Tests", function () {
 
     it("should reject duplicate usernames (409)", async () => {
       const hash = await bcrypt.hash("Password1", 12);
-      await db.run("INSERT INTO users (username, password_hash) VALUES (?,?)", [
-        "TestUser1",
-        hash,
-      ]);
+      const userInsert = await db.run(
+        "INSERT INTO users (username, password_hash) VALUES (?,?)",
+        ["TestUser1", hash]
+      );
+
+      const userId = userInsert.lastID;
+
+      await db.run(
+        "INSERT INTO user_contact (user_id, user_name, email) VALUES (?, ?, ?)",
+        [userId, "Test User", "test@example.com"]
+      );
 
       const res = await request(app).post("/api/auth/register").send({
         username: "TestUser1",
@@ -65,24 +72,38 @@ describe("Auth API Tests", function () {
 
   describe("POST /api/auth/login", () => {
     it("should login successfully with correct password", async () => {
+
+      // ---- create user ----
       const hash = await bcrypt.hash("Password1", 12);
 
-      await db.run("INSERT INTO users (username, password_hash) VALUES (?,?)", [
-        "TestUser1",
-        hash,
-      ]);
+      const userInsert = await db.run(
+        "INSERT INTO users (username, password_hash, admin) VALUES (?, ?, ?)",
+        ["TestUser1", hash, 0]
+      );
 
-      const res = await request(app).post("/api/auth/login").send({
-        username: "TestUser1",
-        password: "Password1",
-      });
+      const userId = userInsert.lastID;
 
+      await db.run(
+        "INSERT INTO user_contact (user_id, user_name, email) VALUES (?, ?, ?)",
+        [userId, "Test User", "test@example.com"]
+      );
+
+      // ---- attempt login ----
+      const res = await request(app)
+        .post("/api/auth/login")
+        .send({
+          email: "test@example.com",
+          password: "Password1",
+        });
+
+      // ---- assertions ----
       expect(res.status).to.equal(200);
       expect(res.body).to.have.property("accessToken");
       expect(res.body).to.have.property("refreshToken");
       expect(res.body).to.have.property("user");
       expect(res.body.user.username).to.equal("TestUser1");
     });
+
 
     it("should reject login with wrong password (401)", async () => {
       const hash = await bcrypt.hash("Password1", 12);
@@ -93,7 +114,7 @@ describe("Auth API Tests", function () {
       ]);
 
       const res = await request(app).post("/api/auth/login").send({
-        username: "TestUser1",
+        email: "test@example.com",
         password: "WrongPassword1",
       });
 
@@ -103,7 +124,7 @@ describe("Auth API Tests", function () {
 
     it("should reject login for unknown user (401)", async () => {
       const res = await request(app).post("/api/auth/login").send({
-        username: "NoUser",
+        email: "nouser@example.com",
         password: "Password1",
       });
 
