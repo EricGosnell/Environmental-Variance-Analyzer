@@ -22,9 +22,8 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
 );
 
-
 CREATE TABLE IF NOT EXISTS pod (
-    pod_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    pod_id INTEGER PRIMARY KEY,
     pod_name TEXT,
     description TEXT,
     pod_data_public BOOLEAN DEFAULT FALSE,

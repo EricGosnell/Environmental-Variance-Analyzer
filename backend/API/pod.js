@@ -269,31 +269,29 @@ module.exports = (db) => {
                 const podDataRows = await getPodDataRowsByPodId(db, podId);
 
                 const data = [];
+
                 for (const pd of podDataRows) {
+
                     const sensors = await getSensorRowsByPodDataId(db, pd.pod_data_id);
 
-                    data.push({
-                        id: String(pd.pod_data_id),
-                        timestamp: new Date(pd.created_at).toISOString(),
-                        data: {
-                            location: {
-                                latitude: Number(pd.latitude),
-                                longitude: Number(pd.longitude),
-                            },
-                            dateCollected: pd.date_collected,
-                            sensors: sensors.map((s) => ({
-                                id: String(s.sensor_data_id),
+                    for (const s of sensors) {
+                        data.push({
+                            id: String(s.sensor_data_id),
+                            timestamp: new Date(s.reading_timestamp).toISOString(),
+                            data: {
                                 sensor_type: s.sensor_type,
                                 reading_value: s.reading_value,
                                 reading_units: s.reading_units,
-                                reading_timestamp: new Date(s.reading_timestamp).toISOString(),
-                                raw_data: s.raw_data ? safeJsonParse(s.raw_data) : null,
-                                created_at: new Date(s.created_at).toISOString(),
-                            })),
-                        },
-                        visibility: isPublic ? "public" : "private",
-                    });
+                                location: {
+                                    latitude: Number(pd.latitude),
+                                    longitude: Number(pd.longitude),
+                                },
+                            },
+                            visibility: isPublic ? "public" : "private",
+                        });
+                    }
                 }
+
 
                 return res.status(200).json({ data });
             } catch (error) {
@@ -310,138 +308,111 @@ module.exports = (db) => {
     // -------------------------
     // POST /pods/upload-pod-data
     // -------------------------
-    router.post("/upload-pod-data", authenticateToken, sanitizeRequestBody,
+    router.post(
+        "/upload-pod-data",
+        authenticateToken,
+        sanitizeRequestBody,
         [
-            body("podId").isInt({ gt: 0 }).withMessage("podId must be a positive integer"),
-            body("data").isObject().withMessage("data must be an object"),
+            body("pod_data").isArray({ min: 1 }).withMessage("pod_data must be an array"),
 
-            body("data.latitude")
-                .exists()
-                .withMessage("latitude required")
-                .bail()
-                .isFloat({ min: -90, max: 90 })
-                .withMessage("latitude invalid"),
+            body("pod_data.*.pod_id")
+                .isInt({ gt: 0 })
+                .withMessage("pod_id must be positive integer"),
 
-            body("data.longitude")
-                .exists()
-                .withMessage("longitude required")
-                .bail()
-                .isFloat({ min: -180, max: 180 })
-                .withMessage("longitude invalid"),
+            body("pod_data.*.ts")
+                .isInt({ gt: 0 })
+                .withMessage("ts must be unix timestamp"),
 
-            body("data.sensors").optional().isArray().withMessage("sensors must be an array"),
-            body("data.sensors.*.sensor_type")
-                .optional()
+            body("pod_data.*.readings")
+                .isArray({ min: 1 })
+                .withMessage("readings must be array"),
+
+            body("pod_data.*.readings.*.metric")
                 .isString()
                 .isLength({ min: 1, max: 64 }),
-            body("data.sensors.*.reading_value").optional().isNumeric(),
-            body("data.sensors.*.reading_units").optional().isString().isLength({ max: 32 }),
-            body("data.sensors.*.raw_data").optional(),
+
+            body("pod_data.*.readings.*.value")
+                .isNumeric(),
+
+            body("pod_data.*.readings.*.unit")
+                .optional()
+                .isString()
+                .isLength({ max: 32 }),
         ],
         async (req, res) => {
             try {
+
                 const errors = validationResult(req);
                 if (!errors.isEmpty()) {
-                    return res.status(400).json({
-                        error: "Invalid pod data",
-                        details: errors.array().map((err) => ({
-                            field: err.param,
-                            message: err.msg,
-                        })),
-                    });
+                    return res.status(400).json({ error: "Invalid payload", details: errors.array() });
                 }
 
                 const userId = req.user.id;
-                const podId = Number(req.body.podId);
-                const payload = req.body.data;
+                const payload = req.body.pod_data;
 
-                const lat = Number(payload.latitude);
-                const lon = Number(payload.longitude);
+                await db.run("BEGIN TRANSACTION");
 
-                if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
-                    return res.status(403).json({ error: "Pod location not set" });
-                }
+                for (const entry of payload) {
 
-                const pod = await getPodById(db, podId);
-                if (!pod) return res.status(404).json({ error: "Pod not registered" });
+                    const podId = entry.pod_id;
 
-                const isAdmin = await getIsAdmin(userId);
-                const owns = await userOwnsPod(db, userId, podId);
+                    const pod = await getPodById(db, podId);
+                    if (!pod) continue;
 
-                if (!owns && !isAdmin) {
-                    return res.status(403).json({ error: "Forbidden" });
-                }
+                    const isAdmin = await getIsAdmin(userId);
+                    const owns = await userOwnsPod(db, userId, podId);
 
-                const insertRes = await insertPodData(db, podId, lat, lon);
-
-                let podDataId = insertRes?.lastID;
-
-                if (!podDataId) {
-                    const row = await db.get(
-                        `
-                        SELECT pod_data_id AS id
-                        FROM pod_data
-                        WHERE pod_id = ?
-                        ORDER BY datetime(created_at) DESC
-                        LIMIT 1
-                        `,
-                        [podId]
-                    );
-                    podDataId = row?.id;
-                }
-
-                if (!podDataId) {
-                    throw new Error("Failed to create pod_data (no lastID)");
-                }
-
-                const sensors = Array.isArray(payload.sensors) ? payload.sensors : [];
-
-                for (const s of sensors) {
-                    const sensor_type =
-                        typeof s.sensor_type === "string" ? s.sensor_type : null;
-
-                    const reading_value =
-                        s.reading_value === undefined || s.reading_value === null
-                            ? null
-                            : Number(s.reading_value);
-
-                    const reading_units =
-                        typeof s.reading_units === "string" ? s.reading_units : null;
-
-                    let raw_data = null;
-                    if (s.raw_data !== undefined) {
-                        raw_data =
-                            typeof s.raw_data === "string"
-                                ? s.raw_data
-                                : JSON.stringify(s.raw_data);
+                    if (!owns && !isAdmin) {
+                        await db.run("ROLLBACK");
+                        return res.status(403).json({ error: "Forbidden" });
                     }
 
-                    if (!sensor_type) continue;
-
-                    await insertSensorData(
-                        db,
-                        podDataId,
-                        sensor_type,
-                        Number.isFinite(reading_value) ? reading_value : null,
-                        reading_units,
-                        raw_data
+                    // get pod_data row (location row)
+                    const podDataRow = await db.get(
+                        `SELECT pod_data_id FROM pod_data
+           WHERE pod_id = ?
+           ORDER BY pod_data_id LIMIT 1`,
+                        [podId]
                     );
+
+                    if (!podDataRow) continue;
+
+                    const podDataId = podDataRow.pod_data_id;
+
+                    const timestampISO = new Date(entry.ts * 1000).toISOString();
+
+                    for (const r of entry.readings) {
+                        await db.run(
+                            `INSERT INTO sensor_data
+             (pod_data_id, sensor_type, reading_value, reading_units, reading_timestamp, raw_data)
+             VALUES (?, ?, ?, ?, ?, ?)`,
+                            [
+                                podDataId,
+                                r.metric,
+                                r.value,
+                                r.unit ?? null,
+                                timestampISO,
+                                JSON.stringify(r),
+                            ]
+                        );
+                    }
                 }
 
-                return res.status(200).json({
-                    podDataId: String(podDataId),
-                    message: "Pod data uploaded successfully",
-                });
+                await db.run("COMMIT");
+
+                return res.status(200).json({ message: "Telemetry uploaded successfully" });
+
             } catch (error) {
+                await db.run("ROLLBACK");
                 return res.status(500).json({
                     error: "Internal server error",
                     where: "/pods/upload-pod-data",
                     message: error?.message,
-                    code: error?.code,
                 });
             }
         }
     );
+
 
     // -------------------------
     // DELETE /pods/delete-pod-data

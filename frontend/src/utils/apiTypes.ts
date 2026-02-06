@@ -14,11 +14,20 @@ export type MessageResponse = { message: string };
 // Core models
 // ----------------------------
 
+export type UserPod = {
+  id: number;
+  name: string;
+  visibility: boolean;
+  lat: string;
+  long: string;
+};
+
+
 export type User = {
   id: string;
   email: string;
   username: string;
-  pods?: string[];
+  pods?: UserPod[];
   podData?: string[];
   createdAt?: string;
   updatedAt?: string;

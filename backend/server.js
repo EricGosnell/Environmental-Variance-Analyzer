@@ -28,7 +28,7 @@ app.use((req, res, next) => {
 
 // Routes
 app.get("/", (req, res) => {
-  res.redirect("/home/home.html");
+  res.send("EVA server running");
 });
 
 // ====== database + api mount ======

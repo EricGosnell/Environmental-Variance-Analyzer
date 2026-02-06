@@ -13,6 +13,14 @@ export default function Home() {
 
     useEffect(() => {
         const ac = new AbortController();
+
+        const token = localStorage.getItem("eva.accessToken");
+
+        if (!token) {
+            setIsAuthenticated(false);
+            return;
+        }
+
         (async () => {
             try {
                 const profile = await getMe(ac.signal);
@@ -23,6 +31,7 @@ export default function Home() {
                 setIsAuthenticated(false);
             }
         })();
+
         return () => ac.abort();
     }, []);
 
@@ -35,7 +44,7 @@ export default function Home() {
                             <div className="warning-message"><p>You currently have no pods registered. Register a pod to upload data.</p></div>
                         )}
                         <button className="btn primary-btn" disabled={(user.pods?.length ?? 0) === 0}>Upload EVA Data</button>
-                        <br/>
+                        <br />
                         <button className="btn secondary-btn">Manage EVA Pods</button>
 
                         <div className="filters-container">
@@ -46,9 +55,15 @@ export default function Home() {
 
                 {isAuthenticated === false ? (
                     <AuthPanel
-                        onAuthSuccess={(authedUser) => {
-                            setUser(authedUser);
-                            setIsAuthenticated(true);
+                        onAuthSuccess={async () => {
+                            try {
+                                const profile = await getMe();
+                                setUser(profile.user);
+                                setIsAuthenticated(true);
+                            } catch {
+                                setUser(null);
+                                setIsAuthenticated(false);
+                            }
                         }}
                     />
                 ) : null}
