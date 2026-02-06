@@ -143,25 +143,29 @@ const createDB = async () => {
 
 
 const loadTestData = async (db) => {
-  const testPath = path.join(__dirname, "../test/testData.json");
 
+  const peoplePath = path.join(__dirname, "../test/testDataPeople.json");
+  const podDataPath = path.join(__dirname, "../test/testDataPodData.json");
 
-  if (!fs.existsSync(testPath)) {
-    console.log("No test data found — skipping seed");
+  if (!fs.existsSync(peoplePath)) {
+    console.log("No people seed data — skipping");
     return;
   }
 
-  const existing = await db.get("SELECT COUNT(*) as c FROM users");
-  if (existing.c > 0) {
-    console.log("Database already seeded — skipping test data");
-    return;
-  }
+  const peopleRaw = JSON.parse(fs.readFileSync(peoplePath));
 
-  const raw = JSON.parse(fs.readFileSync(testPath));
+  const podRaw = fs.existsSync(podDataPath)
+    ? JSON.parse(fs.readFileSync(podDataPath))
+    : { pod_data: [] };
 
   await db.run("BEGIN TRANSACTION");
 
-  for (const person of raw.people) {
+  // ===========================
+  // SEED USERS + PODS
+  // ===========================
+
+  for (const person of peopleRaw.people) {
+
     let userId;
 
     const existingUser = await db.get(
@@ -172,16 +176,17 @@ const loadTestData = async (db) => {
     if (existingUser) {
       userId = existingUser.user_id;
     } else {
+
       const hashedPassword = await bcrypt.hash(person.password, 12);
       const count = await db.get("SELECT COUNT(*) as c FROM users");
-
       const isFirstUser = count.c === 0;
 
       const user = await db.run(
         `INSERT INTO users (username, password_hash, admin)
-   VALUES (?, ?, ?)`,
+         VALUES (?, ?, ?)`,
         [person.email, hashedPassword, isFirstUser ? 1 : 0]
       );
+
       userId = user.lastID;
     }
 
@@ -193,15 +198,29 @@ const loadTestData = async (db) => {
     );
 
     for (const pod of person.pods) {
-      const podRes = await db.run(
-        `INSERT INTO pod (pod_name, pod_data_public) VALUES (?, ?)`,
-        [pod.name, pod.visibility]
+
+      // avoid duplicate pod rows if two users reference same pod (future safe)
+      let podRow = await db.get(
+        "SELECT pod_id FROM pod WHERE pod_name = ?",
+        [pod.name]
       );
 
-      const podId = podRes.lastID;
+      let podId;
+
+      if (podRow) {
+        podId = podRow.pod_id;
+      } else {
+        const podRes = await db.run(
+          `INSERT INTO pod (pod_name, pod_data_public)
+           VALUES (?, ?)`,
+          [pod.name, pod.visibility]
+        );
+        podId = podRes.lastID;
+      }
 
       await db.run(
-        `INSERT INTO user_pod (user_id, pod_id) VALUES (?, ?)`,
+        `INSERT OR IGNORE INTO user_pod (user_id, pod_id)
+         VALUES (?, ?)`,
         [userId, podId]
       );
 
@@ -213,10 +232,62 @@ const loadTestData = async (db) => {
     }
   }
 
+  // ===========================
+  // SEED SENSOR TELEMETRY
+  // ===========================
+
+  for (const entry of podRaw.pod_data) {
+
+    const podRow = await db.get(
+      "SELECT pod_id FROM pod WHERE pod_name = ?",
+      [entry.pod_name]
+    );
+
+    if (!podRow) {
+      console.warn("Skipping telemetry for unknown pod:", entry.pod_name);
+      continue;
+    }
+
+    const podId = podRow.pod_id;
+
+    // get existing pod location row
+    const podDataRow = await db.get(
+      `SELECT pod_data_id FROM pod_data
+   WHERE pod_id = ?
+   ORDER BY pod_data_id LIMIT 1`,
+      [podId]
+    );
+
+    if (!podDataRow) {
+      console.warn("No pod_data location for pod:", entry.pod_name);
+      continue;
+    }
+
+    const podDataId = podDataRow.pod_data_id;
+
+
+    for (const r of entry.readings) {
+
+      await db.run(
+        `INSERT INTO sensor_data
+         (pod_data_id, sensor_type, reading_value, reading_units, raw_data)
+         VALUES (?, ?, ?, ?, ?)`,
+        [
+          podDataId,
+          r.metric,
+          r.value,
+          r.unit,
+          JSON.stringify(r)
+        ]
+      );
+    }
+  }
+
   await db.run("COMMIT");
 
-  console.log("Test data seeded successfully");
+  console.log("People + pod telemetry seeded successfully");
 };
+
 
 
 

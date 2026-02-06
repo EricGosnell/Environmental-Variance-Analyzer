@@ -269,31 +269,29 @@ module.exports = (db) => {
                 const podDataRows = await getPodDataRowsByPodId(db, podId);
 
                 const data = [];
+
                 for (const pd of podDataRows) {
+
                     const sensors = await getSensorRowsByPodDataId(db, pd.pod_data_id);
 
-                    data.push({
-                        id: String(pd.pod_data_id),
-                        timestamp: new Date(pd.created_at).toISOString(),
-                        data: {
-                            location: {
-                                latitude: Number(pd.latitude),
-                                longitude: Number(pd.longitude),
-                            },
-                            dateCollected: pd.date_collected,
-                            sensors: sensors.map((s) => ({
-                                id: String(s.sensor_data_id),
+                    for (const s of sensors) {
+                        data.push({
+                            id: String(s.sensor_data_id),
+                            timestamp: new Date(s.reading_timestamp).toISOString(),
+                            data: {
                                 sensor_type: s.sensor_type,
                                 reading_value: s.reading_value,
                                 reading_units: s.reading_units,
-                                reading_timestamp: new Date(s.reading_timestamp).toISOString(),
-                                raw_data: s.raw_data ? safeJsonParse(s.raw_data) : null,
-                                created_at: new Date(s.created_at).toISOString(),
-                            })),
-                        },
-                        visibility: isPublic ? "public" : "private",
-                    });
+                                location: {
+                                    latitude: Number(pd.latitude),
+                                    longitude: Number(pd.longitude),
+                                },
+                            },
+                            visibility: isPublic ? "public" : "private",
+                        });
+                    }
                 }
+
 
                 return res.status(200).json({ data });
             } catch (error) {
