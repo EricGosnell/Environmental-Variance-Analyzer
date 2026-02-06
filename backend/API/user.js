@@ -367,6 +367,7 @@ module.exports = (db) => {
         body("podId")
             .trim()
             .notEmpty()
+            .isInt({ gt: 0 })
             .withMessage("Pod ID is required"),
         body("nickname")
             .trim()
