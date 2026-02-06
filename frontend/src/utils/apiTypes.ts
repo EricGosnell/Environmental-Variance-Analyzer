@@ -74,7 +74,7 @@ export type AuthLoginResponse = { user: User; accessToken: string; refreshToken:
 export type AuthRefreshRequest = { refreshToken: string };
 export type AuthRefreshResponse = { accessToken: string; refreshToken: string };
 
-export type AuthRegisterRequest = { email: string; password: string; username: string; invitationToken: string };
+export type AuthRegisterRequest = { email: string; password: string; username: string; phone_number: string };
 export type AuthRegisterResponse = { user: User; accessToken: string; refreshToken: string };
 
 export type AuthLogoutRequest = { refreshToken: string };
