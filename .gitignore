@@ -4,3 +4,4 @@ package-lock.json
 Backend/package-lock.json
 test_files/
 backend/database/db.sqlite
+backend/.env
