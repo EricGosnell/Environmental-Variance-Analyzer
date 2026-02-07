@@ -13,9 +13,9 @@ const {
     generateAccessToken,
     generateRefreshToken,
     getRefreshTokenExpiry,
-} = require("../Util/Tokens");
+} = require("../util/Tokens");
 
-const { JWT_CONFIG } = require("../Util/JWT");
+const { JWT_CONFIG } = require("../util/JWT");
 
 module.exports = (db) => {
     const router = express.Router();

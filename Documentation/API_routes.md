@@ -144,7 +144,6 @@ Request Parameters:
 | password | string | Yes | User password |
 | username | string | Yes | Username |
 | phone_number | string | Yes | User phone number |
-| invitationToken | string | Yes | Invitation token for registration |
 
 Request Body:
 ```json
@@ -153,7 +152,6 @@ Request Body:
   "password": "password", // Required
   "username": "user", // Required
   "phone_number": "1234567890", // Required
-  "invitationToken": "ABCD-EFGH" // Required
 }
 ```
 
