@@ -132,6 +132,7 @@ function UserLocationControl() {
   const map = useMap() as any;
 
   useEffect(() => {
+    let userMarker: any = null;
     const control: any = (L as any).control({ position: "topleft" });
     control.onAdd = () => {
       const div = (L as any).DomUtil.create("div", "leaflet-control-layers leaflet-control user-location");
@@ -151,7 +152,31 @@ function UserLocationControl() {
         // Get user location
         navigator.geolocation.getCurrentPosition(
           (position) => {
-            const { latitude, longitude } = position.coords;
+            const { latitude, longitude, accuracy } = position.coords;
+            var min_accuracy = Math.min(accuracy * 2, 100);
+
+            // Remove existing marker if any
+            if (userMarker) {
+              map.removeLayer(userMarker);
+            }
+
+            // Draw blue dot at user location
+            const userLocationIcon = (L as any).divIcon({
+              className: 'user-location-marker',
+              html: `
+                <div class="user-location-dot"></div>
+                <div class="user-location-circle" style="width: ${min_accuracy}px; height: ${min_accuracy}px;"></div>
+              `,
+              iconSize: [20, 20],
+              iconAnchor: [10, 10]
+            });
+
+            // Add marker at user location
+            userMarker = (L as any).marker([latitude, longitude], {
+              icon: userLocationIcon,
+              zIndexOffset: 1000
+            }).addTo(map);
+
             map.flyTo([latitude, longitude], 17, {
               duration: 1
             });
@@ -180,6 +205,9 @@ function UserLocationControl() {
 
     return () => {
       try {
+        if (userMarker) {
+          map.removeLayer(userMarker);
+        }
         control?.remove?.();
       } catch {}
     };
