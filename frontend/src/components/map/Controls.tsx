@@ -133,6 +133,31 @@ function UserLocationControl() {
 
   useEffect(() => {
     let userMarker: any = null;
+    let userAccuracy: number = 0;
+    let userCoords: [number, number] | null = null;
+
+    const updateMarkerSize = () => {
+      // Updates blue circle marker based on map zoom level so it stays geographically accurate
+      if (!userMarker || !userAccuracy || !userCoords) return;
+
+      const zoom = map.getZoom();
+      const metersPerPixel = 40075016.686 * Math.abs(Math.cos(userCoords[0] * Math.PI / 180)) / Math.pow(2, zoom + 8);
+      const radiusInPixels = userAccuracy / metersPerPixel;
+      const diameterInPixels = Math.min(radiusInPixels * 2, 2000);
+
+      const icon = (L as any).divIcon({
+        className: 'user-location-marker',
+        html: `
+          <div class="user-location-dot"></div>
+          <div class="user-location-circle" style="width: ${diameterInPixels}px; height: ${diameterInPixels}px;"></div>
+        `,
+        iconSize: [20, 20],
+        iconAnchor: [10, 10]
+      });
+
+      userMarker.setIcon(icon);
+    };
+
     const control: any = (L as any).control({ position: "topleft" });
     control.onAdd = () => {
       const div = (L as any).DomUtil.create("div", "leaflet-control-layers leaflet-control user-location");
@@ -153,19 +178,28 @@ function UserLocationControl() {
         navigator.geolocation.getCurrentPosition(
           (position) => {
             const { latitude, longitude, accuracy } = position.coords;
-            var min_accuracy = Math.min(accuracy * 2, 100);
+
+            // Store accuracy and coords for zoom updates
+            userAccuracy = accuracy;
+            userCoords = [latitude, longitude];
 
             // Remove existing marker if any
             if (userMarker) {
               map.removeLayer(userMarker);
             }
 
+            // Calculate accuracy radius in pixels
+            const zoom = map.getZoom();
+            const metersPerPixel = 40075016.686 * Math.abs(Math.cos(latitude * Math.PI / 180)) / Math.pow(2, zoom + 8);
+            const radiusInPixels = accuracy / metersPerPixel;
+            const diameterInPixels = Math.min(radiusInPixels * 2, 2000); // Max size: 2000px
+
             // Draw blue dot at user location
             const userLocationIcon = (L as any).divIcon({
               className: 'user-location-marker',
               html: `
                 <div class="user-location-dot"></div>
-                <div class="user-location-circle" style="width: ${min_accuracy}px; height: ${min_accuracy}px;"></div>
+                <div class="user-location-circle" style="width: ${diameterInPixels}px; height: ${diameterInPixels}px;"></div>
               `,
               iconSize: [20, 20],
               iconAnchor: [10, 10]
@@ -203,8 +237,12 @@ function UserLocationControl() {
     };
     control.addTo(map);
 
+    // Update blue circle when map zooms
+    map.on('zoomend', updateMarkerSize);
+
     return () => {
       try {
+        map.off('zoomend', updateMarkerSize);
         if (userMarker) {
           map.removeLayer(userMarker);
         }
