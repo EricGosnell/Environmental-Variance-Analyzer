@@ -184,6 +184,29 @@
     background: var(--secondary-green);
 } */
 
+.user-location {
+    padding: 0;
+}
+
+.user-location-button {
+    padding: 10px 12px;
+    background: none;
+    color: white;
+    border: none;
+    border-radius: 12px;
+    cursor: pointer;
+    font-size: 1rem;
+    transition: all 0.1s ease;
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+.user-location-button:hover {
+    background: var(--secondary-green);
+}
+
 .leaflet-control-geocoder-icon {
     border-radius: 12px;
     background-color: transparent;

@@ -119,16 +119,84 @@ function SearchAreaControl() {
   return null;
 }
 
+function UserLocationControl() {
+  const locate_button_icon = `
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" style="vertical-align: middle; margin-right: 6px;">
+      <circle cx="12" cy="12" r="8" stroke="currentColor" stroke-width="2" fill="none"/>
+      <circle cx="12" cy="12" r="4" fill="currentColor"/>
+      <line x1="12" y1="0" x2="12" y2="4" stroke="currentColor" stroke-width="2"/> 
+      <line x1="20" y1="12" x2="24" y2="12" stroke="currentColor" stroke-width="2"/>
+      <line x1="12" y1="20" x2="12" y2="24" stroke="currentColor" stroke-width="2"/>
+      <line x1="0" y1="12" x2="4" y2="12" stroke="currentColor" stroke-width="2"/>
+    </svg>`
+  const map = useMap() as any;
+
+  useEffect(() => {
+    const control: any = (L as any).control({ position: "topleft" });
+    control.onAdd = () => {
+      const div = (L as any).DomUtil.create("div", "leaflet-control-layers leaflet-control user-location");
+      const button = (L as any).DomUtil.create("button", "user-location-button");
+      button.innerHTML = locate_button_icon+"My Location";
+
+      button.addEventListener("click", () => {
+        if (!navigator.geolocation) {
+          alert("Geolocation is not supported by your browser");
+          return;
+        }
+
+        // Show loading state
+        button.disabled = true;
+        button.innerHTML = locate_button_icon+"Locating...";
+
+        // Get user location
+        navigator.geolocation.getCurrentPosition(
+          (position) => {
+            const { latitude, longitude } = position.coords;
+            map.flyTo([latitude, longitude], 17, {
+              duration: 1
+            });
+
+            // Reset button state
+            button.disabled = false;
+            button.innerHTML = locate_button_icon+"My Location";
+          },
+          (error) => {
+            console.error("Error getting location:", error);
+            alert("Unable to retrieve your location");
+
+            // Reset button state
+            button.disabled = false;
+            button.innerHTML = locate_button_icon+"My Location";
+          }
+        );
+      });
+
+      div.appendChild(button);
+      (L as any).DomEvent.disableClickPropagation(div);
+      (L as any).DomEvent.disableScrollPropagation(div);
+      return div;
+    };
+    control.addTo(map);
+
+    return () => {
+      try {
+        control?.remove?.();
+      } catch {}
+    };
+  }, [map]);
+
+  return null;
+}
+
 export default function Controls() {
   // Preserve the existing add-to-map ordering:
-  // Legend (top-right), then Geocoder (top-left), then Search this area (top-left).
+  // Legend (top-right), then Geocoder (top-left), then Search this area (top-left), then User Location (top-left).
   return (
     <>
       <LegendControl />
       <Geocoder />
       <SearchAreaControl />
+      <UserLocationControl />
     </>
   );
 }
-
-
