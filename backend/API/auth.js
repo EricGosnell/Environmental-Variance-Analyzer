@@ -13,9 +13,9 @@ const {
     generateAccessToken,
     generateRefreshToken,
     getRefreshTokenExpiry,
-} = require("../Util/Tokens");
+} = require("../util/Tokens");
 
-const { JWT_CONFIG } = require("../Util/JWT");
+const { JWT_CONFIG } = require("../util/JWT");
 
 module.exports = (db) => {
     const router = express.Router();
@@ -29,41 +29,30 @@ module.exports = (db) => {
             if (!errors.isEmpty()) {
                 return res.status(400).json({
                     error: "Validation failed",
-                    details: errors.array().map((err) => ({
-                        field: err.param,
-                        message: err.msg,
-                    })),
+                    details: errors.array(),
                 });
             }
 
-            const { username, password } = req.body;
-
+            const { email, password } = req.body;
             const user = await db.get(
                 `
-                SELECT u.user_id, u.username, u.password_hash
-                FROM users u
-                WHERE u.username = ?
-                `,
-                [username]
+      SELECT u.user_id, u.username, u.password_hash, uc.email, uc.phone_number
+      FROM users u
+      JOIN user_contact uc ON u.user_id = uc.user_id
+      WHERE LOWER(uc.email) = LOWER(?)
+      `,
+                [email]
             );
-
-            if (!user) { return res.status(401).json({ error: "Invalid credentials" }); }
-
+            if (!user) {
+                return res.status(401).json({ error: "Invalid credentials" });
+            }
             const validPassword = await bcrypt.compare(password, user.password_hash);
-            if (!validPassword) { return res.status(401).json({ error: "Invalid credentials" }); }
-
-            const userContact = await db.get(
-                `
-                SELECT email, phone_number
-                FROM user_contact
-                WHERE user_id = ?
-                `,
-                [user.user_id]
-            );
+            if (!validPassword) {
+                return res.status(401).json({ error: "Invalid credentials" });
+            }
 
             const accessToken = generateAccessToken(user);
             const refreshToken = generateRefreshToken(user);
-
             const expiresAt = getRefreshTokenExpiry();
 
             await db.run(
@@ -73,15 +62,13 @@ module.exports = (db) => {
 
             await db.run("DELETE FROM refresh_tokens WHERE expires_at < strftime('%s','now')");
 
-            const responseUser = {
-                id: user.user_id,
-                username: user.username,
-                email: userContact?.email || null,
-                phone_number: userContact?.phone_number || null,
-            };
-
             return res.status(200).json({
-                user: responseUser,
+                user: {
+                    id: user.user_id,
+                    username: user.username,
+                    email: user.email,
+                    phone_number: user.phone_number,
+                },
                 accessToken,
                 refreshToken,
             });
@@ -91,7 +78,6 @@ module.exports = (db) => {
                 error: "Internal server error",
                 where: "/login",
                 message: error?.message,
-                code: error?.code,
             });
         }
     });
@@ -305,7 +291,5 @@ module.exports = (db) => {
         }
     }
     );
-
-
     return router;
 };

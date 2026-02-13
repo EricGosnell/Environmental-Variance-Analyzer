@@ -1,0 +1,650 @@
+{
+    "pod_data": [
+        {
+            "pod_name": "tiny-214",
+            "ts": 1735856659,
+            "seq": 307,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 24.702266,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 6.749888,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "tiny-214",
+            "ts": 1735856825,
+            "seq": 308,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 15.155196,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.282298,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "tiny-214",
+            "ts": 1735857122,
+            "seq": 309,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 25.977839,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.346423,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "tiny-214",
+            "ts": 1735857304,
+            "seq": 310,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 29.320808,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.685612,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "small-653",
+            "ts": 1633186122,
+            "seq": 4510,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 25.625351,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 6.744391,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "alien-74",
+            "ts": 1613686669,
+            "seq": 3300,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 16.581119,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.739542,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "tiny-359",
+            "ts": 1710798013,
+            "seq": 4271,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 25.763115,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.596048,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "fly-85",
+            "ts": 1674929461,
+            "seq": 1360,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 29.274414,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 6.834696,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "fly-85",
+            "ts": 1674929681,
+            "seq": 1361,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 24.574002,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 6.541960,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "fly-85",
+            "ts": 1674929887,
+            "seq": 1362,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 16.483180,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.774535,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "tall-200",
+            "ts": 1742286175,
+            "seq": 148,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 19.851719,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.745248,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "tall-200",
+            "ts": 1742286450,
+            "seq": 149,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 22.852950,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.782495,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "tall-200",
+            "ts": 1742286549,
+            "seq": 150,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 23.249404,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.711871,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "tall-200",
+            "ts": 1742286626,
+            "seq": 151,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 28.253852,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.501268,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "small-64",
+            "ts": 1703902999,
+            "seq": 2926,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 26.383865,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.568924,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "fly-937",
+            "ts": 1634853839,
+            "seq": 4246,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 20.226606,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.541555,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "fly-937",
+            "ts": 1634853959,
+            "seq": 4247,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 23.543820,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.791150,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "fly-937",
+            "ts": 1634854182,
+            "seq": 4248,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 22.806071,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 6.877830,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "tim-557",
+            "ts": 1700974168,
+            "seq": 3477,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 27.989413,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 6.676164,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "tim-557",
+            "ts": 1700974421,
+            "seq": 3478,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 29.836368,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.871634,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "alien-152",
+            "ts": 1690312550,
+            "seq": 4697,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 21.581241,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.480596,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "alien-152",
+            "ts": 1690312718,
+            "seq": 4698,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 24.023847,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 6.670827,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "alien-152",
+            "ts": 1690312892,
+            "seq": 4699,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 20.294587,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.734788,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "alien-152",
+            "ts": 1690313015,
+            "seq": 4700,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 28.438629,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.124741,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "little-811",
+            "ts": 1731281595,
+            "seq": 4886,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 21.496163,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.352615,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "small-12",
+            "ts": 1621335384,
+            "seq": 2191,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 29.841600,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 6.820811,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "tall-517",
+            "ts": 1614201952,
+            "seq": 719,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 25.007640,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.285446,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "farm-889",
+            "ts": 1625760128,
+            "seq": 465,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 18.097600,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.754321,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "farm-889",
+            "ts": 1625760270,
+            "seq": 466,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 19.240577,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.480397,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "farm-889",
+            "ts": 1625760452,
+            "seq": 467,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 19.826733,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.421254,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "tiny-475",
+            "ts": 1668814216,
+            "seq": 1807,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 22.759488,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 6.944484,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "tiny-475",
+            "ts": 1668814473,
+            "seq": 1808,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 21.360460,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.380383,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "little-860",
+            "ts": 1636627155,
+            "seq": 410,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 15.771150,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 6.596198,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "little-860",
+            "ts": 1636627430,
+            "seq": 411,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 18.906498,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.029164,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "little-860",
+            "ts": 1636627601,
+            "seq": 412,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 23.403948,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 6.936774,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "farm-224",
+            "ts": 1629658036,
+            "seq": 3079,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 23.742837,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.226068,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "farm-224",
+            "ts": 1629658162,
+            "seq": 3080,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 20.528283,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.271483,
+                    "unit": ""
+                }
+            ]
+        },
+        {
+            "pod_name": "farm-224",
+            "ts": 1629658249,
+            "seq": 3081,
+            "readings": [
+                {
+                    "metric": "temperature",
+                    "value": 24.063918,
+                    "unit": "C"
+                },
+                {
+                    "metric": "ph",
+                    "value": 7.430493,
+                    "unit": ""
+                }
+            ]
+        }
+    ]
+}

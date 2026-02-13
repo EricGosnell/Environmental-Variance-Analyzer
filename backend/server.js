@@ -1,6 +1,6 @@
 const express = require("express");
 const path = require("path");
-
+require("dotenv").config();
 const cors = require("cors");
 
 const { createDB } = require("./database/databaseInit");
@@ -28,7 +28,7 @@ app.use((req, res, next) => {
 
 // Routes
 app.get("/", (req, res) => {
-  res.redirect("/home/home.html");
+  res.send("EVA server running");
 });
 
 // ====== database + api mount ======

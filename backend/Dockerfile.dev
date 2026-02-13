@@ -1,15 +1,18 @@
-# Dockerfile.dev
-FROM node:20-alpine
+FROM node:20-slim
 WORKDIR /app
 
-# Install build dependencies for native modules (sqlite3)
-RUN apk add --no-cache python3 make g++ sqlite-dev
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    python3 \
+    && rm -rf /var/lib/apt/lists/*
 
 COPY package*.json ./
 RUN npm install
 RUN npm install -g nodemon
 
 COPY . .
+
+ENV NODE_ENV=development
 
 EXPOSE 3000
 CMD ["nodemon", "server.js"]
