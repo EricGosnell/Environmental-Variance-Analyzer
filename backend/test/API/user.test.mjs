@@ -4,6 +4,8 @@ import { expect } from "chai";
 import bcrypt from "bcryptjs";
 
 import { makeTestApp, createTestDb } from "../testApp.mjs";
+import jwt from "jsonwebtoken";
+import { JWT_CONFIG } from "../../util/JWT.js";
 
 /*
     Routes are specified in API_routes.md. Test database and app is created before each test and destroyed after each test. 
@@ -34,10 +36,42 @@ describe("User API Tests", function () {
 
   // Tests for GET /api/user/me
   describe("GET api/user/me ", () => {
-    it("should return 404 if the user is not found", async () => {
+    it("should return 403 if authentication token is invalid", async () => {
       const res = await request(app)
         .get("/api/user/me")
         .set("Authorization", `Bearer invalidtoken`);
+      expect(res.status).to.equal(403);
+    });
+
+    it("should return 401 if authentication token is missing", async () => {
+      const res = await request(app).get("/api/user/me");
+      expect(res.status).to.equal(401);
+    });
+
+    it("should return 403 if authentication token is expired", async () => {
+      // Create a token that expires immediately
+      const expiredToken = jwt.sign(
+        { id: 1, username: "TestUser1" },
+        JWT_CONFIG.accessTokenSecret,
+        { expiresIn: "1ms" }
+      );
+      // Wait for the token to expire
+      await new Promise((resolve) => setTimeout(resolve, 100));
+      const res = await request(app)
+        .get("/api/user/me")
+        .set("Authorization", `Bearer ${expiredToken}`);
+      expect(res.status).to.equal(403);
+    });
+
+    it("should return 404 if the user is not found", async () => {
+      // Create a valid token for a non-existent user
+      const nonExistentUserToken = jwt.sign(
+        { id: 9999, username: "NonExistentUser" },
+        JWT_CONFIG.accessTokenSecret,
+        { expiresIn: JWT_CONFIG.accessTokenExpiry });
+      const res = await request(app)
+        .get("/api/user/me")
+        .set("Authorization", `Bearer ${nonExistentUserToken}`);
       expect(res.status).to.equal(404);
     });
 
@@ -129,14 +163,14 @@ describe("User API Tests", function () {
       await request(app).post("/api/auth/register").send({
         username: "TestUser2",
         password: "Password2",
-        email: "TestEmail2",
+        email: "TestEmail2@email.com",
       });
 
       // Attempt to request an email change to the second user's email
       const res = await request(app)
         .post("/api/user/me/email/request-change")
         .set("Authorization", `Bearer ${validToken}`)
-        .send({ email: "TestEmail2" });
+        .send({ email: "TestEmail2@email.com" });
       expect(res.status).to.equal(409);
     });
 
@@ -144,7 +178,7 @@ describe("User API Tests", function () {
       const res = await request(app)
         .post("/api/user/me/email/request-change")
         .set("Authorization", `Bearer ${validToken}`)
-        .send({ email: "NewEmail" });
+        .send({ email: "NewEmail@example.com" });
       expect(res.status).to.equal(200);
       expect(res.body).to.have.property(
         "message",
@@ -167,14 +201,14 @@ describe("User API Tests", function () {
       await request(app).post("/api/auth/register").send({
         username: "TestUser3",
         password: "Password3",
-        email: "TestEmail3",
+        email: "TestEmail3@email.com",
       });
 
       // Attempt to change the first user's email to the second user's email
       const res = await request(app)
         .put("/api/user/me/email")
         .set("Authorization", `Bearer ${validToken}`)
-        .send({ email: "TestEmail3" });
+        .send({ email: "TestEmail3@email.com" });
       expect(res.status).to.equal(409);
     });
 
@@ -182,7 +216,7 @@ describe("User API Tests", function () {
       const res = await request(app)
         .put("/api/user/me/email")
         .set("Authorization", `Bearer ${validToken}`)
-        .send({ email: "NewEmail" });
+        .send({ email: "NewEmail@example.com" });
       expect(res.status).to.equal(200);
       expect(res.body).to.have.property(
         "message",
