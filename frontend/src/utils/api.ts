@@ -190,10 +190,21 @@ async function rawRequest<T>(opts: RequestOptions): Promise<T> {
   if (res.ok) return (await parseResponseBody(res)) as T;
 
   const body = await parseResponseBody(res);
-  const message =
+  let message =
     (body as any)?.error ||
     (body as any)?.message ||
     `Request failed: ${opts.method} ${opts.path} -> ${res.status}`;
+  if (
+    body &&
+    typeof body === "object" &&
+    Array.isArray((body as { details?: Array<{ message?: string }> }).details) &&
+    ((body as { details: Array<{ message?: string }> }).details.length > 0)
+  ) {
+    const parts = (body as { details: Array<{ message?: string }> }).details
+      .map((d) => d.message)
+      .filter(Boolean);
+    if (parts.length) message = parts.join(". ");
+  }
   throw new ApiError(String(message), res.status, body);
 }
 

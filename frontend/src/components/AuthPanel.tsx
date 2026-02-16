@@ -24,6 +24,7 @@ export default function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
   const [signupEmail, setSignupEmail] = useState("");
   const [signupPhone, setSignupPhone] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
+  const [signupPasswordRetype, setSignupPasswordRetype] = useState("");
 
   function switchMode(next: Mode) {
     setMode(next);
@@ -56,6 +57,10 @@ export default function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
     e.preventDefault();
     if (loading) return;
     setError(null);
+    if (signupPassword !== signupPasswordRetype) {
+      setError("Passwords do not match.");
+      return;
+    }
     setLoading(true);
     try {
       const res = await authRegister({
@@ -189,6 +194,19 @@ export default function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
               type="password"
               value={signupPassword}
               onChange={(e) => setSignupPassword(e.target.value)}
+              autoComplete="new-password"
+              required
+              disabled={loading}
+            />
+          </label>
+
+          <label className="auth-label">
+            Retype password
+            <input
+              className="auth-input"
+              type="password"
+              value={signupPasswordRetype}
+              onChange={(e) => setSignupPasswordRetype(e.target.value)}
               autoComplete="new-password"
               required
               disabled={loading}
