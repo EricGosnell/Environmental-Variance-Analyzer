@@ -1,0 +1,44 @@
+.info-container {
+    padding: 32px 40px;
+}
+
+.info-card {
+    border-radius: 16px;
+    overflow: hidden;
+    width: 100%;
+}
+
+.info-header {
+    background-color: var(--primary-green);
+    padding: 5px 30px;
+}
+
+.info-title {
+    margin: 0;
+    color: white;
+    font-size: 2rem;
+}
+
+.info-body {
+    background-color: var(--secondary-green);
+    padding: 10px 30px;
+    color: white;
+    line-height: 1.6;
+    min-height:60vh;
+}
+
+.info-subheader {
+    font-size: 1.6rem;
+    font-weight: 700;
+    margin-top: 15px;
+    margin-bottom: 10px;
+    color: var(--primary-green);
+}
+
+.info-content {
+    margin-top: 10px;
+}
+
+.info-link {
+    color: var(--primary-green);
+}
