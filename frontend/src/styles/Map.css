@@ -147,6 +147,47 @@
     opacity: 0.9;
 }
 
+.eva-legend-swatch-pin .pod-pin-marker {
+    width: 12px;
+    height: 12px;
+}
+
+.eva-legend-swatch-pin {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 12px;
+    height: 12px;
+    background: transparent;
+    border: none;
+}
+
+.pod-pin-icon {
+    background: transparent;
+    border: none;
+}
+
+.pod-pin-marker {
+    display: block;
+    width: 20px;
+    height: 20px;
+    background: rgba(255, 0, 0, 0.85);
+    border: 2px solid red;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(-45deg);
+    transform-origin: center;
+    box-sizing: border-box;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.95);
+    filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.45));
+    transition: transform 120ms ease, filter 120ms ease, box-shadow 120ms ease;
+}
+
+.pod-pin-icon:hover .pod-pin-marker {
+    transform: rotate(-45deg) scale(1.08);
+    filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.5));
+    box-shadow: 0 0 0 3px rgba(255, 255, 255, 0.98);
+}
+
 /* Search Area Button (top-left) */
 .eva-search-area {
     padding: 0;
