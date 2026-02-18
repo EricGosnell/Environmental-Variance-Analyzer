@@ -1,13 +1,19 @@
-import { useEffect, useRef, useState } from "react";
-import { Circle, Tooltip, useMapEvents } from "react-leaflet";
+import { useEffect, useMemo, useRef, useState } from "react";
+import type { MouseEvent } from "react";
+import { Circle, Marker, Tooltip, useMapEvents } from "react-leaflet";
 import { useNavigate } from "react-router-dom";
+import * as L from "leaflet";
 
 import { getPodData, getPodLocations } from "../../utils/api";
 import type { PodLocation } from "../../utils/apiTypes";
-
-// ----------------------------
-// Local helpers + constants (PodMarkers-only)
-// ----------------------------
+import {
+  circleTooltipOffset,
+  formatPodLastUpdated,
+  metersPerPixel,
+  pinTooltipOffset,
+  radiusFromViewportMeters,
+  shouldUsePinAtZoom,
+} from "./podMarkerUtils";
 
 const EVENT_SEARCH_AREA = "searcharea";
 
@@ -15,7 +21,9 @@ const MAP_CLICK_SUPPRESS_MS = 250;
 const TOOLTIP_CLOSE_CLEAR_DELAY_MS = 150;
 
 const MARKER_BASE_RADIUS_METERS = 50;
-const MARKER_MIN_RADIUS_PX = 6;
+const MARKER_MIN_VISIBLE_RADIUS_PX = 8;
+const PIN_ICON_WIDTH_PX = 24;
+const PIN_ICON_HEIGHT_PX = 24;
 
 const TOOLTIP_GAP_PX = 8;
 const TOOLTIP_ESTIMATED_WIDTH_PX = 215;
@@ -29,32 +37,45 @@ type MapLike = {
   flyTo: (center: { lat: number; lng: number } | [number, number], zoom?: number, options?: unknown) => void;
 };
 
-function metersPerPixel(latitude: number, zoom: number): number {
-  // Web Mercator approximate meters-per-pixel at given latitude.
-  return (156543.03392 * Math.cos((latitude * Math.PI) / 180)) / Math.pow(2, zoom);
-}
+type PodTooltipContentProps = {
+  pod: PodLocation;
+  selectedPodData: unknown[] | null;
+  selectedPodDataLoading: boolean;
+  podDataCountById: Record<string, number>;
+  onViewFullData: (podId: string, event: MouseEvent<HTMLButtonElement>) => void;
+};
 
-function radiusFromViewportMeters(centerLat: number, zoom: number, widthPx: number, heightPx: number): number {
-  const mpp = metersPerPixel(centerLat, zoom);
-  // Roughly cover the visible viewport (half of the max dimension).
-  return Math.max(1, Math.round(mpp * Math.max(widthPx, heightPx) * 0.5));
-}
-
-function formatDate(dateString: string | undefined | null): string {
-  if (!dateString) return "—";
-  try {
-    const date = new Date(dateString);
-    if (isNaN(date.getTime())) return "—";
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
-    const seconds = String(date.getSeconds()).padStart(2, "0");
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    return `${hours}:${minutes}:${seconds} ${year}-${month}-${day}`;
-  } catch {
-    return "—";
-  }
+function PodTooltipContent({
+  pod,
+  selectedPodData,
+  selectedPodDataLoading,
+  podDataCountById,
+  onViewFullData,
+}: PodTooltipContentProps) {
+  return (
+    <div>
+      <div>
+        <strong>{pod.nickname || pod.id}</strong>
+      </div>
+      <div>Visibility: {pod.visibility}</div>
+      <div>Last updated: {formatPodLastUpdated(pod.lastUpdated)}</div>
+      <div>
+        Data points:{" "}
+        {podDataCountById[pod.id] !== undefined
+          ? podDataCountById[pod.id]
+          : selectedPodDataLoading
+            ? "Loading…"
+            : (selectedPodData?.length ?? "—")}
+      </div>
+      <button
+        className="btn primary-btn"
+        onClick={(e) => onViewFullData(pod.id, e)}
+        style={{ marginTop: "8px", marginBottom: "0", padding: "8px 16px", fontSize: "0.875rem", width: "100%" }}
+      >
+        View Full Data
+      </button>
+    </div>
+  );
 }
 
 export default function PodMarkers() {
@@ -70,6 +91,18 @@ export default function PodMarkers() {
   const [podDataCountById, setPodDataCountById] = useState<Record<string, number>>({});
   const [tooltipPodId, setTooltipPodId] = useState<string | null>(null);
   const [tooltipVisible, setTooltipVisible] = useState(false);
+  const [zoomLevel, setZoomLevel] = useState<number>(12);
+
+  const pinIcon = useMemo(
+    () =>
+      L.divIcon({
+        className: "pod-pin-icon",
+        html: '<span class="pod-pin-marker" aria-hidden="true"></span>',
+        iconSize: [PIN_ICON_WIDTH_PX, PIN_ICON_HEIGHT_PX],
+        iconAnchor: [PIN_ICON_WIDTH_PX / 2, PIN_ICON_HEIGHT_PX],
+      }),
+    [],
+  );
 
   async function fetchPods(map: MapLike) {
     abortRef.current?.abort();
@@ -109,9 +142,13 @@ export default function PodMarkers() {
     [EVENT_SEARCH_AREA]: () => {
       void fetchPods(map as unknown as MapLike);
     },
+    zoomend: () => {
+      setZoomLevel(map.getZoom());
+    },
   } as any) as unknown as MapLike;
 
   useEffect(() => {
+    setZoomLevel(map.getZoom());
     void fetchPods(map);
     return () => {
       abortRef.current?.abort();
@@ -142,12 +179,8 @@ export default function PodMarkers() {
     }, TOOLTIP_CLOSE_CLEAR_DELAY_MS);
   }
 
-  // Real-world radius in meters (scales naturally with zoom), with a minimum on-screen size.
-  // Guarantee the circle is at least ~6px radius when zoomed out by converting px->meters at current zoom.
-  const center = map.getCenter();
-  const zoom = map.getZoom();
-  const minRadiusMetersAtThisZoom = MARKER_MIN_RADIUS_PX * metersPerPixel(center.lat, zoom);
-  const markerRadiusMeters = Math.max(MARKER_BASE_RADIUS_METERS, minRadiusMetersAtThisZoom);
+  // Keep pod coverage radius stable in real-world units (meters), independent of zoom level.
+  const markerRadiusMeters = MARKER_BASE_RADIUS_METERS;
 
   function flyToWithRightTooltipRoom(p: PodLocation) {
     const z = map.getZoom();
@@ -155,7 +188,10 @@ export default function PodMarkers() {
       // Put the pod slightly left of center so the right-side tooltip has room,
       // while keeping it as a single smooth animation (no follow-up pan jerk).
       const pxRadius = markerRadiusMeters / metersPerPixel(p.latitude, z);
-      const dx = Math.round(TOOLTIP_ESTIMATED_WIDTH_PX / 2 + pxRadius + TOOLTIP_GAP_PX);
+      const markerHalfWidthPx = shouldUsePinAtZoom(markerRadiusMeters, p.latitude, z, MARKER_MIN_VISIBLE_RADIUS_PX)
+        ? PIN_ICON_WIDTH_PX / 2
+        : pxRadius;
+      const dx = Math.round(TOOLTIP_ESTIMATED_WIDTH_PX / 2 + markerHalfWidthPx + TOOLTIP_GAP_PX);
 
       // Shift the center to the RIGHT of the pod by dx pixels, so the pod appears left of center.
       const podPoint = map.project([p.latitude, p.longitude], z) as any;
@@ -207,68 +243,75 @@ export default function PodMarkers() {
 
   // For Circles, Leaflet anchors tooltips on the center point. Offset it by the on-screen circle radius
   // so it sits fully to the right of the circle at any zoom level.
-  function tooltipOffsetForPod(p: PodLocation): [number, number] {
-    const pxRadius = markerRadiusMeters / metersPerPixel(p.latitude, map.getZoom());
-    return [Math.round(pxRadius + TOOLTIP_GAP_PX), 0];
+  function tooltipOffsetForPod(p: PodLocation, isPin: boolean): [number, number] {
+    if (isPin) return pinTooltipOffset(PIN_ICON_WIDTH_PX, PIN_ICON_HEIGHT_PX, TOOLTIP_GAP_PX);
+    return circleTooltipOffset(markerRadiusMeters, p.latitude, zoomLevel, TOOLTIP_GAP_PX);
+  }
+
+  function handlePodClick(p: PodLocation, e: any) {
+    // Prevent the map's click handler from immediately closing the tooltip.
+    e?.originalEvent?.stopPropagation?.();
+    lastPodClickAtRef.current = Date.now();
+    void selectPod(p);
+  }
+
+  function handleViewFullData(podId: string, e: MouseEvent<HTMLButtonElement>) {
+    e.stopPropagation();
+    navigate(`/pod/${podId}`);
   }
 
   return (
     <>
-      {pods.map((p) => (
-        <Circle
-          key={p.id}
-          center={[p.latitude, p.longitude]}
-          radius={markerRadiusMeters}
-          pathOptions={{ color: "red", weight: 2, fillOpacity: 0.5 }}
-          eventHandlers={{
-            click: (e: any) => {
-              // Prevent the map's click handler from immediately closing the tooltip.
-              e?.originalEvent?.stopPropagation?.();
-              lastPodClickAtRef.current = Date.now();
-              void selectPod(p);
-            },
-          }}
-        >
-          {tooltipPodId === p.id ? (
-            <Tooltip
-              direction="right"
-              offset={tooltipOffsetForPod(p)}
-              opacity={tooltipVisible ? 1 : 0}
-              permanent
-              interactive
-              className={tooltipVisible ? "pod-tooltip pod-tooltip--open" : "pod-tooltip pod-tooltip--closing"}
+      {pods.map((p) => {
+        const isPin = shouldUsePinAtZoom(markerRadiusMeters, p.latitude, zoomLevel, MARKER_MIN_VISIBLE_RADIUS_PX);
+        const tooltip = tooltipPodId === p.id ? (
+          <Tooltip
+            direction="right"
+            offset={tooltipOffsetForPod(p, isPin)}
+            opacity={tooltipVisible ? 1 : 0}
+            permanent
+            interactive
+            className={tooltipVisible ? "pod-tooltip pod-tooltip--open" : "pod-tooltip pod-tooltip--closing"}
+          >
+            <PodTooltipContent
+              pod={p}
+              selectedPodData={selectedPodData}
+              selectedPodDataLoading={selectedPodDataLoading}
+              podDataCountById={podDataCountById}
+              onViewFullData={handleViewFullData}
+            />
+          </Tooltip>
+        ) : null;
+
+        if (isPin) {
+          return (
+            <Marker
+              key={p.id}
+              position={[p.latitude, p.longitude]}
+              icon={pinIcon}
+              eventHandlers={{
+                click: (e: any) => handlePodClick(p, e),
+              }}
             >
-              <div>
-                <div>
-                  <strong>{p.nickname || p.id}</strong>
-                </div>
-                <div>Visibility: {p.visibility}</div>
-                <div>Last updated: {formatDate(p.lastUpdated)}</div>
-                <div>
-                  Data points:{" "}
-                  {podDataCountById[p.id] !== undefined
-                    ? podDataCountById[p.id]
-                    : selectedPodDataLoading
-                      ? "Loading…"
-                      : (selectedPodData?.length ?? "—")}
-                </div>
-                <button
-                  className="btn primary-btn"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    navigate(`/pod/${p.id}`);
-                  }}
-                  style={{ marginTop: "8px", marginBottom: "0", padding: "8px 16px", fontSize: "0.875rem", width: "100%" }}
-                >
-                  View Full Data
-                </button>
-              </div>
-            </Tooltip>
-          ) : null}
-        </Circle>
-      ))}
+              {tooltip}
+            </Marker>
+          );
+        }
+
+        return (
+          <Circle
+            key={p.id}
+            center={[p.latitude, p.longitude]}
+            radius={markerRadiusMeters}
+            pathOptions={{ color: "red", weight: 2, fillOpacity: 0.5 }}
+            eventHandlers={{
+              click: (e: any) => handlePodClick(p, e),
+            }}
+          >
+            {tooltip}
+          </Circle>
+        );
+      })}
     </>
   );
 }
-
-
