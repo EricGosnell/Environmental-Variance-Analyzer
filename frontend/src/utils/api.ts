@@ -122,9 +122,15 @@ function triggerApiError(message: string): void {
   }
 }
 
-function maybeTriggerApiError(opts: RequestOptions, message: string): void {
+function formatDebugErrorMessage(opts: RequestOptions, message: string, status?: number, reason?: string): string {
+  const statusPart = typeof status === "number" ? ` status=${status}` : "";
+  const reasonPart = reason ? ` reason=${reason}` : "";
+  return `${message} [debug: ${opts.method} ${opts.path}${statusPart}${reasonPart}]`;
+}
+
+function maybeTriggerApiError(opts: RequestOptions, message: string, status?: number, reason?: string): void {
   if (opts.suppressGlobalError) return;
-  triggerApiError(message);
+  triggerApiError(formatDebugErrorMessage(opts, message, status, reason));
 }
 
 // ----------------------------
@@ -235,31 +241,35 @@ async function request<T>(opts: RequestOptions): Promise<T> {
   try {
     return await rawRequest<T>(opts);
   } catch (err) {
+    if ((err as any)?.name === "AbortError") {
+      throw err;
+    }
+
     if (!opts.auth) {
       if (err instanceof ApiError) {
-        if (err.status !== 400) maybeTriggerApiError(opts, err.message);
+        if (err.status !== 400) maybeTriggerApiError(opts, err.message, err.status, "no_auth_route");
       } else {
-        maybeTriggerApiError(opts, "Network request failed. Please try again.");
+        maybeTriggerApiError(opts, "Network request failed. Please try again.", undefined, "network_error");
       }
       throw err;
     }
     if (!(err instanceof ApiError)) {
-      maybeTriggerApiError(opts, "Network request failed. Please try again.");
+      maybeTriggerApiError(opts, "Network request failed. Please try again.", undefined, "network_error");
       throw err;
     }
     if (err.status !== 401) {
-      if (err.status !== 400) maybeTriggerApiError(opts, err.message);
+      if (err.status !== 400) maybeTriggerApiError(opts, err.message, err.status, "auth_route_non_401");
       throw err;
     }
     if (opts.path.startsWith("/auth/refresh")) {
-      maybeTriggerApiError(opts, err.message);
+      maybeTriggerApiError(opts, err.message, err.status, "refresh_endpoint_401");
       throw err;
     }
 
     const refreshToken = getRefreshToken();
     if (!refreshToken) {
       triggerAuthLost();
-      maybeTriggerApiError(opts, "Your session has expired. Please log in again.");
+      maybeTriggerApiError(opts, "Your session has expired. Please log in again.", err.status, "missing_refresh_token");
       throw err;
     }
 
@@ -282,9 +292,9 @@ async function request<T>(opts: RequestOptions): Promise<T> {
     } catch (refreshErr) {
       triggerAuthLost();
       if (refreshErr instanceof ApiError) {
-        maybeTriggerApiError(opts, refreshErr.message);
+        maybeTriggerApiError(opts, refreshErr.message, refreshErr.status, "refresh_failed");
       } else {
-        maybeTriggerApiError(opts, "Network request failed. Please try again.");
+        maybeTriggerApiError(opts, "Network request failed. Please try again.", undefined, "refresh_network_error");
       }
       throw refreshErr;
     }
@@ -513,7 +523,7 @@ export async function getPodLocations(
     method: "GET",
     path: "/pods/locations",
     query: params,
-    auth: true,
+    auth: false,
     signal,
   });
 }

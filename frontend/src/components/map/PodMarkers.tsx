@@ -72,12 +72,6 @@ export default function PodMarkers() {
   const [tooltipVisible, setTooltipVisible] = useState(false);
 
   async function fetchPods(map: MapLike) {
-    const token = localStorage.getItem("eva.accessToken");
-    if (!token) {
-      setPods([]);
-      return;
-    }
-
     abortRef.current?.abort();
     const ac = new AbortController();
     abortRef.current = ac;
@@ -178,12 +172,6 @@ export default function PodMarkers() {
   }
 
   async function selectPod(p: PodLocation) {
-    const token = localStorage.getItem("eva.accessToken");
-    if (!token) {
-      closeTooltip();
-      return;
-    }
-
     // If a close animation is in progress, cancel it so we can switch immediately.
     if (closeTooltipTimeoutRef.current !== null) {
       window.clearTimeout(closeTooltipTimeoutRef.current);
@@ -282,4 +270,3 @@ export default function PodMarkers() {
     </>
   );
 }
-
