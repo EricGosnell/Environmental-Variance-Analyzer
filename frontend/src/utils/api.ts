@@ -89,6 +89,7 @@ export function clearTokens(): void {
 // ----------------------------
 
 let authLostHandler: (() => void) | null = null;
+let apiErrorHandler: ((message: string) => void) | null = null;
 
 /**
  * Register a single global handler to run when the API layer determines the user is no longer authenticated
@@ -100,6 +101,10 @@ export function setAuthLostHandler(handler: (() => void) | null): void {
   authLostHandler = handler;
 }
 
+export function setApiErrorHandler(handler: ((message: string) => void) | null): void {
+  apiErrorHandler = handler;
+}
+
 function triggerAuthLost(): void {
   clearTokens();
   try {
@@ -107,6 +112,19 @@ function triggerAuthLost(): void {
   } catch {
     // avoid secondary crashes during navigation
   }
+}
+
+function triggerApiError(message: string): void {
+  try {
+    apiErrorHandler?.(message);
+  } catch {
+    // avoid secondary crashes during error display
+  }
+}
+
+function maybeTriggerApiError(opts: RequestOptions, message: string): void {
+  if (opts.suppressGlobalError) return;
+  triggerApiError(message);
 }
 
 // ----------------------------
@@ -132,6 +150,7 @@ type RequestOptions = {
   body?: unknown;
   auth?: boolean; // attach Authorization header, auto-refresh on 401 if possible
   signal?: AbortSignal;
+  suppressGlobalError?: boolean;
 };
 
 function buildUrl(path: string, query?: RequestOptions["query"]): string {
@@ -216,14 +235,31 @@ async function request<T>(opts: RequestOptions): Promise<T> {
   try {
     return await rawRequest<T>(opts);
   } catch (err) {
-    if (!opts.auth) throw err;
-    if (!(err instanceof ApiError)) throw err;
-    if (err.status !== 401) throw err;
-    if (opts.path.startsWith("/auth/refresh")) throw err;
+    if (!opts.auth) {
+      if (err instanceof ApiError) {
+        if (err.status !== 400) maybeTriggerApiError(opts, err.message);
+      } else {
+        maybeTriggerApiError(opts, "Network request failed. Please try again.");
+      }
+      throw err;
+    }
+    if (!(err instanceof ApiError)) {
+      maybeTriggerApiError(opts, "Network request failed. Please try again.");
+      throw err;
+    }
+    if (err.status !== 401) {
+      if (err.status !== 400) maybeTriggerApiError(opts, err.message);
+      throw err;
+    }
+    if (opts.path.startsWith("/auth/refresh")) {
+      maybeTriggerApiError(opts, err.message);
+      throw err;
+    }
 
     const refreshToken = getRefreshToken();
     if (!refreshToken) {
       triggerAuthLost();
+      maybeTriggerApiError(opts, err.message);
       throw err;
     }
 
@@ -245,6 +281,11 @@ async function request<T>(opts: RequestOptions): Promise<T> {
       return await rawRequest<T>(opts);
     } catch (refreshErr) {
       triggerAuthLost();
+      if (refreshErr instanceof ApiError) {
+        maybeTriggerApiError(opts, refreshErr.message);
+      } else {
+        maybeTriggerApiError(opts, "Network request failed. Please try again.");
+      }
       throw refreshErr;
     }
   }
@@ -331,6 +372,16 @@ export async function authResetPassword(
 
 export async function getMe(signal?: AbortSignal): Promise<UserResponse> {
   return await request<UserResponse>({ method: "GET", path: "/users/me", auth: true, signal });
+}
+
+export async function getMeSilent(signal?: AbortSignal): Promise<UserResponse> {
+  return await request<UserResponse>({
+    method: "GET",
+    path: "/users/me",
+    auth: true,
+    signal,
+    suppressGlobalError: true,
+  });
 }
 
 export async function getUserById(id: string, signal?: AbortSignal): Promise<UserResponse> {
@@ -498,4 +549,3 @@ export async function deletePodData(payload: DeletePodDataRequest, signal?: Abor
     signal,
   });
 }
-

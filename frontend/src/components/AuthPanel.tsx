@@ -32,12 +32,6 @@ export default function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
     setLoading(false);
   }
 
-  function formatError(err: unknown): string {
-    if (err instanceof ApiError) return err.message;
-    if (err instanceof Error) return err.message;
-    return "Request failed. Please try again.";
-  }
-
   async function submitLogin(e: React.FormEvent) {
     e.preventDefault();
     if (loading) return;
@@ -47,7 +41,11 @@ export default function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
       const res = await authLogin({ email: loginEmail, password: loginPassword });
       onAuthSuccess(res.user);
     } catch (err) {
-      setError(formatError(err));
+      if (err instanceof ApiError && err.status === 400) {
+        setError(err.message);
+      } else {
+        setError(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -71,7 +69,11 @@ export default function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
       });
       onAuthSuccess(res.user);
     } catch (err) {
-      setError(formatError(err));
+      if (err instanceof ApiError && err.status === 400) {
+        setError(err.message);
+      } else {
+        setError(null);
+      }
     } finally {
       setLoading(false);
     }
@@ -227,5 +229,4 @@ export default function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
     </div>
   );
 }
-
 

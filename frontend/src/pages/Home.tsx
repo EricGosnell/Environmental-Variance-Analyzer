@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import MapView from "../components/Map.tsx";
 
-import { getMe } from "../utils/api.ts";
+import { getMe, getMeSilent } from "../utils/api.ts";
 import type { User } from "../utils/apiTypes.ts";
 import AuthPanel from "../components/AuthPanel.tsx";
 
@@ -23,7 +23,7 @@ export default function Home() {
 
         (async () => {
             try {
-                const profile = await getMe(ac.signal);
+                const profile = await getMeSilent(ac.signal);
                 setUser(profile.user);
                 setIsAuthenticated(true);
             } catch {
