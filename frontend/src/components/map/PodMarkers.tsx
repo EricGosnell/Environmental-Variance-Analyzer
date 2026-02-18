@@ -266,6 +266,7 @@ export default function PodMarkers() {
         const isPin = shouldUsePinAtZoom(markerRadiusMeters, p.latitude, zoomLevel, MARKER_MIN_VISIBLE_RADIUS_PX);
         const tooltip = tooltipPodId === p.id ? (
           <Tooltip
+            key={`tooltip-${p.id}-${zoomLevel}`}
             direction="right"
             offset={tooltipOffsetForPod(p, isPin)}
             opacity={tooltipVisible ? 1 : 0}
