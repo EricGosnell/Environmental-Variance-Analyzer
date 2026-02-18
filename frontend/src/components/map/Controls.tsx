@@ -199,6 +199,8 @@ function UserLocationControl() {
 
         if (navigator.permissions?.query) {
           try {
+            // Some TS DOM lib versions do not type "geolocation" on PermissionName consistently.
+            // We cast here and fall back to getCurrentPosition error handling if query is unsupported.
             const permission = await navigator.permissions.query({ name: "geolocation" as PermissionName });
             if (permission.state === "denied") {
               showError("Location permission is blocked for this site. Enable it in browser settings and retry.");
@@ -260,7 +262,7 @@ function UserLocationControl() {
           },
           {
             enableHighAccuracy: true,
-            maximumAge: 60000,
+            maximumAge: 30000,
             timeout: 10000,
           }
         );

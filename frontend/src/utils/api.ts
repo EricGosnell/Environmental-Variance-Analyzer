@@ -259,7 +259,7 @@ async function request<T>(opts: RequestOptions): Promise<T> {
     const refreshToken = getRefreshToken();
     if (!refreshToken) {
       triggerAuthLost();
-      maybeTriggerApiError(opts, err.message);
+      maybeTriggerApiError(opts, "Your session has expired. Please log in again.");
       throw err;
     }
 
