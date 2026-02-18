@@ -1,3 +1,6 @@
+export const MARKER_BASE_RADIUS_METERS = 50;
+export const MARKER_MIN_VISIBLE_RADIUS_PX = 8;
+
 export function metersPerPixel(latitude: number, zoom: number): number {
   // Web Mercator approximate meters-per-pixel at given latitude.
   return (156543.03392 * Math.cos((latitude * Math.PI) / 180)) / Math.pow(2, zoom);

@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useMap } from "react-leaflet";
-import { shouldUsePinAtZoom } from "./podMarkerUtils"
+import { MARKER_BASE_RADIUS_METERS, MARKER_MIN_VISIBLE_RADIUS_PX, shouldUsePinAtZoom } from "./podMarkerUtils";
 
 import * as L from "leaflet";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -53,8 +53,6 @@ function Geocoder() {
   return null;
 }
 
-const MARKER_BASE_RADIUS_METERS = 50;
-const MARKER_MIN_VISIBLE_RADIUS_PX = 8;
 function LegendControl() {
   const map = useMap() as any;
 

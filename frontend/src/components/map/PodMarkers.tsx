@@ -9,6 +9,8 @@ import type { PodLocation } from "../../utils/apiTypes";
 import {
   circleTooltipOffset,
   formatPodLastUpdated,
+  MARKER_BASE_RADIUS_METERS,
+  MARKER_MIN_VISIBLE_RADIUS_PX,
   metersPerPixel,
   pinTooltipOffset,
   radiusFromViewportMeters,
@@ -20,8 +22,6 @@ const EVENT_SEARCH_AREA = "searcharea";
 const MAP_CLICK_SUPPRESS_MS = 250;
 const TOOLTIP_CLOSE_CLEAR_DELAY_MS = 150;
 
-const MARKER_BASE_RADIUS_METERS = 50;
-const MARKER_MIN_VISIBLE_RADIUS_PX = 8;
 const PIN_ICON_WIDTH_PX = 24;
 const PIN_ICON_HEIGHT_PX = 24;
 
