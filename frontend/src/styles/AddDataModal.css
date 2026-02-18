@@ -1,0 +1,109 @@
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 2000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: rgba(20, 24, 26, 0.45);
+    backdrop-filter: blur(6px);
+    -webkit-backdrop-filter: blur(6px);
+}
+
+.modal {
+    width: min(720px, 100%);
+    max-height: 90vh;
+    overflow-y: auto;
+    background: var(--tooltip-background);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 16px;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.modal-header h2 {
+    margin: 0 0 12px 0;
+}
+
+.modal-body {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.form-row label {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.form-row label.checkbox-row {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+}
+
+.form-row input[type="text"],
+.form-row input[type="file"],
+.form-row select,
+.form-row textarea {
+    width: 100%;
+    box-sizing: border-box;
+    border-radius: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: rgba(0, 0, 0, 0.15);
+    color: #fff;
+    padding: 10px;
+}
+
+.modal-footer {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.modal-footer .btn {
+    width: auto;
+    margin-bottom: 0;
+}
+
+.upload-location-map {
+    width: 100%;
+    height: 280px;
+    position: relative;
+}
+
+.modal-map-locate-control {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    z-index: 1200;
+    background: var(--tooltip-background);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.modal-map-locate-control .user-location-button {
+    width: 40px;
+    height: 40px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.modal-map-locate-control .user-location-button[data-locating="true"] {
+    opacity: 0.7;
+}
+
+.modal-map-center-pin {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    z-index: 500;
+}

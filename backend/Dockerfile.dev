@@ -9,6 +9,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY package*.json ./
 RUN npm install
 RUN npm install -g nodemon
+RUN npm install -
 
 COPY . .
 

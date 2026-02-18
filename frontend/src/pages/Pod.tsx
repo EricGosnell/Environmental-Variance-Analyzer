@@ -3,8 +3,9 @@ import { useParams } from "react-router-dom";
 import { FiUpload } from "react-icons/fi";
 
 import "../styles/Pod.css";
+import AddDataModal from "../components/AddDataModal";
 import { getPodData } from "../utils/api";
-import type { PodDataEntry } from "../utils/apiTypes";
+import type { PodDataEntry, UserPod } from "../utils/apiTypes";
 
 function titleCaseSensor(value: string): string {
   const raw = String(value ?? "").trim();
@@ -62,6 +63,7 @@ export default function Pod() {
   const [selectedSensor, setSelectedSensor] = useState<string>("");
   const [selectedRange, setSelectedRange] = useState<string>("Last 7 Days");
   const [selectedDay, setSelectedDay] = useState<string>("");
+  const [showAddDataModal, setShowAddDataModal] = useState(false);
 
   useEffect(() => {
     if (!podId) {
@@ -150,6 +152,17 @@ export default function Pod() {
   // Latest cards are derived at render time from whatever sensor types exist (no hardcoding).
 
   const locationText = formatLocation(podMeta?.latitude, podMeta?.longitude);
+  const currentPodOption: UserPod[] = podMeta
+    ? [
+        {
+          id: podMeta.id,
+          name: podMeta.nickname,
+          visibility: podMeta.visibility === "public",
+          lat: String(podMeta.latitude),
+          long: String(podMeta.longitude),
+        },
+      ]
+    : [];
 
   if (loading) return <div className="pod-loading">Loading…</div>;
   if (error) return <div className="pod-error">{error}</div>;
@@ -167,9 +180,16 @@ export default function Pod() {
           <div className="pod-meta">
             <div>Last updated: {lastUpdatedDate ? formatDateMDY(lastUpdatedDate) : "—"}</div>
           </div>
-          <button className="pod-action" type="button" title="Upload/Export (placeholder)">
+          <button className="pod-action" type="button" title="Upload data" onClick={() => setShowAddDataModal(true)}>
             <FiUpload size={28} />
           </button>
+          <AddDataModal
+            show={showAddDataModal}
+            onCancel={() => setShowAddDataModal(false)}
+            pods={currentPodOption}
+            initialPodId={podMeta?.id}
+            onUpload={() => setShowAddDataModal(false)}
+          />
         </div>
       </section>
 
@@ -286,5 +306,4 @@ export default function Pod() {
     </div>
   );
 }
-
 

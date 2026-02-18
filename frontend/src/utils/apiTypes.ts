@@ -15,7 +15,7 @@ export type MessageResponse = { message: string };
 // ----------------------------
 
 export type UserPod = {
-  id: number;
+  id: number | string;
   name: string;
   visibility: boolean;
   lat: string;
@@ -151,5 +151,4 @@ export type UploadPodDataResponse = MessageResponse & { podDataId: string };
 
 export type DeletePodDataRequest = { podDataId: string };
 export type DeletePodDataResponse = MessageResponse & { podDataId: string };
-
 

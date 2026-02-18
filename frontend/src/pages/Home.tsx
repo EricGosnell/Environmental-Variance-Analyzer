@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import MapView from "../components/Map.tsx";
+import AddDataModal from "../components/AddDataModal.tsx";
 
 import { getMe } from "../utils/api.ts";
 import type { User } from "../utils/apiTypes.ts";
@@ -10,6 +11,8 @@ import "../styles/Home.css";
 export default function Home() {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
     const [user, setUser] = useState<User | null>(null);
+    const [showAddDataModal, setShowAddDataModal] = useState(false);
+    const ownedPodsCount = user?.pods?.length ?? 0;
 
     useEffect(() => {
         const ac = new AbortController();
@@ -43,13 +46,25 @@ export default function Home() {
                         {(user.pods?.length ?? 0) === 0 && (
                             <div className="warning-message"><p>You currently have no pods registered. Register a pod to upload data.</p></div>
                         )}
-                        <button className="btn primary-btn" disabled={(user.pods?.length ?? 0) === 0}>Upload EVA Data</button>
+                        <button
+                            className="btn primary-btn"
+                            disabled={ownedPodsCount === 0}
+                            onClick={() => setShowAddDataModal(true)}
+                        >
+                            Upload EVA Data
+                        </button>
                         <br />
                         <button className="btn secondary-btn">Manage EVA Pods</button>
 
                         <div className="filters-container">
                             <p>Filters</p>
                         </div>
+                        <AddDataModal
+                            show={showAddDataModal}
+                            onCancel={() => setShowAddDataModal(false)}
+                            pods={user.pods ?? []}
+                            onUpload={() => setShowAddDataModal(false)}
+                        />
                     </>
                 ) : null}
 

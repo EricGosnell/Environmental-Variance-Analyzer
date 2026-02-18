@@ -918,14 +918,18 @@ Request Parameters:
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | podId | string | Yes | The pod ID |
-| data | file | Yes | CSV file containing the pod data |
+| data | file | Yes | NDJSON file containing the pod data |
+| latitude | number | No | Optional latitude for the pod data upload |
+| longitude | number | No | Optional longitude for the pod data upload |
 | notes | string | No | Optional notes for the pod data upload |
 
 Request Body:
 ```json
 {
   "podId": "123", // Required: The pod ID
-  "data": "<csv_file>", // Required: CSV file with the pod data
+  "data": "<ndjson_file>", // Required: NDJSON file with the pod data
+  "latitude": 40.0150, // Optional: Latitude for this upload
+  "longitude": -105.2705, // Optional: Longitude for this upload
   "notes": "Optional notes" // Optional: Notes for the pod data upload
 }
 ```
