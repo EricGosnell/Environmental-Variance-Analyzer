@@ -1,4 +1,5 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
 
 type GlobalErrorContextValue = {
   message: string | null;
@@ -8,7 +9,7 @@ type GlobalErrorContextValue = {
 
 const GlobalErrorContext = createContext<GlobalErrorContextValue | undefined>(undefined);
 
-export function GlobalErrorProvider({ children }: { children: React.ReactNode }) {
+export function GlobalErrorProvider({ children }: { children: ReactNode }) {
   const [message, setMessage] = useState<string | null>(null);
   const timerRef = useRef<number | null>(null);
 

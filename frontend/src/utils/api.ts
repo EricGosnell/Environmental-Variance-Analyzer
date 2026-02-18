@@ -122,15 +122,20 @@ function triggerApiError(message: string): void {
   }
 }
 
-function formatDebugErrorMessage(opts: RequestOptions, message: string, status?: number, reason?: string): string {
-  const statusPart = typeof status === "number" ? ` status=${status}` : "";
-  const reasonPart = reason ? ` reason=${reason}` : "";
-  return `${message} [debug: ${opts.method} ${opts.path}${statusPart}${reasonPart}]`;
+function shouldSuppressGlobalError(opts: RequestOptions, status?: number): boolean {
+  if (!opts.suppressGlobalError) return false;
+  if (opts.suppressGlobalError === true) return true;
+  if (typeof status !== "number") return false;
+  return opts.suppressGlobalError.includes(status);
 }
 
 function maybeTriggerApiError(opts: RequestOptions, message: string, status?: number, reason?: string): void {
-  if (opts.suppressGlobalError) return;
-  triggerApiError(formatDebugErrorMessage(opts, message, status, reason));
+  if (shouldSuppressGlobalError(opts, status)) return;
+  if (reason) {
+    const statusPart = typeof status === "number" ? ` status=${status}` : "";
+    console.error(`[api-error] ${opts.method} ${opts.path}${statusPart} reason=${reason}`);
+  }
+  triggerApiError(message);
 }
 
 // ----------------------------
@@ -156,7 +161,7 @@ type RequestOptions = {
   body?: unknown;
   auth?: boolean; // attach Authorization header, auto-refresh on 401 if possible
   signal?: AbortSignal;
-  suppressGlobalError?: boolean;
+  suppressGlobalError?: boolean | number[];
 };
 
 function buildUrl(path: string, query?: RequestOptions["query"]): string {
@@ -262,7 +267,7 @@ async function request<T>(opts: RequestOptions): Promise<T> {
       throw err;
     }
     if (opts.path.startsWith("/auth/refresh")) {
-      maybeTriggerApiError(opts, err.message, err.status, "refresh_endpoint_401");
+      maybeTriggerApiError(opts, "Your session has expired. Please log in again.", err.status, "refresh_endpoint_401");
       throw err;
     }
 
@@ -390,7 +395,7 @@ export async function getMeSilent(signal?: AbortSignal): Promise<UserResponse> {
     path: "/users/me",
     auth: true,
     signal,
-    suppressGlobalError: true,
+    suppressGlobalError: [401, 403],
   });
 }
 
