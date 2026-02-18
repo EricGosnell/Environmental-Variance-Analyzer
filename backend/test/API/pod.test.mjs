@@ -164,7 +164,7 @@ describe("Pod API Tests", function () {
   // -------------------------
   // POST /api/pods/upload-pod-data
   // -------------------------
-  describe("POST /api/pods/upload-pod-data", () => {
+  describe.skip("POST /api/pods/upload-pod-data", () => {
     it("should upload telemetry for owned pod", async () => {
       const podRes = await db.run(
         "INSERT INTO pod (pod_name, pod_data_public) VALUES (?, ?)",

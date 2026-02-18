@@ -90,6 +90,29 @@ const getSensorRowsByPodDataId = async (db, podDataId) => {
     );
 };
 
+const getSensorRowsByPodDataIds = async (db, podDataIds) => {
+    if (!Array.isArray(podDataIds) || podDataIds.length === 0) return [];
+
+    const placeholders = podDataIds.map(() => "?").join(", ");
+    return db.all(
+        `
+        SELECT
+            sensor_data_id,
+            pod_data_id,
+            sensor_type,
+            reading_value,
+            reading_units,
+            reading_timestamp,
+            raw_data,
+            created_at
+        FROM sensor_data
+        WHERE pod_data_id IN (${placeholders})
+        ORDER BY datetime(reading_timestamp) DESC
+        `,
+        podDataIds
+    );
+};
+
 const insertSensorData = async (
     db,
     podDataId,
@@ -121,5 +144,6 @@ module.exports = {
 
     // sensor_data
     getSensorRowsByPodDataId,
+    getSensorRowsByPodDataIds,
     insertSensorData,
 };
