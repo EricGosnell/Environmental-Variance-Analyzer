@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import MapView from "../components/Map.tsx";
 import AddDataModal from "../components/AddDataModal.tsx";
 
-import { getMe } from "../utils/api.ts";
+import { getMe, uploadPodData } from "../utils/api.ts";
 import type { User } from "../utils/apiTypes.ts";
 import AuthPanel from "../components/AuthPanel.tsx";
 
@@ -13,6 +13,32 @@ export default function Home() {
     const [user, setUser] = useState<User | null>(null);
     const [showAddDataModal, setShowAddDataModal] = useState(false);
     const ownedPodsCount = user?.pods?.length ?? 0;
+
+    const handleModalUpload = async (payload: {
+        file: File | null;
+        podId: string;
+        latitude?: number;
+        longitude?: number;
+        podDataNotes: string;
+    }) => {
+        if (!payload.file) {
+            alert("Please select an NDJSON file before uploading.");
+            return;
+        }
+
+        try {
+            await uploadPodData({
+                podId: payload.podId,
+                data: payload.file,
+                notes: payload.podDataNotes || undefined,
+                latitude: payload.latitude,
+                longitude: payload.longitude,
+            });
+            setShowAddDataModal(false);
+        } catch (e: any) {
+            alert(e?.message ? String(e.message) : "Failed to upload data.");
+        }
+    };
 
     useEffect(() => {
         const ac = new AbortController();
@@ -63,7 +89,7 @@ export default function Home() {
                             show={showAddDataModal}
                             onCancel={() => setShowAddDataModal(false)}
                             pods={user.pods ?? []}
-                            onUpload={() => setShowAddDataModal(false)}
+                            onUpload={handleModalUpload}
                         />
                     </>
                 ) : null}

@@ -4,7 +4,7 @@ import { FiUpload } from "react-icons/fi";
 
 import "../styles/Pod.css";
 import AddDataModal from "../components/AddDataModal";
-import { getPodData } from "../utils/api";
+import { getPodData, uploadPodData } from "../utils/api";
 import type { PodDataEntry, UserPod } from "../utils/apiTypes";
 
 function titleCaseSensor(value: string): string {
@@ -64,6 +64,32 @@ export default function Pod() {
   const [selectedRange, setSelectedRange] = useState<string>("Last 7 Days");
   const [selectedDay, setSelectedDay] = useState<string>("");
   const [showAddDataModal, setShowAddDataModal] = useState(false);
+
+  const handleModalUpload = async (payload: {
+    file: File | null;
+    podId: string;
+    latitude?: number;
+    longitude?: number;
+    podDataNotes: string;
+  }) => {
+    if (!payload.file) {
+      alert("Please select an NDJSON file before uploading.");
+      return;
+    }
+
+    try {
+      await uploadPodData({
+        podId: payload.podId,
+        data: payload.file,
+        notes: payload.podDataNotes || undefined,
+        latitude: payload.latitude,
+        longitude: payload.longitude,
+      });
+      setShowAddDataModal(false);
+    } catch (e: any) {
+      alert(e?.message ? String(e.message) : "Failed to upload data.");
+    }
+  };
 
   useEffect(() => {
     if (!podId) {
@@ -188,7 +214,7 @@ export default function Pod() {
             onCancel={() => setShowAddDataModal(false)}
             pods={currentPodOption}
             initialPodId={podMeta?.id}
-            onUpload={() => setShowAddDataModal(false)}
+            onUpload={handleModalUpload}
           />
         </div>
       </section>
@@ -306,4 +332,3 @@ export default function Pod() {
     </div>
   );
 }
-

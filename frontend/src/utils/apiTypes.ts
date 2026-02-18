@@ -146,9 +146,14 @@ export type GetPodLocationsRequest = {
   fromDate?: string;
   toDate?: string;
 };
-export type UploadPodDataRequest = { podId: string; data: File; notes?: string };
+export type UploadPodDataRequest = {
+  podId: string;
+  data: File;
+  notes?: string;
+  latitude?: number;
+  longitude?: number;
+};
 export type UploadPodDataResponse = MessageResponse & { podDataId: string };
 
 export type DeletePodDataRequest = { podDataId: string };
 export type DeletePodDataResponse = MessageResponse & { podDataId: string };
-

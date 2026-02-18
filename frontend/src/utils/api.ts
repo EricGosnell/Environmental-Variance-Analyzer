@@ -470,6 +470,12 @@ export async function uploadPodData(payload: UploadPodDataRequest, signal?: Abor
   if (payload.notes !== undefined) {
     formData.append("notes", payload.notes);
   }
+  if (payload.latitude !== undefined) {
+    formData.append("latitude", String(payload.latitude));
+  }
+  if (payload.longitude !== undefined) {
+    formData.append("longitude", String(payload.longitude));
+  }
   return await request<UploadPodDataResponse>({
     method: "POST",
     path: "/pods/upload-pod-data",
@@ -487,4 +493,3 @@ export async function deletePodData(payload: DeletePodDataRequest, signal?: Abor
     signal,
   });
 }
-
