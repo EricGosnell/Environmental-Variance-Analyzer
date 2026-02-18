@@ -12,8 +12,6 @@ const {
   getSensorRowsByPodDataId,
   getPodDataById,
   deletePodDataById,
-  insertPodData,
-  insertSensorData,
 } = require("../util/podQueries");
 
 module.exports = (db) => {
@@ -62,25 +60,6 @@ module.exports = (db) => {
       Math.sin(deltaLat / 2) ** 2 +
       Math.cos(lat1Rad) * Math.cos(lat2Rad) * Math.sin(deltaLon / 2) ** 2;
     return 2 * R * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
-  };
-
-  const normalizeUploadPayload = (input) => {
-    if (input && typeof input === "object" && !Array.isArray(input)) {
-      return input;
-    }
-
-    if (typeof input === "string") {
-      try {
-        const parsed = JSON.parse(input);
-        if (parsed && typeof parsed === "object" && !Array.isArray(parsed)) {
-          return parsed;
-        }
-      } catch {
-        return null;
-      }
-    }
-
-    return null;
   };
 
   // -------------------------
@@ -349,113 +328,12 @@ module.exports = (db) => {
   router.post(
     "/upload-pod-data",
     authenticateToken,
-    sanitizeRequestBody,
-    [
-      body("podId")
-        .isInt({ gt: 0 })
-        .withMessage("podId must be a positive integer"),
-      body("data").exists().withMessage("data is required"),
-      body("notes").optional().isString().isLength({ max: 2048 }),
-    ],
     async (req, res) => {
       try {
-        const errors = validationResult(req);
-        if (!errors.isEmpty()) {
-          return res.status(400).json({
-            error: "Invalid pod data",
-            details: errors.array().map((err) => ({
-              field: err.param,
-              message: err.msg,
-            })),
-          });
-        }
-
-        const userId = req.user.id;
-        const podId = Number(req.body.podId);
-
-        const normalizedData = normalizeUploadPayload(req.body.data);
-        if (!normalizedData) {
-          return res.status(400).json({ error: "Invalid pod data" });
-        }
-
-        const lat = Number(normalizedData.latitude);
-        const lon = Number(normalizedData.longitude);
-
-        if (!Number.isFinite(lat) || !Number.isFinite(lon)) {
-          return res.status(403).json({ error: "Pod location not set" });
-        }
-
-        const pod = await getPodById(db, podId);
-        if (!pod) return res.status(404).json({ error: "Pod not registered" });
-
-        const isAdmin = await getIsAdmin(userId);
-        const owns = await userOwnsPod(db, userId, podId);
-
-        if (!owns && !isAdmin) {
-          return res.status(403).json({ error: "Forbidden" });
-        }
-
-        const insertRes = await insertPodData(db, podId, lat, lon);
-
-        let podDataId = insertRes?.lastID;
-
-        if (!podDataId) {
-          const row = await db.get(
-            `
-                        SELECT pod_data_id AS id
-                        FROM pod_data
-                        WHERE pod_id = ?
-                        ORDER BY datetime(created_at) DESC
-                        LIMIT 1
-                        `,
-            [podId],
-          );
-          podDataId = row?.id;
-        }
-
-        if (!podDataId) {
-          throw new Error("Failed to create pod_data (no lastID)");
-        }
-
-        const sensors = Array.isArray(normalizedData.sensors)
-          ? normalizedData.sensors
-          : [];
-
-        for (const s of sensors) {
-          const sensor_type =
-            typeof s.sensor_type === "string" ? s.sensor_type : null;
-
-          const reading_value =
-            s.reading_value === undefined || s.reading_value === null
-              ? null
-              : Number(s.reading_value);
-
-          const reading_units =
-            typeof s.reading_units === "string" ? s.reading_units : null;
-
-          let raw_data = null;
-          if (s.raw_data !== undefined) {
-            raw_data =
-              typeof s.raw_data === "string"
-                ? s.raw_data
-                : JSON.stringify(s.raw_data);
-          }
-
-          if (!sensor_type) continue;
-
-          await insertSensorData(
-            db,
-            podDataId,
-            sensor_type,
-            Number.isFinite(reading_value) ? reading_value : null,
-            reading_units,
-            raw_data,
-          );
-        }
-
-        return res.status(200).json({
-          podDataId: String(podDataId),
-          message: "Pod data uploaded successfully",
+        // TODO: Implement multipart/form-data NDJSON file parsing and persistence.
+        // This endpoint is intentionally left as a stub because NDJSON ingestion is not assigned yet.
+        return res.status(501).json({
+          error: "Not implemented: NDJSON pod data upload parsing is pending",
         });
       } catch (error) {
         return res.status(500).json({
