@@ -147,6 +147,21 @@
     opacity: 0.9;
 }
 
+.eva-legend-swatch-pin .pod-pin-marker {
+    width: 12px;
+    height: 12px;
+}
+
+.eva-legend-swatch-pin {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 12px;
+    height: 12px;
+    background: transparent;
+    border: none;
+}
+
 .pod-pin-icon {
     background: transparent;
     border: none;

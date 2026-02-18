@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useMap } from "react-leaflet";
+import { shouldUsePinAtZoom } from "./podMarkerUtils"
 
 import * as L from "leaflet";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
@@ -52,27 +53,55 @@ function Geocoder() {
   return null;
 }
 
+const MARKER_BASE_RADIUS_METERS = 50;
+const MARKER_MIN_VISIBLE_RADIUS_PX = 8;
 function LegendControl() {
   const map = useMap() as any;
 
   useEffect(() => {
     const control: any = (L as any).control({ position: "topright" });
+
+    let swatch: HTMLElement | null = null;
+    function updateSwatch() {
+      if (!swatch) return;
+      const center = map.getCenter();
+      const zoom = map.getZoom();
+      const isPin = shouldUsePinAtZoom(MARKER_BASE_RADIUS_METERS, center.lat, zoom, MARKER_MIN_VISIBLE_RADIUS_PX);
+
+      if (isPin) {
+        swatch.className = "pod-pin-icon eva-legend-swatch-pin";
+        swatch.innerHTML = '<span class="pod-pin-marker" aria-hidden="true"></span>';
+      } else {
+        swatch.className = "eva-legend-swatch";
+        swatch.innerHTML = "";
+      }
+    }
+
     control.onAdd = () => {
       // Reuse existing Leaflet control styling from Map.css by using leaflet-control-layers classes.
       const div = (L as any).DomUtil.create("div", "leaflet-control-layers leaflet-control eva-legend");
-      div.innerHTML = `
-        <div class="eva-legend-row">
-          <span class="eva-legend-swatch" aria-hidden="true"></span>
-          <span>EVA Pod</span>
-        </div>
-      `;
+      div.innerHTML = ``;
+      swatch = (L as any).DomUtil.create("span", "eva-legend-swatch");
+
+      const row = (L as any).DomUtil.create("div", "eva-legend-row", div);
+      row.appendChild(swatch);
+
+      const label = (L as any).DomUtil.create("span", "", row);
+      label.textContent = "EVA Pod";
+
       (L as any).DomEvent.disableClickPropagation(div);
       (L as any).DomEvent.disableScrollPropagation(div);
+
+      updateSwatch();
+
       return div;
     };
+
     control.addTo(map);
+    map.on("zoomend", updateSwatch);
 
     return () => {
+      map.off("zoomend", updateSwatch);
       try {
         control?.remove?.();
       } catch {
