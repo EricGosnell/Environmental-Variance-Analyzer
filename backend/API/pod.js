@@ -292,16 +292,17 @@ module.exports = (db) => {
                     const sensors = sensorsByPodDataId.get(pd.pod_data_id) || [];
 
                     for (const s of sensors) {
+                        const readingTimestampIso = new Date(s.reading_timestamp).toISOString();
                         data.push({
-                            id: String(pd.pod_data_id),
-                            timestamp: new Date(pd.created_at).toISOString(),
+                            id: String(s.sensor_data_id),
+                            timestamp: readingTimestampIso,
                             data: {
                                 sensor_data_id: String(s.sensor_data_id),
                                 pod_data_id: String(pd.pod_data_id),
                                 sensor_type: s.sensor_type,
                                 reading_value: s.reading_value,
                                 reading_units: s.reading_units,
-                                reading_timestamp: new Date(s.reading_timestamp).toISOString(),
+                                reading_timestamp: readingTimestampIso,
                                 raw_data: s.raw_data ? safeJsonParse(s.raw_data) : null,
                                 created_at: new Date(s.created_at).toISOString(),
                             },
@@ -309,6 +310,7 @@ module.exports = (db) => {
                         });
                     }
                 }
+                data.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
 
                 return res.status(200).json({
                     id: String(pod.pod_id),
