@@ -5,3 +5,5 @@ Backend/package-lock.json
 test_files/
 backend/database/db.sqlite
 backend/.env
+backend/database/db.sqlite-journal
+.DS_Store

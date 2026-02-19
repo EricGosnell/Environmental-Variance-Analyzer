@@ -14,6 +14,10 @@
   --disabled-button: #71ca9f88;
   --warning-red: #FF7665;
   --tooltip-background: hsl(156, 5%, 20%, 0.8);
+  --global-error-banner-bg: #7a1c1c;
+  --global-error-banner-border: rgba(255, 255, 255, 0.18);
+  --global-error-banner-hover: rgba(255, 255, 255, 0.14);
+  --global-error-banner-close-border: rgba(255, 255, 255, 0.35);
 }
 
 a {
@@ -63,4 +67,36 @@ body {
   font-size: 1rem;
   font-weight: 500;
   /* margin-bottom: 16px; */
+}
+
+.global-error-banner {
+  position: sticky;
+  top: 0;
+  z-index: 5000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 16px;
+  background: var(--global-error-banner-bg);
+  border-bottom: 1px solid var(--global-error-banner-border);
+}
+
+.global-error-banner-message {
+  color: #fff;
+  font-size: 0.95rem;
+}
+
+.global-error-banner-close {
+  border: 1px solid var(--global-error-banner-close-border);
+  border-radius: 8px;
+  background: transparent;
+  color: #fff;
+  font-size: 0.85rem;
+  padding: 6px 10px;
+  cursor: pointer;
+}
+
+.global-error-banner-close:hover {
+  background: var(--global-error-banner-hover);
 }
