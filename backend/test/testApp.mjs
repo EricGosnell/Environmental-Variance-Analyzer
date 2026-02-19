@@ -5,6 +5,7 @@ import { promisify } from "util";
 
 import authRoutes from "../API/auth.js";
 import podRoutes from "../API/pod.js";
+import userRoutes from "../API/user.js";
 
 function promisifyDb(database) {
   const runOriginal = database.run.bind(database);
@@ -107,6 +108,15 @@ export async function createTestDb() {
     );
   `);
 
+  // ----- PENDING EMAIL CHANGES -----
+  await db.run(`
+    CREATE TABLE pending_email_changes (
+      user_id INTEGER PRIMARY KEY,
+      new_email TEXT NOT NULL,
+      verification_code TEXT NOT NULL,
+      expires_at TEXT NOT NULL
+    );  
+`);
   return db;
 }
 
@@ -117,7 +127,7 @@ export function makeTestApp(db) {
   // mount what you're testing
   app.use("/api/auth", authRoutes(db));
   app.use("/api/pods", podRoutes(db));
-
+  app.use("/api/user", userRoutes(db));
   return app;
 }
 

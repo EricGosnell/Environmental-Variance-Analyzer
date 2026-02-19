@@ -57,6 +57,14 @@ CREATE TABLE IF NOT EXISTS sensor_data (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Table for pending email changes with verification codes
+CREATE TABLE IF NOT EXISTS pending_email_changes (
+    user_id INTEGER PRIMARY KEY UNIQUE NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    new_email TEXT NOT NULL,
+    verification_code TEXT NOT NULL,
+    expires_at INTEGER NOT NULL
+);
+
 CREATE INDEX IF NOT EXISTS idx_user_contact_user_id ON user_contact(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_pod_user_id ON user_pod(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_pod_pod_id ON user_pod(pod_id);

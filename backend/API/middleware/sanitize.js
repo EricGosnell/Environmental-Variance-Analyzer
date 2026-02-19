@@ -37,7 +37,6 @@ const loginValidation = [
         .withMessage("Password is required"),
 ];
 
-
 const registerValidation = [
     body("username")
         .isLength({ min: MIN_USERNAME_LENGTH, max: MAX_USERNAME_LENGTH })
@@ -57,7 +56,7 @@ const registerValidation = [
         .optional()
         .isEmail()
         .withMessage("Please provide a valid email address")
-        .normalizeEmail()
+        //.normalizeEmail()
         .isLength({ max: MAX_EMAIL_LENGTH })
         .withMessage(`Email must be less than ${MAX_EMAIL_LENGTH} characters`),
 
