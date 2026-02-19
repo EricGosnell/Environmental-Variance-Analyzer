@@ -1,7 +1,6 @@
 // TODO - Implemet
 import request from "supertest";
 import { expect } from "chai";
-import bcrypt from "bcryptjs";
 
 import { makeTestApp, createTestDb } from "../testApp.mjs";
 import jwt from "jsonwebtoken";
