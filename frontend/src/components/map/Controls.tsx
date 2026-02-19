@@ -3,6 +3,7 @@ import { useMap } from "react-leaflet";
 import { MARKER_BASE_RADIUS_METERS, MARKER_MIN_VISIBLE_RADIUS_PX, shouldUsePinAtZoom } from "./podMarkerUtils";
 
 import * as L from "leaflet";
+import { useGlobalError } from "../GlobalErrorContext";
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore - this package ships without types in this repo; we only need the side-effect import to register the control.
 import "leaflet-control-geocoder";
@@ -157,6 +158,7 @@ function UserLocationControl() {
       <line x1="0" y1="12" x2="4" y2="12" stroke="currentColor" stroke-width="2"/>
     </svg>`
   const map = useMap() as any;
+  const { showError } = useGlobalError();
 
   useEffect(() => {
     let userMarker: any = null;
@@ -191,15 +193,51 @@ function UserLocationControl() {
       const button = (L as any).DomUtil.create("button", "user-location-button");
       button.innerHTML = locate_button_icon+"My Location";
 
-      button.addEventListener("click", () => {
-        if (!navigator.geolocation) {
-          alert("Geolocation is not supported by your browser");
+      const setButtonLoading = (loading: boolean) => {
+        button.disabled = loading;
+        button.innerHTML = locate_button_icon + (loading ? "Locating..." : "My Location");
+      };
+
+      const getLocationErrorMessage = (error: GeolocationPositionError): string => {
+        if (error.code === error.PERMISSION_DENIED) {
+          return "Location permission was denied. Enable location access for this site and try again.";
+        }
+        if (error.code === error.POSITION_UNAVAILABLE) {
+          return "Your location is currently unavailable. Check GPS/network and try again.";
+        }
+        if (error.code === error.TIMEOUT) {
+          return "Timed out while getting your location. Please try again.";
+        }
+        return "Unable to retrieve your location right now. Please try again.";
+      };
+
+      button.addEventListener("click", async () => {
+        if (!window.isSecureContext) {
+          showError("Location access requires a secure context (HTTPS or localhost).");
           return;
         }
 
-        // Show loading state
-        button.disabled = true;
-        button.innerHTML = locate_button_icon+"Locating...";
+        if (!navigator.geolocation) {
+          showError("Geolocation is not supported by your browser.");
+          return;
+        }
+
+        setButtonLoading(true);
+
+        if (navigator.permissions?.query) {
+          try {
+            // Some TS DOM lib versions do not type "geolocation" on PermissionName consistently.
+            // We cast here and fall back to getCurrentPosition error handling if query is unsupported.
+            const permission = await navigator.permissions.query({ name: "geolocation" as PermissionName });
+            if (permission.state === "denied") {
+              showError("Location permission is blocked for this site. Enable it in browser settings and retry.");
+              setButtonLoading(false);
+              return;
+            }
+          } catch {
+            // Fallback to geolocation error callback below when permissions query is unavailable.
+          }
+        }
 
         // Get user location
         navigator.geolocation.getCurrentPosition(
@@ -242,17 +280,17 @@ function UserLocationControl() {
               duration: 1
             });
 
-            // Reset button state
-            button.disabled = false;
-            button.innerHTML = locate_button_icon+"My Location";
+            setButtonLoading(false);
           },
           (error) => {
             console.error("Error getting location:", error);
-            alert("Unable to retrieve your location");
-
-            // Reset button state
-            button.disabled = false;
-            button.innerHTML = locate_button_icon+"My Location";
+            showError(getLocationErrorMessage(error));
+            setButtonLoading(false);
+          },
+          {
+            enableHighAccuracy: true,
+            maximumAge: 30000,
+            timeout: 10000,
           }
         );
       });
@@ -276,7 +314,7 @@ function UserLocationControl() {
         control?.remove?.();
       } catch {}
     };
-  }, [map]);
+  }, [map, showError]);
 
   return null;
 }

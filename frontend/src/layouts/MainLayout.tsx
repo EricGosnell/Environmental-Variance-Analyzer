@@ -1,15 +1,21 @@
 import Header from "../components/Header";
 import { useEffect } from "react";
 import { Outlet, useNavigate } from "react-router-dom";
-import { setAuthLostHandler } from "../utils/api";
+import { GlobalErrorProvider, useGlobalError } from "../components/GlobalErrorContext";
+import { setApiErrorHandler, setAuthLostHandler } from "../utils/api";
 
-export default function MainLayout() {
+function MainLayoutContent() {
     const navigate = useNavigate();
+    const { showError } = useGlobalError();
 
     useEffect(() => {
         setAuthLostHandler(() => navigate("/", { replace: true }));
-        return () => setAuthLostHandler(null);
-    }, [navigate]);
+        setApiErrorHandler((message) => showError(message));
+        return () => {
+            setAuthLostHandler(null);
+            setApiErrorHandler(null);
+        };
+    }, [navigate, showError]);
 
     return (
         <>
@@ -18,5 +24,13 @@ export default function MainLayout() {
                 <Outlet />
             </main>
         </>
+    );
+}
+
+export default function MainLayout() {
+    return (
+        <GlobalErrorProvider>
+            <MainLayoutContent />
+        </GlobalErrorProvider>
     );
 }
