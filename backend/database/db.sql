@@ -3,7 +3,12 @@ CREATE TABLE IF NOT EXISTS users (
     username TEXT UNIQUE NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     password_hash TEXT NOT NULL,
-    admin BOOLEAN DEFAULT FALSE
+
+    -- flags
+    admin BOOLEAN DEFAULT FALSE,
+    verifiedEmail BOOLEAN DEFAULT FALSE,
+    accountLocked BOOLEAN DEFAULT FALSE
+
 );
 
 -- 1 to 1 with users
@@ -14,6 +19,20 @@ CREATE TABLE IF NOT EXISTS user_contact (
     phone_number TEXT,
     email TEXT UNIQUE
 );
+
+-- email verification codes 
+
+CREATE TABLE IF NOT EXISTS email_verification (
+    user_id INTEGER PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
+    code_hash TEXT NOT NULL,
+    expires_at INTEGER NOT NULL,
+    attempts INTEGER DEFAULT 0,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_email_verification_expires 
+ON email_verification(expires_at);
+
 
 CREATE TABLE IF NOT EXISTS refresh_tokens (
     token TEXT PRIMARY KEY,

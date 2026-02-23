@@ -8,14 +8,21 @@ const {
     loginValidation,
     registerValidation,
 } = require("./middleware/sanitize");
-
+const { sendEmail } = require("../util/email");
 const {
     generateAccessToken,
     generateRefreshToken,
     getRefreshTokenExpiry,
 } = require("../util/Tokens");
-
 const { JWT_CONFIG } = require("../util/JWT");
+const crypto = require("crypto");
+
+
+// ========= helpers ==========
+function generateCode() { return Math.floor(100000 + Math.random() * 900000).toString(); }
+
+function hashCode(code) { return crypto.createHash("sha256").update(code).digest("hex"); }
+
 
 module.exports = (db) => {
     const router = express.Router();
@@ -36,7 +43,7 @@ module.exports = (db) => {
             const { email, password } = req.body;
             const user = await db.get(
                 `
-      SELECT u.user_id, u.username, u.password_hash, uc.email, uc.phone_number
+      SELECT u.user_id, u.username, u.password_hash, uc.email, uc.phone_number,  u.verifiedEmail, u.accountLocked
       FROM users u
       JOIN user_contact uc ON u.user_id = uc.user_id
       WHERE LOWER(uc.email) = LOWER(?)
@@ -49,6 +56,13 @@ module.exports = (db) => {
             const validPassword = await bcrypt.compare(password, user.password_hash);
             if (!validPassword) {
                 return res.status(401).json({ error: "Invalid credentials" });
+            }
+
+            if (!user.verifiedEmail) {
+                return res.status(403).json({ error: "Email not verified", "needsVerification": true });
+            }
+            if (user.accountLocked) {
+                return res.status(423).json({ error: "Accont locked by admin" });
             }
 
             const accessToken = generateAccessToken(user);
@@ -291,5 +305,110 @@ module.exports = (db) => {
         }
     }
     );
+
+    // -------------------------
+    // PUT /send-verification
+    // -------------------------
+    router.put("/send-verification", [body("email").isEmail().withMessage("Valid email required")],
+        async (req, res) => {
+            const errors = validationResult(req);
+            if (!errors.isEmpty())
+                return res.status(400).json({ errors: errors.array() });
+
+            const email = req.body.email.toLowerCase();
+
+            try {
+                const user = await db.get(`
+                SELECT u.user_id
+                FROM users u
+                JOIN user_contact uc ON u.user_id = uc.user_id
+                WHERE uc.email = ?
+            `, [email]);
+
+                if (!user)
+                    return res.status(404).json({ error: "Email not found" });
+
+                const code = generateCode();
+                const hash = hashCode(code);
+                const expires = Date.now() + 10 * 60 * 1000;
+
+                await db.run(`
+                INSERT OR REPLACE INTO email_verification
+                VALUES (?, ?, ?, 0, strftime('%s','now'))
+            `, [user.user_id, hash, expires]);
+
+                await sendEmail({
+                    to: email,
+                    subject: "Verify your email",
+                    html: `
+                    <h2>Your verification code</h2>
+                    <p style="font-size:24px;"><b>${code}</b></p>
+                    <p>Expires in 10 minutes.</p>
+                `
+                });
+
+                res.json({ sent: true });
+
+            } catch (err) {
+                res.status(500).json({ error: "Internal server error" });
+            }
+        }
+    );
+
+    // -------------------------
+    // POST /verify-email
+    // -------------------------
+    router.post("/verify-email",
+        [body("email").isEmail().withMessage("Valid email required"), body("code").isLength({ min: 6, max: 6 }).withMessage("6 digit code required")],
+        async (req, res) => {
+
+            const errors = validationResult(req);
+            if (!errors.isEmpty())
+                return res.status(400).json({ errors: errors.array() });
+
+            const email = req.body.email.toLowerCase();
+            const code = req.body.code;
+
+            try {
+                const row = await db.get(`
+                SELECT ev.*, u.user_id
+                FROM email_verification ev
+                JOIN user_contact uc ON ev.user_id = uc.user_id
+                JOIN users u ON u.user_id = ev.user_id
+                WHERE uc.email = ?
+            `, [email]);
+
+                if (!row)
+                    return res.status(400).json({ error: "No verification code found" });
+
+                if (Date.now() > row.expires_at)
+                    return res.status(400).json({ error: "Code expired" });
+
+                if (row.attempts >= 5)
+                    return res.status(429).json({ error: "Too many attempts" });
+
+                if (hashCode(code) !== row.code_hash) {
+                    await db.run(
+                        "UPDATE email_verification SET attempts = attempts + 1 WHERE user_id = ?",
+                        [row.user_id]
+                    );
+                    return res.status(400).json({ error: "Invalid code" });
+                }
+
+                await db.run(
+                    "UPDATE users SET verifiedEmail = 1 WHERE user_id = ?", [row.user_id]);
+                await db.run(
+                    "DELETE FROM email_verification WHERE user_id = ?",
+                    [row.user_id]
+                );
+
+                res.json({ verified: true });
+
+            } catch (err) {
+                res.status(500).json({ error: "Internal server error" });
+            }
+        }
+    );
+
     return router;
 };

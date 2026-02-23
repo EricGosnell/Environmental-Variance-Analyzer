@@ -41,6 +41,12 @@ createDB()
     app.use("/api/users", userRoutes(db));
     app.use("/api/pods", podRoutes(db));
 
+    setInterval(() => {
+      const now = Math.floor(Date.now() / 1000);
+      db.run(`DELETE FROM email_verification WHERE expires_at < ?`, [now]);
+      db.run(`DELETE FROM refresh_tokens WHERE expires_at < ?`, [now]);
+    }, 15 * 60 * 1000); //every 15 minute to delete expired tokens and email verifications
+
     app.listen(PORT, () => {
       console.log(`Server running on http://localhost:${PORT}`);
     });

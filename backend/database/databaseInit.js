@@ -30,81 +30,62 @@ const initializeDatabase = async (db, dbFilePath, schemaFilePath) => {
   let needsInitialization = false;
 
   try {
-    // Check if database file exists and is valid
     if (fs.existsSync(dbFilePath)) {
       try {
-        // Try to read the file header to verify it's a valid SQLite database
         const buffer = Buffer.alloc(16);
         const fd = fs.openSync(dbFilePath, "r");
         fs.readSync(fd, buffer, 0, 16, 0);
         fs.closeSync(fd);
 
-        // SQLite database files start with "SQLite format 3\0"
         const header = buffer.toString("utf8", 0, 13);
         if (header !== "SQLite format") {
-          console.log(
-            "Database file is corrupted (invalid header), will recreate it..."
-          );
+          console.log("Database corrupted, recreating...");
           needsInitialization = true;
         } else {
-          // Try to query to make sure db is accessible
           await db.get(
-            "SELECT name FROM sqlite_master WHERE type='table' AND name='users' LIMIT 1"
+            "SELECT name FROM sqlite_master WHERE type='table' AND name='users'"
           );
-          console.log("Database already initialized and valid");
-          return db;
+          console.log("Database exists — ensuring schema is up to date...");
         }
-      } catch (error) {
-        console.log(
-          "Database file is corrupted or inaccessible, will recreate it..."
-        );
+      } catch {
         needsInitialization = true;
       }
     } else {
-      console.log("Database file does not exist, will create it...");
       needsInitialization = true;
     }
 
+    let workingDb = db;
+
     if (needsInitialization) {
-      // Close existing connection
-      await new Promise((resolve, reject) => {
-        db.close((err) => (err ? reject(err) : resolve()));
-      });
+      await new Promise((resolve, reject) =>
+        db.close(err => err ? reject(err) : resolve())
+      );
 
-      // Delete corrupted file if it exists
-      if (fs.existsSync(dbFilePath)) {
-        fs.unlinkSync(dbFilePath);
-        console.log("Removed corrupted database file");
-      }
+      if (fs.existsSync(dbFilePath)) fs.unlinkSync(dbFilePath);
 
-      // Create new database instance
-      let newDb = new sqlite3.Database(dbFilePath);
-      newDb = promisifyDb(newDb);
+      workingDb = promisifyDb(new sqlite3.Database(dbFilePath));
+      console.log("Created fresh database");
+    }
+    const schema = fs.readFileSync(schemaFilePath, "utf-8");
 
-      // Read and execute schema
-      console.log("Initializing database from schema...");
-      const schema = fs.readFileSync(schemaFilePath, "utf-8");
+    const statements = schema
+      .split(";")
+      .map(s => s.trim())
+      .filter(Boolean);
 
-      // Split into statements & run them
-      const statements = schema
-        .split(";")
-        .map((stmt) => stmt.trim())
-        .filter((stmt) => stmt.length > 0);
-
-      for (const statement of statements) {
-        await newDb.run(statement);
-      }
-
-      console.log("Database initialized successfully");
-      return newDb;
+    for (const statement of statements) {
+      await workingDb.run(statement);
     }
 
-    return db;
+    console.log("Schema ensured successfully");
+    return workingDb;
+
   } catch (error) {
-    console.error("Error initializing database:", error);
+    console.error("DB init error:", error);
     throw error;
   }
 };
+
 
 // Verify schema exists
 const verifyDatabase = async (db) => {

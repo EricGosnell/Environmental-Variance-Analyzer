@@ -385,6 +385,32 @@ export async function authResetPassword(
   });
 }
 
+export async function sendVerification(
+  payload: { email: string },
+  signal?: AbortSignal,
+): Promise<MessageResponse> {
+  return await request<MessageResponse>({
+    method: "PUT",
+    path: "/auth/send-verification",
+    body: payload,
+    auth: false,
+    signal,
+  });
+}
+
+export async function verifyEmail(
+  payload: { email: string; code: string },
+  signal?: AbortSignal,
+): Promise<MessageResponse> {
+  return await request<MessageResponse>({
+    method: "POST",
+    path: "/auth/verify-email",
+    body: payload,
+    auth: false,
+    signal,
+  });
+}
+
 export async function getMe(signal?: AbortSignal): Promise<UserResponse> {
   return await request<UserResponse>({ method: "GET", path: "/users/me", auth: true, signal });
 }
