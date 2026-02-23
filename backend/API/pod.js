@@ -67,9 +67,7 @@ module.exports = (db) => {
     // GET /pods/locations
     // -------------------------
     // returns public pods + user's pods, OR all pods if admin
-    router.get(
-        "/locations",
-        optionalAuth,
+    router.get("/locations", optionalAuth,
         [
             query("latitude").exists().isFloat({ min: -90, max: 90 }),
             query("longitude").exists().isFloat({ min: -180, max: 180 }),
@@ -235,8 +233,7 @@ module.exports = (db) => {
     // GET /pods/:id/data
     // -------------------------
     // public pods accessible anonymously, otherwise owner/admin required
-    router.get(
-        "/:id/data",
+    router.get("/:id/data",
         optionalAuth,
         [param("id").isInt({ gt: 0 }).withMessage("Pod id must be a positive integer")],
         async (req, res) => {
@@ -308,8 +305,7 @@ module.exports = (db) => {
     // -------------------------
     // POST /pods/upload-pod-data
     // -------------------------
-    router.post(
-        "/upload-pod-data",
+    router.post("/upload-pod-data",
         authenticateToken,
         sanitizeRequestBody,
         [
@@ -417,8 +413,7 @@ module.exports = (db) => {
     // -------------------------
     // DELETE /pods/delete-pod-data
     // -------------------------
-    router.delete(
-        "/delete-pod-data",
+    router.delete("/delete-pod-data",
         authenticateToken,
         sanitizeRequestBody,
         [body("podDataId").isInt({ gt: 0 }).withMessage("podDataId must be a positive integer")],
@@ -460,6 +455,105 @@ module.exports = (db) => {
                 return res.status(500).json({
                     error: "Internal server error",
                     where: "/pods/delete-pod-data",
+                    message: error?.message,
+                    code: error?.code,
+                });
+            }
+        }
+    );
+
+    // -------------------------
+    // GET /pods/:id/latest/:metric
+    // -------------------------
+    router.get(
+        "/:id/latest/:metric", optionalAuth,
+        [
+            param("id").isInt({ gt: 0 }).withMessage("Pod id must be positive"),
+            param("metric").isString().trim().notEmpty().withMessage("Metric required"),
+        ],
+        async (req, res) => {
+            try {
+                const errors = validationResult(req);
+                if (!errors.isEmpty()) {
+                    return res.status(400).json({
+                        error: "Validation failed",
+                        details: errors.array().map((err) => ({
+                            field: err.param,
+                            message: err.msg,
+                        })),
+                    });
+                }
+
+                const podId = Number(req.params.id);
+                const metric = req.params.metric.trim();
+
+                const userId = req.user?.id ?? null;
+
+                // ---- visibility logic (same as /pods/:id/data) ----
+                const pod = await getPodById(db, podId);
+                if (!pod) {
+                    return res.status(404).json({ error: "Pod not found" });
+                }
+
+                const isPublic = !!pod.pod_data_public;
+                const isAdmin = userId ? await getIsAdmin(userId) : false;
+                const owns = userId ? await userOwnsPod(db, userId, podId) : false;
+
+                if (!isPublic && !owns && !isAdmin) {
+                    return res.status(403).json({ error: "Forbidden" });
+                }
+
+                // ---- fetch latest reading for this metric ----
+                const row = await db.get(
+                    `
+        SELECT
+          sd.sensor_data_id,
+          sd.sensor_type,
+          sd.reading_value,
+          sd.reading_units,
+          sd.reading_timestamp,
+          pd.latitude,
+          pd.longitude
+        FROM pod_data pd
+        JOIN sensor_data sd
+          ON sd.pod_data_id = pd.pod_data_id
+        WHERE pd.pod_id = ?
+          AND sd.sensor_type = ?
+        ORDER BY datetime(sd.reading_timestamp) DESC
+        LIMIT 1
+        `,
+                    [podId, metric]
+                );
+
+                if (!row) {
+                    return res.status(404).json({
+                        error: "No readings found for this pod and metric",
+                        podId: String(podId),
+                        metric,
+                    });
+                }
+
+                // ---- response ----
+                return res.status(200).json({
+                    reading: {
+                        id: String(row.sensor_data_id),
+                        podId: String(podId),
+                        podName: pod.pod_name ?? null,
+                        metric: row.sensor_type,
+                        value: row.reading_value,
+                        units: row.reading_units ?? null,
+                        timestamp: new Date(row.reading_timestamp).toISOString(),
+                        location: {
+                            latitude: Number(row.latitude),
+                            longitude: Number(row.longitude),
+                        },
+                        visibility: isPublic ? "public" : "private",
+                    },
+                });
+            } catch (error) {
+                return res.status(500).json({
+                    error: "Internal server error",
+                    where: "/pods/:id/latest/:metric",
                     message: error?.message,
                     code: error?.code,
                 });
