@@ -13,6 +13,7 @@ This document outlines the API routes for the project.
   - [Reset Password: `/auth/reset-password`](#reset-password)
 - [User Management](#user-management)
   - [Get User: `/users/me`](#get-user)
+  - [Search Users by Username: `/users/search`](#search-users-by-username)
   - [Get User by ID: `/users/{id}`](#get-user-by-id)
   - [Update User Username: `/users/me/username`](#update-user-username)
   - [Update User Email:](#update-user-email)
@@ -335,6 +336,53 @@ Response (200 OK):
 ```
 
 This endpoint returns the current user's information.
+
+### Search Users by Username
+
+```
+GET /users/search
+```
+
+Authentication:
+- Bearer token required.
+
+Request Query Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| username | string | Yes | Username search term (2-16 chars, letters/numbers/underscore/hyphen) |
+| limit | integer | No | Max number of results to return (1-50, default 20) |
+
+Example Request:
+```
+GET /users/search?username=ann&limit=10
+```
+
+Response (200 OK):
+```json
+{
+  "users": [
+    { "id": 12, "username": "anna" },
+    { "id": 35, "username": "joanna" }
+  ]
+}
+```
+
+Response (400 Bad Request):
+```json
+{
+  "error": "Invalid search parameters"
+}
+```
+
+Response (401 Unauthorized):
+```json
+{
+  "error": "No token provided"
+}
+```
+
+This endpoint searches users by username using case-insensitive contains matching. Results are ranked in this order: exact match, prefix match, then contains match, with alphabetical ordering as the tiebreaker.
 
 ### Get User by ID
 
