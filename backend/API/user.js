@@ -623,3 +623,34 @@ module.exports = (db) => {
 
     return router;
 };
+
+    // -------------------------
+    // GET /get-pods - Get all pods registered to current user
+    // -------------------------
+    router.get("/me/get-pods", authenticateToken, async (req, res) => {
+        try {
+            const userId = req.user.id;
+            const pods = await db.all(
+                `
+                SELECT p.pod_id, p.pod_name, p.pod_data_public, pd.latitude, pd.longitude 
+                FROM pod p
+                JOIN user_pod up ON up.pod_id = p.pod_id
+                LEFT JOIN pod_data pd ON pd.pod_id = p.pod_id 
+                WHERE up.user_id = ?
+                `,
+                [userId]
+            );
+            return res.status(200).json({ pods: pods.map(p => ({
+                id: p.pod_id,
+                name: p.pod_name,
+                visibility: !!p.pod_data_public,
+                lat: p.latitude,
+                long: p.longitude
+            })) });
+        } catch (error) {
+            return res.status(500).json({
+                error: "Internal server error",
+                message: error?.message,
+            });
+        }
+    });
