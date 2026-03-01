@@ -23,6 +23,7 @@ This document outlines the API routes for the project.
   - [Register Pod: `/users/me/register-pod`](#register-pod)
   - [Update Pod: `/users/me/update-pod`](#update-pod)
   - [Unregister Pod: `/users/me/unregister-pod`](#unregister-pod)
+  - [Get All Pods: `/users/me/get-pods`](#get-pods)
 - [User Management (Admin)](#user-management-admin)
   - [Get All Users: `/admin/users`](#get-all-users)
   - [Generate Invitation Token: `/admin/users/invitation-token`](#generate-invitation-token)
@@ -692,6 +693,34 @@ Response (404 Not Found):
 ```
 
 This endpoint deletes the current user's pod.
+
+### Get All Pods
+
+```
+GET /users/me/get-pods
+```
+
+Response (200 OK):
+```json
+{
+  "pod": {
+    "id": "123",
+    "name": "pod_name",
+    "visibility": "True",
+    "lat": "42.123",
+    "long": "135.321"
+  }
+}
+```
+
+Response (500):
+```json
+{
+  "error": "Internal Server Error"
+}
+```
+
+Returns an array containing every pods owened by the current user
 
 ## User Management (Admin)
 
