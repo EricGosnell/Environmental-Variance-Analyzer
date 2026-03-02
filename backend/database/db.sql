@@ -36,6 +36,18 @@ CREATE TABLE IF NOT EXISTS email_verification (
 CREATE INDEX IF NOT EXISTS idx_email_verification_expires 
 ON email_verification(expires_at);
 
+-- pending email change verification codes
+CREATE TABLE IF NOT EXISTS pending_email_changes (
+    user_id INTEGER PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
+    new_email TEXT NOT NULL,
+    verification_code TEXT NOT NULL,
+    expires_at INTEGER NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_pending_email_changes_expires
+ON pending_email_changes(expires_at);
+
 
 CREATE TABLE IF NOT EXISTS refresh_tokens (
     token TEXT PRIMARY KEY,

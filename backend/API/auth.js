@@ -67,7 +67,7 @@ module.exports = (db) => {
             }
 
             if (!user.verified_email) {
-                return res.status(403).json({ error: "Email not verified", "needsVerification": true });
+                return res.status(403).json({ error: "Email not verified" });
             }
             if (user.account_locked) {
                 return res.status(423).json({ error: "Account locked by admin" });
@@ -185,7 +185,6 @@ module.exports = (db) => {
             return res.status(201).json({
                 user: responseUser,
                 message: "Registration successful. Please verify your email.",
-                needsVerification: true,
             });
         } catch (error) {
             if (transaction) {
@@ -361,6 +360,16 @@ module.exports = (db) => {
                 const hash = hashCode(code);
                 const expires = now + VERIFICATION_TTL_SECONDS;
 
+                await sendEmail({
+                    to: email,
+                    subject: "Verify your email",
+                    html: `
+                    <h2>Your verification code</h2>
+                    <p style="font-size:24px;"><b>${code}</b></p>
+                    <p>Expires in 10 minutes.</p>
+                `
+                });
+
                 await db.run(`
                     INSERT INTO email_verification (
                         user_id,
@@ -380,16 +389,6 @@ module.exports = (db) => {
                         last_sent_at = excluded.last_sent_at,
                         window_started_at = excluded.window_started_at
                 `, [user.user_id, hash, expires, sendCount, now, windowStartAt]);
-
-                await sendEmail({
-                    to: email,
-                    subject: "Verify your email",
-                    html: `
-                    <h2>Your verification code</h2>
-                    <p style="font-size:24px;"><b>${code}</b></p>
-                    <p>Expires in 10 minutes.</p>
-                `
-                });
 
                 res.json({ message: responseMessage });
 

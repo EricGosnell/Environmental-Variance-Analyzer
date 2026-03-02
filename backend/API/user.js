@@ -4,6 +4,7 @@ const bcrypt = require("bcryptjs");
 const { body, validationResult } = require("express-validator");
 const { sanitizeRequestBody } = require("./middleware/sanitize");
 const { authenticateToken } = require("../util/Tokens");
+const { sendEmail } = require("../util/email");
 
 //USING THESE FOR VALIDATION RESTRICTIONS FOR NOW, 
 //CAN BE CHANGED LATER IF WE DECIDE TO - Ryan
@@ -204,9 +205,7 @@ module.exports = (db) => {
             // Generate verification code (6-digit)
             const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-            // Store pending email change with verification code
-            // TODO: Create table for pending_email_changes or use an existing one
-            // For now, storing verification code with 15 minute expiry
+            // Store pending email change with verification code for 15 minutes
             const expiresAt = Math.floor(Date.now() / 1000) + (15 * 60);
 
             await db.run(
@@ -218,8 +217,15 @@ module.exports = (db) => {
                 [userId, newEmail, verificationCode, expiresAt, newEmail, verificationCode, expiresAt]
             );
 
-            // TODO: Send verification code to newEmail via email service
-            console.log(`[DEV] Verification code for ${newEmail}: ${verificationCode}`);
+            await sendEmail({
+                to: newEmail,
+                subject: "Verify your new email",
+                html: `
+                    <h2>Your email change verification code</h2>
+                    <p style="font-size:24px;"><b>${verificationCode}</b></p>
+                    <p>Expires in 15 minutes.</p>
+                `
+            });
 
             return res.status(200).json({ message: "Verification code sent to new email" });
         } catch (error) {
