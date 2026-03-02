@@ -476,6 +476,17 @@ export async function unregisterPod(payload: UnregisterPodRequest, signal?: Abor
     signal,
   });
 }
+//Get user's pods
+export async function getUserPods(signal?: AbortSignal): Promise<PodLocationsResponse> {
+  return await request<PodLocationsResponse>({
+    method: "GET",
+    path: "/users/me/get-pods",
+    auth: true,
+    signal,
+  });
+}
+
+// Admin routes
 
 export async function adminGetAllUsers(signal?: AbortSignal): Promise<UsersResponse> {
   return await request<UsersResponse>({ method: "GET", path: "/admin/users", auth: true, signal });

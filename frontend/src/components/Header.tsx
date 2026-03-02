@@ -14,6 +14,7 @@ export default function Header() {
                     <NavLink to="/">Map</NavLink>
                     <NavLink to="/about">About</NavLink>
                     <NavLink to="/contact">Contact</NavLink>
+                    <NavLink to="/managepods">Manage Pods</NavLink>
                     <NavLink to="/profile">Profile</NavLink>
                     <div className="nav-separator"></div>
                     <Link to="https://www.colorado.edu/center/spacegrant/" target="_blank">
