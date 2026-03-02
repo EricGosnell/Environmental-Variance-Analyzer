@@ -331,15 +331,13 @@ export async function authRefresh(payload: AuthRefreshRequest, signal?: AbortSig
 }
 
 export async function authRegister(payload: AuthRegisterRequest, signal?: AbortSignal): Promise<AuthRegisterResponse> {
-  const res = await request<AuthRegisterResponse>({
+  return await request<AuthRegisterResponse>({
     method: "POST",
     path: "/auth/register",
     body: payload,
     auth: false,
     signal,
   });
-  setTokens(res);
-  return res;
 }
 
 export async function authLogout(
