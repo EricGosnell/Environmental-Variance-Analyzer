@@ -8,6 +8,8 @@ This document outlines the API routes for the project.
   - [Login: `/auth/login`](#login-authlogin)
   - [Refresh: `/auth/refresh`](#refresh-authrefresh)
   - [Register: `/auth/register`](#register-authregister)
+  - [Send Verification: `/auth/send-verification`](#send-verification-authsend-verification)
+  - [Verify Email: `/auth/verify-email`](#verify-email-authverify-email)
   - [Logout: `/auth/logout`](#logout)
   - [Forgot Password: `/auth/forgot-password`](#forgot-password)
   - [Reset Password: `/auth/reset-password`](#reset-password)
@@ -143,7 +145,7 @@ Request Parameters:
 | email | string | Yes | User email address |
 | password | string | Yes | User password |
 | username | string | Yes | Username |
-| phone_number | string | Yes | User phone number |
+| phone_number | string | No | User phone number |
 
 Request Body:
 ```json
@@ -151,11 +153,11 @@ Request Body:
   "email": "user@example.com", // Required
   "password": "password", // Required
   "username": "user", // Required
-  "phone_number": "1234567890", // Required
+  "phone_number": "1234567890" // Optional
 }
 ```
 
-Response (200 OK):
+Response (201 Created):
 ```json
 {
   "user": {
@@ -163,15 +165,14 @@ Response (200 OK):
     "email": "user@example.com",
     "username": "user"
   },
-  "accessToken": "access_token",
-  "refreshToken": "refresh_token"
+  "message": "Registration successful. Please verify your email."
 }
 ```
 
 Response (400 Bad Request):
 ```json
 {
-  "error": "Invalid input data or invalid invitation token"
+  "error": "Validation failed"
 }
 ```
 
@@ -182,7 +183,93 @@ Response (409 Conflict):
 }
 ```
 
-This endpoint creates a new user account.
+This endpoint creates a new user account and marks it as unverified. It does not issue login tokens.  
+After registration, call `/auth/send-verification` and then `/auth/verify-email` before login.
+
+### Send verification
+
+```
+PUT /auth/send-verification
+```
+
+Request Body:
+```json
+{
+  "email": "user@example.com" // Required
+}
+```
+
+Response (200 OK):
+```json
+{
+  "message": "If the email exists, a verification code was sent."
+}
+```
+
+Response (400 Bad Request):
+```json
+{
+  "errors": [
+    {
+      "msg": "Valid email required"
+    }
+  ]
+}
+```
+
+Notes:
+- This endpoint always returns a generic success message to avoid account enumeration.
+- Resend throttling is enforced internally.
+- Verification state is persisted only after the email provider accepts the send request.
+
+### Verify email
+
+```
+POST /auth/verify-email
+```
+
+Request Body:
+```json
+{
+  "email": "user@example.com", // Required
+  "code": "123456" // Required, 6 digits
+}
+```
+
+Response (200 OK):
+```json
+{
+  "message": "Email verified"
+}
+```
+
+Response (400 Bad Request):
+```json
+{
+  "error": "No verification code found"
+}
+```
+
+Response (400 Bad Request):
+```json
+{
+  "error": "Invalid code"
+}
+```
+
+Response (400 Bad Request):
+```json
+{
+  "error": "Code expired"
+}
+```
+
+Response (429 Too Many Requests):
+```json
+{
+  "error": "Too many attempts"
+}
+```
 
 ### Logout
 
@@ -452,7 +539,7 @@ Response (409 Conflict):
 }
 ```
 
-This endpoint sends a verification code to the new email address. The user must verify this code before the email can be updated.
+This endpoint sends a verification code to the new email address via the email service. The user must verify this code before the email can be updated.
 
 #### Verify and Update Email
 

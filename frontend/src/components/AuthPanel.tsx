@@ -52,11 +52,17 @@ export default function AuthPanel({
     e.preventDefault();
     if (loading) return;
     setError(null);
+    const normalizedLoginEmail = loginEmail.trim();
     setLoading(true);
     try {
-      const res = await authLogin({ email: loginEmail, password: loginPassword });
+      const res = await authLogin({ email: normalizedLoginEmail, password: loginPassword });
       onAuthSuccess(res.user);
     } catch (err) {
+      if (err instanceof ApiError && err.status === 403) {
+        const next = `/?${new URLSearchParams({ auth: "login", email: normalizedLoginEmail, verified: "1" }).toString()}`;
+        navigate(`/verify-email?${new URLSearchParams({ email: normalizedLoginEmail, next, reason: "login" }).toString()}`);
+        return;
+      }
       if (err instanceof ApiError && err.status === 400) {
         setError(err.message);
       } else {
