@@ -37,7 +37,7 @@ export async function createTestDb() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       password_hash TEXT NOT NULL,
       admin BOOLEAN DEFAULT FALSE,
-      verified_email BOOLEAN DEFAULT TRUE,
+      verified_email BOOLEAN DEFAULT FALSE,
       account_locked BOOLEAN DEFAULT FALSE
     );
   `);
