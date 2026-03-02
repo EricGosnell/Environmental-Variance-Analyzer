@@ -131,23 +131,22 @@ module.exports = (db) => {
 
             if (existingUser) { return res.status(409).json({ error: "Username already exists" }); }
 
-            if (email) {
-                const existingEmail = await db.get(
-                    "SELECT user_id FROM user_contact WHERE email = ?",
-                    [email]
-                );
+            const existingEmail = await db.get(
+                "SELECT user_id FROM user_contact WHERE email = ?",
+                [email]
+            );
 
-                if (existingEmail) { return res.status(409).json({ error: "Email already registered" }); }
-            }
+            if (existingEmail) { return res.status(409).json({ error: "Email already registered" }); }
 
             await db.run("BEGIN TRANSACTION");
             transaction = true;
 
             const hashedPassword = await bcrypt.hash(password, 12);
+            const verifiedEmail = 0;
 
             const userInsertResult = await db.run(
-                "INSERT INTO users (username, password_hash) VALUES (?, ?)",
-                [username, hashedPassword]
+                "INSERT INTO users (username, password_hash, verified_email) VALUES (?, ?, ?)",
+                [username, hashedPassword, verifiedEmail]
             );
 
             const userId = userInsertResult?.lastID;
@@ -176,16 +175,6 @@ module.exports = (db) => {
                 [userId]
             );
 
-            const accessToken = generateAccessToken(userWithContact);
-            const refreshToken = generateRefreshToken(userWithContact);
-
-            const expiresAt = getRefreshTokenExpiry();
-
-            await db.run(
-                "INSERT INTO refresh_tokens (token, user_id, expires_at) VALUES (?, ?, ?)",
-                [refreshToken, userId, expiresAt]
-            );
-
             const responseUser = {
                 id: userWithContact.user_id,
                 username: userWithContact.username,
@@ -195,8 +184,8 @@ module.exports = (db) => {
 
             return res.status(201).json({
                 user: responseUser,
-                accessToken,
-                refreshToken,
+                message: "Registration successful. Please verify your email.",
+                needsVerification: true,
             });
         } catch (error) {
             if (transaction) {

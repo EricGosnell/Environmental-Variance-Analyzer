@@ -1,13 +1,6 @@
 const Brevo = require("@getbrevo/brevo");
-const express = require("express");
-const bcrypt = require("bcryptjs");
-const jwt = require("jsonwebtoken");
 
-const { body, validationResult } = require("express-validator");
 const apiInstance = new Brevo.TransactionalEmailsApi();
-
-const { JWT_CONFIG } = require("./JWT");
-
 
 apiInstance.setApiKey(
     Brevo.TransactionalEmailsApiApiKeys.apiKey,
