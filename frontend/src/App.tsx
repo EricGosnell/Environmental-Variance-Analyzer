@@ -8,6 +8,7 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Profile from "./pages/Profile"
 import Pod from "./pages/Pod";
+import VerifyEmail from "./pages/VerifyEmail";
 
 function App() {
     return (
@@ -19,6 +20,7 @@ function App() {
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/pod/:podId" element={<Pod />} />
+                    <Route path="/verify-email" element={<VerifyEmail />} />
                 </Route>
             </Routes>
         </BrowserRouter>
