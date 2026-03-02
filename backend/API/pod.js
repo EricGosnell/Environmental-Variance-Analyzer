@@ -463,82 +463,108 @@ module.exports = (db) => {
     );
 
     // -------------------------
-    // GET /pods/:id/latest/:metric
+    // GET /pods/latest?ids=1,2,3
     // -------------------------
     router.get(
-        "/:id/latest/:metric", optionalAuth,
-        [
-            param("id").isInt({ gt: 0 }).withMessage("Pod id must be positive"),
-            param("metric").isString().trim().notEmpty().withMessage("Metric required"),
-        ],
+        "/latest",
+        optionalAuth,
         async (req, res) => {
             try {
-                const errors = validationResult(req);
-                if (!errors.isEmpty()) {
+                const idsParam = req.query.ids;
+                if (!idsParam) {
                     return res.status(400).json({
-                        error: "Validation failed",
-                        details: errors.array().map((err) => ({
-                            field: err.param,
-                            message: err.msg,
-                        })),
+                        error: "Query param 'ids' required (comma separated pod IDs)"
                     });
                 }
 
-                const podId = Number(req.params.id);
-                const metric = req.params.metric.trim();
+                const podIds = idsParam
+                    .split(",")
+                    .map((id) => Number(id.trim()))
+                    .filter((id) => !isNaN(id) && id > 0);
+
+                if (podIds.length === 0) {
+                    return res.status(400).json({
+                        error: "No valid pod IDs provided"
+                    });
+                }
 
                 const userId = req.user?.id ?? null;
-
-                // ---- visibility logic (same as /pods/:id/data) ----
-                const pod = await getPodById(db, podId);
-                if (!pod) {
-                    return res.status(404).json({ error: "Pod not found" });
-                }
-
-                const isPublic = !!pod.pod_data_public;
                 const isAdmin = userId ? await getIsAdmin(userId) : false;
-                const owns = userId ? await userOwnsPod(db, userId, podId) : false;
 
-                if (!isPublic && !owns && !isAdmin) {
-                    return res.status(403).json({ error: "Forbidden" });
+                // -------------------------
+                // Fetch pods + visibility check
+                // -------------------------
+                const pods = [];
+                for (const podId of podIds) {
+                    const pod = await getPodById(db, podId);
+                    if (!pod) continue;
+
+                    const isPublic = !!pod.pod_data_public;
+                    const owns = userId ? await userOwnsPod(db, userId, podId) : false;
+
+                    if (!isPublic && !owns && !isAdmin) continue;
+
+                    pods.push(pod);
                 }
 
-                // ---- fetch latest reading for this metric ----
-                const row = await db.get(
+                if (pods.length === 0) {
+                    return res.status(403).json({ error: "No accessible pods" });
+                }
+
+                const accessibleIds = pods.map(p => p.pod_id);
+
+                // -------------------------
+                // Get latest per pod + sensor_type
+                // -------------------------
+                const placeholders = accessibleIds.map(() => "?").join(",");
+
+                const rows = await db.all(
                     `
-        SELECT
-          sd.sensor_data_id,
-          sd.sensor_type,
-          sd.reading_value,
-          sd.reading_units,
-          sd.reading_timestamp,
-          pd.latitude,
-          pd.longitude
-        FROM pod_data pd
-        JOIN sensor_data sd
-          ON sd.pod_data_id = pd.pod_data_id
-        WHERE pd.pod_id = ?
-          AND sd.sensor_type = ?
-        ORDER BY datetime(sd.reading_timestamp) DESC
-        LIMIT 1
+        SELECT *
+        FROM (
+          SELECT
+            pd.pod_id,
+            p.pod_name,
+            sd.sensor_data_id,
+            sd.sensor_type,
+            sd.reading_value,
+            sd.reading_units,
+            sd.reading_timestamp,
+            pd.latitude,
+            pd.longitude,
+            ROW_NUMBER() OVER (
+              PARTITION BY pd.pod_id, sd.sensor_type
+              ORDER BY datetime(sd.reading_timestamp) DESC
+            ) as rn
+          FROM pod_data pd
+          JOIN sensor_data sd
+            ON sd.pod_data_id = pd.pod_data_id
+          JOIN pods p
+            ON p.pod_id = pd.pod_id
+          WHERE pd.pod_id IN (${placeholders})
+        )
+        WHERE rn = 1
         `,
-                    [podId, metric]
+                    accessibleIds
                 );
 
-                if (!row) {
-                    return res.status(404).json({
-                        error: "No readings found for this pod and metric",
-                        podId: String(podId),
-                        metric,
-                    });
+                // -------------------------
+                // Build response structure
+                // -------------------------
+                const result = {};
+
+                for (const pod of pods) {
+                    result[pod.pod_id] = {
+                        podId: String(pod.pod_id),
+                        podName: pod.pod_name ?? null,
+                        visibility: pod.pod_data_public ? "public" : "private",
+                        latestReadings: {}
+                    };
                 }
 
-                // ---- response ----
-                return res.status(200).json({
-                    reading: {
+                for (const row of rows) {
+                    result[row.pod_id].latestReadings[row.sensor_type] = {
                         id: String(row.sensor_data_id),
-                        podId: String(podId),
-                        podName: pod.pod_name ?? null,
                         metric: row.sensor_type,
                         value: row.reading_value,
                         units: row.reading_units ?? null,
@@ -546,14 +572,18 @@ module.exports = (db) => {
                         location: {
                             latitude: Number(row.latitude),
                             longitude: Number(row.longitude),
-                        },
-                        visibility: isPublic ? "public" : "private",
-                    },
+                        }
+                    };
+                }
+
+                return res.status(200).json({
+                    pods: Object.values(result)
                 });
+
             } catch (error) {
                 return res.status(500).json({
                     error: "Internal server error",
-                    where: "/pods/:id/latest/:metric",
+                    where: "/pods/latest",
                     message: error?.message,
                     code: error?.code,
                 });
