@@ -6,8 +6,8 @@ CREATE TABLE IF NOT EXISTS users (
 
     -- flags
     admin BOOLEAN DEFAULT FALSE,
-    verifiedEmail BOOLEAN DEFAULT FALSE,
-    accountLocked BOOLEAN DEFAULT FALSE
+    verified_email BOOLEAN DEFAULT FALSE,
+    account_locked BOOLEAN DEFAULT FALSE
 
 );
 
@@ -26,7 +26,10 @@ CREATE TABLE IF NOT EXISTS email_verification (
     user_id INTEGER PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
     code_hash TEXT NOT NULL,
     expires_at INTEGER NOT NULL,
-    attempts INTEGER DEFAULT 0,
+    attempts INTEGER NOT NULL DEFAULT 0,
+    send_count INTEGER NOT NULL DEFAULT 0,
+    last_sent_at INTEGER NOT NULL DEFAULT 0,
+    window_started_at INTEGER NOT NULL DEFAULT 0,
     created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
 );
 

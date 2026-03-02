@@ -42,9 +42,15 @@ createDB()
     app.use("/api/pods", podRoutes(db));
 
     setInterval(() => {
-      const now = Math.floor(Date.now() / 1000);
-      db.run(`DELETE FROM email_verification WHERE expires_at < ?`, [now]);
-      db.run(`DELETE FROM refresh_tokens WHERE expires_at < ?`, [now]);
+      (async () => {
+        try {
+          const now = Math.floor(Date.now() / 1000);
+          await db.run(`DELETE FROM email_verification WHERE expires_at < ?`, [now]);
+          await db.run(`DELETE FROM refresh_tokens WHERE expires_at < ?`, [now]);
+        } catch (err) {
+          console.error("Cleanup interval failed:", err);
+        }
+      })();
     }, 15 * 60 * 1000); //every 15 minute to delete expired tokens and email verifications
 
     app.listen(PORT, () => {

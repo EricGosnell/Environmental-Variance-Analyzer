@@ -17,9 +17,17 @@ const {
 const { JWT_CONFIG } = require("../util/JWT");
 const crypto = require("crypto");
 
+const VERIFICATION_TTL_SECONDS = 10 * 60;
+const VERIFICATION_MIN_RESEND_SECONDS = 60;
+const VERIFICATION_WINDOW_SECONDS = 15 * 60;
+const VERIFICATION_MAX_SENDS_PER_WINDOW = 5;
 
 // ========= helpers ==========
-function generateCode() { return Math.floor(100000 + Math.random() * 900000).toString(); }
+const getNowEpochSeconds = () => Math.floor(Date.now() / 1000);
+
+function generateCode() {
+    return crypto.randomInt(0, 1_000_000).toString().padStart(6, "0");
+}
 
 function hashCode(code) { return crypto.createHash("sha256").update(code).digest("hex"); }
 
@@ -43,7 +51,7 @@ module.exports = (db) => {
             const { email, password } = req.body;
             const user = await db.get(
                 `
-      SELECT u.user_id, u.username, u.password_hash, uc.email, uc.phone_number,  u.verifiedEmail, u.accountLocked
+      SELECT u.user_id, u.username, u.password_hash, uc.email, uc.phone_number,  u.verified_email, u.account_locked
       FROM users u
       JOIN user_contact uc ON u.user_id = uc.user_id
       WHERE LOWER(uc.email) = LOWER(?)
@@ -58,11 +66,11 @@ module.exports = (db) => {
                 return res.status(401).json({ error: "Invalid credentials" });
             }
 
-            if (!user.verifiedEmail) {
+            if (!user.verified_email) {
                 return res.status(403).json({ error: "Email not verified", "needsVerification": true });
             }
-            if (user.accountLocked) {
-                return res.status(423).json({ error: "Accont locked by admin" });
+            if (user.account_locked) {
+                return res.status(423).json({ error: "Account locked by admin" });
             }
 
             const accessToken = generateAccessToken(user);
@@ -315,27 +323,74 @@ module.exports = (db) => {
             if (!errors.isEmpty())
                 return res.status(400).json({ errors: errors.array() });
 
-            const email = req.body.email.toLowerCase();
+            const email = req.body.email.trim().toLowerCase();
+            const now = getNowEpochSeconds();
+            const responseMessage = "If the email exists, a verification code was sent.";
 
             try {
                 const user = await db.get(`
                 SELECT u.user_id
                 FROM users u
                 JOIN user_contact uc ON u.user_id = uc.user_id
-                WHERE uc.email = ?
+                WHERE LOWER(uc.email) = LOWER(?)
             `, [email]);
 
-                if (!user)
-                    return res.status(404).json({ error: "Email not found" });
+                if (!user) {
+                    return res.status(200).json({ message: responseMessage });
+                }
+
+                const existingRow = await db.get(
+                    "SELECT attempts, send_count, last_sent_at, window_started_at FROM email_verification WHERE user_id = ?",
+                    [user.user_id]
+                );
+
+                let sendCount = 1;
+                let windowStartAt = now;
+                const existingSendCount = existingRow?.send_count ?? 0;
+                const existingWindowStart = existingRow?.window_started_at ?? now;
+                const existingLastSentAt = existingRow?.last_sent_at ?? 0;
+
+                if (existingRow) {
+                    if (existingLastSentAt + VERIFICATION_MIN_RESEND_SECONDS > now) {
+                        return res.status(429).json({ error: "Please wait before requesting another verification code." });
+                    }
+
+                    if ((now - existingWindowStart) <= VERIFICATION_WINDOW_SECONDS) {
+                        if (existingSendCount >= VERIFICATION_MAX_SENDS_PER_WINDOW) {
+                            return res.status(429).json({ error: "Too many verification codes sent. Try again later." });
+                        }
+
+                        sendCount = existingSendCount + 1;
+                        windowStartAt = existingWindowStart;
+                    } else {
+                        sendCount = 1;
+                        windowStartAt = now;
+                    }
+                }
 
                 const code = generateCode();
                 const hash = hashCode(code);
-                const expires = Date.now() + 10 * 60 * 1000;
+                const expires = now + VERIFICATION_TTL_SECONDS;
 
                 await db.run(`
-                INSERT OR REPLACE INTO email_verification
-                VALUES (?, ?, ?, 0, strftime('%s','now'))
-            `, [user.user_id, hash, expires]);
+                    INSERT INTO email_verification (
+                        user_id,
+                        code_hash,
+                        expires_at,
+                        attempts,
+                        send_count,
+                        last_sent_at,
+                        window_started_at
+                    )
+                    VALUES (?, ?, ?, 0, ?, ?, ?)
+                    ON CONFLICT(user_id) DO UPDATE SET
+                        code_hash = excluded.code_hash,
+                        expires_at = excluded.expires_at,
+                        attempts = excluded.attempts,
+                        send_count = excluded.send_count,
+                        last_sent_at = excluded.last_sent_at,
+                        window_started_at = excluded.window_started_at
+                `, [user.user_id, hash, expires, sendCount, now, windowStartAt]);
 
                 await sendEmail({
                     to: email,
@@ -347,7 +402,7 @@ module.exports = (db) => {
                 `
                 });
 
-                res.json({ sent: true });
+                res.json({ message: responseMessage });
 
             } catch (err) {
                 res.status(500).json({ error: "Internal server error" });
@@ -366,8 +421,9 @@ module.exports = (db) => {
             if (!errors.isEmpty())
                 return res.status(400).json({ errors: errors.array() });
 
-            const email = req.body.email.toLowerCase();
+            const email = req.body.email.trim().toLowerCase();
             const code = req.body.code;
+            const now = getNowEpochSeconds();
 
             try {
                 const row = await db.get(`
@@ -375,13 +431,13 @@ module.exports = (db) => {
                 FROM email_verification ev
                 JOIN user_contact uc ON ev.user_id = uc.user_id
                 JOIN users u ON u.user_id = ev.user_id
-                WHERE uc.email = ?
+                WHERE LOWER(uc.email) = LOWER(?)
             `, [email]);
 
                 if (!row)
                     return res.status(400).json({ error: "No verification code found" });
 
-                if (Date.now() > row.expires_at)
+                if (now > row.expires_at)
                     return res.status(400).json({ error: "Code expired" });
 
                 if (row.attempts >= 5)
@@ -396,13 +452,13 @@ module.exports = (db) => {
                 }
 
                 await db.run(
-                    "UPDATE users SET verifiedEmail = 1 WHERE user_id = ?", [row.user_id]);
+                    "UPDATE users SET verified_email = 1 WHERE user_id = ?", [row.user_id]);
                 await db.run(
                     "DELETE FROM email_verification WHERE user_id = ?",
                     [row.user_id]
                 );
 
-                res.json({ verified: true });
+                res.json({ message: "Email verified" });
 
             } catch (err) {
                 res.status(500).json({ error: "Internal server error" });

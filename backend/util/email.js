@@ -15,6 +15,10 @@ apiInstance.setApiKey(
 );
 
 async function sendEmail({ to, subject, html }) {
+    if (process.env.EMAIL_DRY_RUN === "1") {
+        return { skipped: true };
+    }
+
     const email = {
         sender: {
             email: process.env.BREVO_SENDER_EMAIL,
