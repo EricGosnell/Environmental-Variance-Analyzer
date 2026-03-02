@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import MapView from "../components/Map.tsx";
+import PodTable from "../components/PodTable.tsx";
 
 import { getMe, getMeSilent } from "../utils/api.ts";
 import type { User } from "../utils/apiTypes.ts";
@@ -10,6 +11,8 @@ import "../styles/Home.css";
 export default function Home() {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
     const [user, setUser] = useState<User | null>(null);
+    const [isPodTableOpen, setIsPodTableOpen] = useState(false);
+    const [podTableHeight, setPodTableHeight] = useState(33);
 
     useEffect(() => {
         const ac = new AbortController();
@@ -68,9 +71,24 @@ export default function Home() {
                     />
                 ) : null}
             </div>
+
             <div className="map-container">
-                <MapView />
+                <div className="map-content" style={{flex: isPodTableOpen ? `0 0 ${100 - podTableHeight}%` : '1'}}>
+                    <MapView />
+                </div>
+
+                {!isPodTableOpen && (
+                    <button className="pod-table-open-btn" onClick={() => setIsPodTableOpen(true)}>
+                        Pod Table
+                    </button>
+                )}
+
+                <PodTable
+                    isOpen={isPodTableOpen}
+                    onClose={() => setIsPodTableOpen(false)}
+                    onHeightChange={setPodTableHeight}
+                />
             </div>
         </div>
-    )
+    );
 }
