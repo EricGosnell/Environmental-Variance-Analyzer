@@ -50,7 +50,7 @@ const loadTestData = async (db) => {
             const isFirstUser = count.c === 0;
 
             const user = await db.run(
-                `INSERT INTO users (username, password_hash, admin, verified_email, account_locked)
+                `INSERT INTO users (username, password_hash, admin, verifiedEmail, accountLocked)
          VALUES (?, ?, ?, 1, 0)`,
                 [person.email, hashedPassword, isFirstUser ? 1 : 0]
             );
