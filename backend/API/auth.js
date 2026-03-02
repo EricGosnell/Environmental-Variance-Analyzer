@@ -352,12 +352,12 @@ module.exports = (db) => {
 
                 if (existingRow) {
                     if (existingLastSentAt + VERIFICATION_MIN_RESEND_SECONDS > now) {
-                        return res.status(429).json({ error: "Please wait before requesting another verification code." });
+                        return res.status(200).json({ message: responseMessage });
                     }
 
                     if ((now - existingWindowStart) <= VERIFICATION_WINDOW_SECONDS) {
                         if (existingSendCount >= VERIFICATION_MAX_SENDS_PER_WINDOW) {
-                            return res.status(429).json({ error: "Too many verification codes sent. Try again later." });
+                            return res.status(200).json({ message: responseMessage });
                         }
 
                         sendCount = existingSendCount + 1;
