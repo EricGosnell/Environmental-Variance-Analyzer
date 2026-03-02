@@ -36,9 +36,7 @@ export async function createTestDb() {
       username TEXT UNIQUE NOT NULL,
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       password_hash TEXT NOT NULL,
-      admin BOOLEAN DEFAULT FALSE,
-      verified_email BOOLEAN DEFAULT FALSE,
-      account_locked BOOLEAN DEFAULT FALSE
+      admin BOOLEAN DEFAULT FALSE
     );
   `);
 
@@ -59,20 +57,6 @@ export async function createTestDb() {
       token TEXT PRIMARY KEY,
       user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
       expires_at INTEGER NOT NULL,
-      created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
-    );
-  `);
-
-  // ----- EMAIL VERIFICATION -----
-  await db.run(`
-    CREATE TABLE email_verification (
-      user_id INTEGER PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
-      code_hash TEXT NOT NULL,
-      expires_at INTEGER NOT NULL,
-      attempts INTEGER NOT NULL DEFAULT 0,
-      send_count INTEGER NOT NULL DEFAULT 0,
-      last_sent_at INTEGER NOT NULL DEFAULT 0,
-      window_started_at INTEGER NOT NULL DEFAULT 0,
       created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
     );
   `);
@@ -136,3 +120,4 @@ export function makeTestApp(db) {
 
   return app;
 }
+
