@@ -520,31 +520,31 @@ module.exports = (db) => {
 
                 const rows = await db.all(
                     `
-        SELECT *
-        FROM (
-          SELECT
-            pd.pod_id,
-            p.pod_name,
-            sd.sensor_data_id,
-            sd.sensor_type,
-            sd.reading_value,
-            sd.reading_units,
-            sd.reading_timestamp,
-            pd.latitude,
-            pd.longitude,
-            ROW_NUMBER() OVER (
-              PARTITION BY pd.pod_id, sd.sensor_type
-              ORDER BY datetime(sd.reading_timestamp) DESC
-            ) as rn
-          FROM pod_data pd
-          JOIN sensor_data sd
-            ON sd.pod_data_id = pd.pod_data_id
-          JOIN pods p
-            ON p.pod_id = pd.pod_id
-          WHERE pd.pod_id IN (${placeholders})
-        )
-        WHERE rn = 1
-        `,
+  SELECT *
+  FROM (
+    SELECT
+      pd.pod_id,
+      p.pod_name,
+      sd.sensor_data_id,
+      sd.sensor_type,
+      sd.reading_value,
+      sd.reading_units,
+      sd.reading_timestamp,
+      pd.latitude,
+      pd.longitude,
+      ROW_NUMBER() OVER (
+        PARTITION BY pd.pod_id, sd.sensor_type
+        ORDER BY datetime(sd.reading_timestamp) DESC
+      ) as rn
+    FROM pod_data pd
+    JOIN sensor_data sd
+      ON sd.pod_data_id = pd.pod_data_id
+    JOIN pod p
+      ON p.pod_id = pd.pod_id
+    WHERE pd.pod_id IN (${placeholders})
+  )
+  WHERE rn = 1
+  `,
                     accessibleIds
                 );
 
