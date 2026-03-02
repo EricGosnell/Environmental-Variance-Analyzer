@@ -41,4 +41,31 @@
 
 .info-link {
     color: var(--primary-green);
+    text-decoration: underline;
+}
+
+.members-container {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 20px;
+}
+
+.members-card {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+}
+
+.members-image {
+    width: 80px;
+    height: 80px;
+    border-radius: 16px;
+}
+
+.members-content h3 {
+    margin: 0;
+}
+
+.members-content p {
+    margin: 0;
 }
