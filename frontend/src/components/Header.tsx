@@ -12,14 +12,14 @@ export default function Header() {
                 <nav className="navbar-links">
                     <NavLink to="/">Map</NavLink>
                     <div className="dropdown">
-                        <NavLink to="/about-the-EVA-pod" className="dropdown-toggle">
+                        <NavLink to="/about" className="dropdown-toggle">
                             About
                         </NavLink>
                         <div className="dropdown-menu dropdown-menu-center">
-                            <Link to="/about-the-EVA-pod">The EVA Pod</Link>
-                            <Link to="/about-assembly-instructions">Assembly Instructions</Link>
-                            <Link to="/about-NASA-STELLA">NASA STELLA</Link>
-                            <Link to="/about-meet-CARMA">Meet CARMA</Link>
+                            <Link to="/about/EVA-pod">The EVA Pod</Link>
+                            <Link to="/about/assembly-instructions">Assembly Instructions</Link>
+                            <Link to="/about/NASA-STELLA">NASA STELLA</Link>
+                            <Link to="/about/meet-CARMA">Meet CARMA</Link>
                         </div>
                     </div>
                     <NavLink to="/faqs">FAQs</NavLink>

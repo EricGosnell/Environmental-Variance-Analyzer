@@ -6,34 +6,34 @@ export default function Footer() {
     return (
         <footer className="footer">
             <div className="footer-container">
-                <div className="footer-left">
-                    <p>NASA Colorado Space Grant Consortium</p>
-                    <p>1095 Regent Dr.</p>
-                    <p>Boulder, CO 80309</p>
-                    <p>Discovery Leaning Center</p>
-                    <p>Room 270</p>
-                    <p>Webmaster</p>
-                    <p>cospacegrant@colorado.edu</p>
+                <div className="footer-column">
+                    <h4>Explore</h4>
+                    <Link to="/">Map</Link>
+                    <Link to="/about-assembly-instructions">Assembly Instructions</Link>
+                    <Link to="/faqs">FAQs</Link>
+
                 </div>
-                <div className="footer-center">
-                    <Link to="/contact-us">Contact Us</Link>
-                    <Link to="/terms-and-conditions">Terms & Conditions</Link>
-                    <Link to="/privacy-statement">Privacy Statement</Link>
-                    <Link to="/copyright-and-other-notices">Copyright and Other Notices</Link>
+                <div className="footer-column">
+                    <h4>About</h4>
+                    <Link to="/about-the-EVA-pod">The EVA Pod</Link>
+                    <Link to="/about-NASA-STELLA">NASA STELLA</Link>
+                    <Link to="/about-meet-CARMA">CARMA</Link>
+                    <Link to="/contact">Contact Us</Link>
+                    <Link to="/privacy">Privacy</Link>
                 </div>
-                <div className="footer-right">
+                <div className="footer-column">
                     <Link to="https://www.colorado.edu/center/spacegrant/" target="_blank">
                         <img
                             src={cosgc_logo}
                             alt="COSGC Logo"
-                            className="cosgc-logo"
+                            className="footer-image"
                         />
                     </Link>
                     <Link to="https://www.nasa.gov/" target="_blank">
                         <img
                             src="https://www.nasa.gov/wp-content/themes/nasa/assets/images/nasa-logo.svg"
                             alt="NASA Logo"
-                            className="nasa-logo"
+                            className="footer-image"
                         />
                     </Link>
                 </div>

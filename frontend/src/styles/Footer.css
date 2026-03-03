@@ -6,43 +6,34 @@
 }
 
 .footer-container {
-    padding: 0 40px;
     display: flex;
     justify-content: space-between;
-    align-items: center;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 0 100px;
 }
-
-.footer-left p {
-    margin: 0 0;
-}
-
-.footer-center {
+.footer-column {
     display: flex;
     flex-direction: column;
+    gap: 10px;
 }
 
-.footer-center a {
-    padding: 10px 10px;
+.footer-column h4 {
+    margin: 0;
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.footer-column a {
     color: white;
     font-weight: 500;
 }
 
-.footer-center a:hover {
+.footer-column a:hover {
     opacity: 0.8;
 }
 
-.footer-right {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-}
-
-.footer-right .cosgc-logo {
-    height: 100px;
-    width: auto;
-}
-
-.footer-right .nasa-logo {
-    height: 100px;
-    width: auto;
+.footer-column .footer-image {
+    height: auto;
+    width: 100px;
 }
