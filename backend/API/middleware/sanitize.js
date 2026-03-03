@@ -27,18 +27,16 @@ const sanitizeRequestBody = (req, res, next) => {
 
 // Input validation schemas for login and registration
 const loginValidation = [
-    body("username")
-        .isLength({ min: MIN_USERNAME_LENGTH, max: MAX_USERNAME_LENGTH })
-        .withMessage(`Username must be between ${MIN_USERNAME_LENGTH} and ${MAX_USERNAME_LENGTH} characters`)
-        .matches(/^[a-zA-Z0-9_-]+$/)
-        .withMessage("Username can only contain letters, numbers, underscores, and hyphens")
-        .trim()
-        .escape(),
+    body("email")
+        .isEmail()
+        .withMessage("Must be a valid email address")
+        .trim(),
 
     body("password")
-        .isLength({ min: MIN_PASSWORD_LENGTH, max: MAX_PASSWORD_LENGTH })
-        .withMessage(`Password must be between ${MIN_PASSWORD_LENGTH} and ${MAX_PASSWORD_LENGTH} characters`),
+        .notEmpty()
+        .withMessage("Password is required"),
 ];
+
 
 const registerValidation = [
     body("username")

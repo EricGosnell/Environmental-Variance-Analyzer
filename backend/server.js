@@ -1,5 +1,7 @@
 const express = require("express");
 const path = require("path");
+require("dotenv").config();
+const cors = require("cors");
 
 const { createDB } = require("./database/databaseInit");
 const authRoutes = require("./API/auth");
@@ -12,6 +14,9 @@ const PORT = process.env.PORT || 3000;
 // ====== middleware ======
 app.use(express.static(path.join(__dirname, "Pages")));
 app.use(express.json());
+if (process.env.NODE_ENV === "development") {
+  app.use(cors({ origin: "http://localhost:5173" }));
+}
 
 // Security headers middleware
 app.use((req, res, next) => {
@@ -23,7 +28,7 @@ app.use((req, res, next) => {
 
 // Routes
 app.get("/", (req, res) => {
-  res.redirect("/home/home.html");
+  res.send("EVA server running");
 });
 
 // ====== database + api mount ======

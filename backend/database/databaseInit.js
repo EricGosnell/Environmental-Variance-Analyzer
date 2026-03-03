@@ -2,19 +2,28 @@ const path = require("path");
 const sqlite3 = require("sqlite3").verbose();
 const { promisify } = require("util");
 const fs = require("fs");
+const bcrypt = require("bcryptjs");
+const { loadTestData } = require("../test/testDataLoader");
 
 // Helper function to promisify db methods
 const promisifyDb = (database) => {
-  const dbRun = promisify(database.run.bind(database));
-  const dbGet = promisify(database.get.bind(database));
-  const dbAll = promisify(database.all.bind(database));
+  const originalRun = database.run.bind(database);
 
-  database.run = dbRun;
-  database.get = dbGet;
-  database.all = dbAll;
+  database.run = (sql, params = []) =>
+    new Promise((resolve, reject) => {
+      originalRun(sql, params, function (err) {
+        if (err) reject(err);
+        else resolve(this);
+      });
+    });
+
+  database.get = promisify(database.get.bind(database));
+  database.all = promisify(database.all.bind(database));
 
   return database;
 };
+
+
 
 // Initialize database from schema file if needed
 const initializeDatabase = async (db, dbFilePath, schemaFilePath) => {
@@ -114,11 +123,21 @@ const createDB = async () => {
   const dbFilePath = path.join(__dirname, "db.sqlite");
   const schemaFilePath = path.join(__dirname, "db.sql");
 
+  if (process.env.NODE_ENV === "development") {
+    if (fs.existsSync(dbFilePath)) {
+      fs.unlinkSync(dbFilePath);
+      console.log("Dev mode: wiped database for fresh seed");
+    }
+  }
+
   let db = new sqlite3.Database(dbFilePath);
   db = promisifyDb(db);
 
   db = await initializeDatabase(db, dbFilePath, schemaFilePath);
   await verifyDatabase(db);
+
+  console.log("Seeding development data...");
+  await loadTestData(db);
 
   return db;
 };

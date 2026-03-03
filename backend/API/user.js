@@ -3,7 +3,7 @@ const express = require("express");
 const bcrypt = require("bcryptjs");
 const { body, validationResult } = require("express-validator");
 const { sanitizeRequestBody } = require("./middleware/sanitize");
-const { authenticateToken } = require("../Util/Tokens");
+const { authenticateToken } = require("../util/Tokens");
 
 //USING THESE FOR VALIDATION RESTRICTIONS FOR NOW, 
 //CAN BE CHANGED LATER IF WE DECIDE TO - Ryan
@@ -37,22 +37,19 @@ module.exports = (db) => {
                 return res.status(404).json({ error: "User not found" });
             }
 
-            // Get pod IDs
-            const pods = await db.all(
-                `SELECT pod_id FROM user_pod WHERE user_id = ?`,
-                [userId]
-            );
+            const pods = await db.all(`
+            SELECT 
+                p.pod_id,
+                p.pod_name,
+                p.pod_data_public,
+                pd.latitude,
+                pd.longitude
+            FROM pod p
+            JOIN user_pod up ON up.pod_id = p.pod_id
+            JOIN pod_data pd ON pd.pod_id = p.pod_id
+            WHERE up.user_id = ?
+            `, [userId]);
 
-            // Get pod data IDs
-            const podData = await db.all(
-                `
-                SELECT DISTINCT pd.pod_data_id
-                FROM pod_data pd
-                JOIN user_pod up ON pd.pod_id = up.pod_id
-                WHERE up.user_id = ?
-                `,
-                [userId]
-            );
 
             return res.status(200).json({
                 user: {
@@ -60,10 +57,16 @@ module.exports = (db) => {
                     email: user.email,
                     phone_number: user.phone_number,
                     username: user.username,
-                    pods: pods.map(p => p.pod_id),
-                    podData: podData.map(pd => pd.pod_data_id),
+                    pods: pods.map(p => ({
+                        id: p.pod_id,
+                        name: p.pod_name,
+                        visibility: !!p.pod_data_public,
+                        lat: p.latitude,
+                        long: p.longitude
+                    }))
                 }
             });
+
         } catch (error) {
             return res.status(500).json({
                 error: "Internal server error",
@@ -364,6 +367,7 @@ module.exports = (db) => {
         body("podId")
             .trim()
             .notEmpty()
+            .isInt({ gt: 0 })
             .withMessage("Pod ID is required"),
         body("nickname")
             .trim()

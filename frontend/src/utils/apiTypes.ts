@@ -14,11 +14,20 @@ export type MessageResponse = { message: string };
 // Core models
 // ----------------------------
 
+export type UserPod = {
+  id: number;
+  name: string;
+  visibility: boolean;
+  lat: string;
+  long: string;
+};
+
+
 export type User = {
   id: string;
   email: string;
   username: string;
-  pods?: string[];
+  pods?: UserPod[];
   podData?: string[];
   createdAt?: string;
   updatedAt?: string;
@@ -74,7 +83,7 @@ export type AuthLoginResponse = { user: User; accessToken: string; refreshToken:
 export type AuthRefreshRequest = { refreshToken: string };
 export type AuthRefreshResponse = { accessToken: string; refreshToken: string };
 
-export type AuthRegisterRequest = { email: string; password: string; username: string; invitationToken: string };
+export type AuthRegisterRequest = { email: string; password: string; username: string; phone_number: string };
 export type AuthRegisterResponse = { user: User; accessToken: string; refreshToken: string };
 
 export type AuthLogoutRequest = { refreshToken: string };
