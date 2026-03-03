@@ -4,6 +4,15 @@
     /*background-color: #444;*/
     }
 
+.navbar::after {
+    content: "";
+    display: block;
+    height: 2px;
+    background-color: white;
+    width: calc(100% - 80px);
+    margin: 16px auto 0;
+}
+
 .nav-container {
     padding: 0 40px;
     display: flex;
