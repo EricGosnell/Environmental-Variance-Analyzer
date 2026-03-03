@@ -102,13 +102,20 @@
     display: flex;
 }
 
-.dropdown-menu a {
-    padding: 8px 16px;
-    color: white;
+.dropdown-item {
+    text-align: left;
+    padding: 9px 13px;
+    font-size: 1rem;
     font-weight: 500;
+    font-family: inherit;
+    color: white;
+    background: none;
+    border: none;
+    cursor: pointer;
+    border-radius: 8px;
 }
 
-.dropdown-menu a:hover {
+.dropdown-item:hover {
     background-color: black;
     opacity: 0.9;
 }
