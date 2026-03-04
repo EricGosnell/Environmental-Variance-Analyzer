@@ -99,18 +99,19 @@ module.exports = (db) => {
 
             const searchTerm = req.query.username.toLowerCase();
             const limit = req.query.limit ?? 20;
-            const containsPattern = `%${searchTerm}%`;
-            const prefixPattern = `${searchTerm}%`;
+            const escapedSearchTerm = searchTerm.replace(/([\\%_])/g, "\\$1");
+            const containsPattern = `%${escapedSearchTerm}%`;
+            const prefixPattern = `${escapedSearchTerm}%`;
 
             const users = await db.all(
                 `
                 SELECT u.user_id, u.username
                 FROM users u
-                WHERE LOWER(u.username) LIKE ?
+                WHERE LOWER(u.username) LIKE ? ESCAPE '\\'
                 ORDER BY
                     CASE
                         WHEN LOWER(u.username) = ? THEN 0
-                        WHEN LOWER(u.username) LIKE ? THEN 1
+                        WHEN LOWER(u.username) LIKE ? ESCAPE '\\' THEN 1
                         ELSE 2
                     END ASC,
                     LOWER(u.username) ASC
