@@ -32,6 +32,7 @@ function App() {
                     <Route path="/privacy" element={<Privacy />} />
                     <Route path="/faqs" element={<FAQs />} />
                     <Route path="/profile" element={<Profile />} />
+                    <Route path="/settings" element={<Navigate to="/profile" replace />} />
                     <Route path="/friends" element={<Friends />} />
                     <Route path="/pod/:podId" element={<Pod />} />
                 </Route>

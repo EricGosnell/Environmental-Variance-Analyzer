@@ -11,8 +11,9 @@ export default function Contact() {
                     <p className="info-content">
                         For any inquiries, please email{" "}
                         <a href="mailto:cospacegrant@colorado.edu" className="info-link">
-                            cospacegrant@colorado.edu.
+                            cospacegrant@colorado.edu
                         </a>
+                        .
                     </p>
                     <p className="info-content">
                         Address: 1095 Regent Dr., Boulder CO 80309, Discovery Learning Center, Room 270

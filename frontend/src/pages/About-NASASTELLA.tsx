@@ -14,7 +14,12 @@ export default function About_NASASTELLA() {
                     </p>
                     <p>
                         For more information about the STELLA devices, including versions, build instructions, example applications, history, and other related resources, visit{" "}
-                        <a href="https://science.gsfc.nasa.gov/stella/" target="_blank" className="info-link">
+                        <a
+                            href="https://science.gsfc.nasa.gov/stella/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="info-link"
+                        >
                             the NASA STELLA website.
                         </a>
                     </p>

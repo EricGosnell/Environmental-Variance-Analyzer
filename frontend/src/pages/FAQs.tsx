@@ -1,4 +1,4 @@
-import { useState } from "react";
+import {KeyboardEvent, useState} from "react";
 import "../styles/FAQs.css";
 
 const faqs = [
@@ -144,6 +144,16 @@ export default function FAQs() {
         setOpenIndex(openIndex === id ? null : id);
     };
 
+    const handleQuestionKeyDown = (
+        event: KeyboardEvent<HTMLButtonElement>,
+        id: string,
+    ) => {
+        if (event.key === "Enter" || event.key === " " || event.key === "ArrowDown") {
+            event.preventDefault();
+            toggleFAQ(id);
+        }
+    };
+
     return (
         <div className="faqs-container">
             <h1 className="faqs-header">Frequently Asked Questions</h1>
@@ -152,13 +162,21 @@ export default function FAQs() {
                     <h2 className="faqs-subheader">{section.category}</h2>
                     {section.questions.map((item, questionIndex) => {
                         const uniqueId = `${sectionIndex}-${questionIndex}`;
+                        const answerId = `faq-answer-${uniqueId}`;
                         return (
                             <div key={uniqueId} className={`faq-item ${openIndex === uniqueId ? "open" : ""}`}>
-                                <div className="faq-question" onClick={() => toggleFAQ(uniqueId)}>
+                                <button
+                                    id={`faq-button-${uniqueId}`}
+                                    className="faq-question"
+                                    aria-expanded={openIndex === uniqueId}
+                                    aria-controls={answerId}
+                                    onClick={() => toggleFAQ(uniqueId)}
+                                    onKeyDown={(event) => handleQuestionKeyDown(event, uniqueId)}
+                                >
                                     {item.question}
                                     <span>{openIndex === uniqueId ? "−" : "+"}</span>
-                                </div>
-                                <div className="faq-answer">
+                                </button>
+                                <div className="faq-answer" id={answerId} role="region" aria-labelledby={`faq-button-${uniqueId}`}>
                                     <p>{item.answer}</p>
                                 </div>
                             </div>

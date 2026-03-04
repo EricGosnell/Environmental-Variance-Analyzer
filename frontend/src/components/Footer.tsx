@@ -23,18 +23,26 @@ export default function Footer() {
                 </div>
                 <div className="footer-column footer-column-images">
                     <div className="footer-images">
-                        <Link to="https://www.colorado.edu/center/spacegrant/" target="_blank">
+                        <a
+                            href="https://www.colorado.edu/center/spacegrant/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
                             <img
                                 src={cosgc_logo}
                                 alt="COSGC Logo"
                             />
-                        </Link>
-                        <Link to="https://www.nasa.gov/" target="_blank">
+                        </a>
+                        <a
+                            href="https://www.nasa.gov/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                        >
                             <img
                                 src="https://www.nasa.gov/wp-content/themes/nasa/assets/images/nasa-logo.svg"
                                 alt="NASA Logo"
                             />
-                        </Link>
+                        </a>
                     </div>
                 </div>
             </div>

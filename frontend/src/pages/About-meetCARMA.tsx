@@ -64,14 +64,24 @@ export default function About_MeetCarma() {
                             </p>
                             <p className="info-content">
                                 For more information on CARMA, including related programs, see NASA Colorado Space Grant Consortium’s{" "}
-                                <a href="https://www.colorado.edu/center/spacegrant/climate-projects" target="_blank" className="info-link">
+                                <a
+                                    href="https://www.colorado.edu/center/spacegrant/climate-projects"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="info-link"
+                                >
                                     Earth System Projects.
                                 </a>
                             </p>
                             <h2 className="info-subheader">COSGC</h2>
                             <p className="info-content">
                                 CARMA is proud to be part of the Colorado Space Grant Consortium (COSGC), which is a state-wide program that provides Colorado students access to space through innovative courses and NASA-aligned projects. More information on the COSGC can be found on{" "}
-                                <a href="https://www.colorado.edu/center/spacegrant/" target="_blank" className="info-link">
+                                <a
+                                    href="https://www.colorado.edu/center/spacegrant/"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="info-link"
+                                >
                                     their website.
                                 </a>
                             </p>
