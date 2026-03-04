@@ -1,17 +1,12 @@
 import {Link, NavLink, useNavigate} from "react-router-dom";
 import {ApiError, authLogout, getAccessToken} from "../utils/api";
 import "../styles/Header.css";
-import {useEffect, useState} from "react";
+import {useState} from "react";
 
 export default function Header() {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(false);
-    const [login, setLogin] = useState(false);
-
-    useEffect(() => {
-        const token = getAccessToken();
-        setLogin(!!token);
-    }, []);
+    const login = !!getAccessToken();
 
     const submitLogout = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -19,8 +14,11 @@ export default function Header() {
         setLoading(true);
         try {
             await authLogout();
-            setLogin(false);
-            navigate("/");
+            if (location.pathname === "/") {
+                navigate(0);
+            } else {
+                navigate("/", { replace: true });
+            }
         } catch (err) {
             if (err instanceof ApiError && err.status === 400) {
                 console.error("Logout failed", err);

@@ -3,6 +3,7 @@ import { FiArrowLeft } from "react-icons/fi";
 import type { User } from "../utils/apiTypes";
 import { ApiError, authLogin, authRegister } from "../utils/api";
 import "../styles/AuthPanel.css";
+import {useNavigate} from "react-router-dom";
 
 type AuthPanelProps = {
   onAuthSuccess: (user: User) => void;
@@ -14,6 +15,7 @@ export default function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
   const [mode, setMode] = useState<Mode>("login");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const navigate = useNavigate();
 
   // login
   const [loginEmail, setLoginEmail] = useState("");
@@ -40,6 +42,7 @@ export default function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
     try {
       const res = await authLogin({ email: loginEmail, password: loginPassword });
       onAuthSuccess(res.user);
+      navigate("/")
     } catch (err) {
       if (err instanceof ApiError && err.status === 400) {
         setError(err.message);
