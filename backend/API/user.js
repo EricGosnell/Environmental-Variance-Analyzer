@@ -364,19 +364,12 @@ module.exports = (db) => {
     // POST /me/register-pod - Register a new pod
     // -------------------------
     router.post("/me/register-pod", authenticateToken, sanitizeRequestBody, [
-        body("podId")
-            .trim()
-            .notEmpty()
-            .isInt({ gt: 0 })
-            .withMessage("Pod ID is required"),
         body("nickname")
             .trim()
             .notEmpty()
             .withMessage("Nickname is required"),
         body("visibility")
             .trim()
-            //the readME lists this as a string, 
-            // should we use a bollean instead? - Ryan
             .isIn(["public", "private"])
             .withMessage("Visibility must be either 'public' or 'private'"),
         body("latitude")
@@ -394,24 +387,44 @@ module.exports = (db) => {
                 return res.status(400).json({ error: "One or more required parameters are invalid or missing" });
             }
 
-            const { podId, nickname, visibility, latitude, longitude } = req.body;
+            const { nickname, visibility, latitude, longitude } = req.body;
             const userId = req.user.id;
 
-            // Check if user already has this pod registered
+            // Enforce uniqueness by pod name
             const existingPod = await db.get(
-                "SELECT pod_id FROM user_pod WHERE user_id = ? AND pod_id = ?",
-                [userId, podId]
+                "SELECT pod_id FROM pod WHERE pod_name = ?",
+                [nickname]
             );
-
             if (existingPod) {
-                return res.status(409).json({ message: "Pod already registered" });
+                // Check if user is already registered to this pod
+                const userPod = await db.get(
+                    "SELECT * FROM user_pod WHERE user_id = ? AND pod_id = ?",
+                    [userId, existingPod.pod_id]
+                );
+                if (userPod) {
+                    return res.status(409).json({ error: "A pod with this name registered to you already exists." });
+                }
+                // Register user to existing pod
+                await db.run(
+                    "INSERT INTO user_pod (user_id, pod_id) VALUES (?, ?)",
+                    [userId, existingPod.pod_id]
+                );
+                // Insert pod location data if provided
+                if (latitude !== undefined && longitude !== undefined) {
+                    const today = new Date().toISOString().split('T')[0];
+                    await db.run(
+                        "INSERT INTO pod_data (pod_id, date_collected, latitude, longitude) VALUES (?, ?, ?, ?)",
+                        [existingPod.pod_id, today, latitude, longitude]
+                    );
+                }
+                return res.status(200).json({ message: "Pod registered to user successfully", podId: existingPod.pod_id });
             }
 
             //Check long and lat have required specificity, three decimals minimum
             if (latitude !== undefined) {
                 const latString = latitude.toString();
                 const latDecimals = latString.split(".")[1];
-                if (latDecimals.length < 3) {
+                if (!latDecimals || latDecimals.length < 3) {
                     return res.status(400).json({ error: "Latitude must have at least three decimal places" });
                 }
             }
@@ -419,23 +432,17 @@ module.exports = (db) => {
             if (longitude !== undefined) {
                 const lonString = longitude.toString();
                 const lonDecimals = lonString.split(".")[1];
-                if (lonDecimals.length < 3) {
+                if (!lonDecimals || lonDecimals.length < 3) {
                     return res.status(400).json({ error: "Longitude must have at least three decimal places" });
                 }
             }
 
-            // Create pod if it doesn't exist
-            const podResult = await db.get(
-                "SELECT pod_id FROM pod WHERE pod_id = ?",
-                [podId]
+            // Insert new pod and get pod_id
+            const podInsert = await db.run(
+                "INSERT INTO pod (pod_name, pod_data_public) VALUES (?, ?)",
+                [nickname, visibility === "public" ? 1 : 0]
             );
-
-            if (!podResult) {
-                await db.run(
-                    "INSERT INTO pod (pod_id, pod_name, pod_data_public) VALUES (?, ?, ?)",
-                    [podId, nickname, visibility === "public" ? 1 : 0]
-                );
-            }
+            const podId = podInsert.lastID;
 
             // Register user to pod
             await db.run(
@@ -446,14 +453,13 @@ module.exports = (db) => {
             // Insert pod location data if provided
             if (latitude !== undefined && longitude !== undefined) {
                 const today = new Date().toISOString().split('T')[0];
-
                 await db.run(
                     "INSERT INTO pod_data (pod_id, date_collected, latitude, longitude) VALUES (?, ?, ?, ?)",
                     [podId, today, latitude, longitude]
                 );
             }
 
-            return res.status(200).json({ message: "Pod registered successfully" });
+            return res.status(200).json({ message: "Pod registered successfully", podId });
         } catch (error) {
             return res.status(500).json({
                 error: "Internal server error",

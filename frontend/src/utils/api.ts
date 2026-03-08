@@ -386,7 +386,11 @@ export async function authResetPassword(
 }
 
 export async function getMe(signal?: AbortSignal): Promise<UserResponse> {
-  return await request<UserResponse>({ method: "GET", path: "/users/me", auth: true, signal });
+  return await request<UserResponse>(
+    { method: "GET", 
+      path: "/users/me", 
+      auth: true, 
+      signal });
 }
 
 export async function getMeSilent(signal?: AbortSignal): Promise<UserResponse> {
@@ -476,15 +480,7 @@ export async function unregisterPod(payload: UnregisterPodRequest, signal?: Abor
     signal,
   });
 }
-//Get user's pods
-export async function getUserPods(signal?: AbortSignal): Promise<PodLocationsResponse> {
-  return await request<PodLocationsResponse>({
-    method: "GET",
-    path: "/users/me/get-pods",
-    auth: true,
-    signal,
-  });
-}
+
 
 // Admin routes
 
