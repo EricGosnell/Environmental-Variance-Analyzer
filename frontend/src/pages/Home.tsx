@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import MapView from "../components/Map.tsx";
-
+import { useNavigate } from "react-router-dom";
 import { getMe, getMeSilent } from "../utils/api.ts";
 import type { User } from "../utils/apiTypes.ts";
 import AuthPanel from "../components/AuthPanel.tsx";
@@ -10,6 +10,7 @@ import "../styles/Home.css";
 export default function Home() {
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
     const [user, setUser] = useState<User | null>(null);
+    const navigate = useNavigate();
 
     useEffect(() => {
         const ac = new AbortController();
@@ -45,7 +46,7 @@ export default function Home() {
                         )}
                         <button className="btn primary-btn" disabled={(user.pods?.length ?? 0) === 0}>Upload EVA Data</button>
                         <br />
-                        <button className="btn secondary-btn">Manage EVA Pods</button>
+                        <button className="btn secondary-btn" onClick={() => navigate("/manage-pods")}>Manage EVA Pods</button>
 
                         <div className="filters-container">
                             <p>Filters</p>

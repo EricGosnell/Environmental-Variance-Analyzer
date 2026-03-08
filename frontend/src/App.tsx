@@ -8,6 +8,7 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Profile from "./pages/Profile"
 import Pod from "./pages/Pod";
+import ManagePods from "./pages/ManagePods";
 
 function App() {
     return (
@@ -19,6 +20,7 @@ function App() {
                     <Route path="/contact" element={<Contact />} />
                     <Route path="/profile" element={<Profile />} />
                     <Route path="/pod/:podId" element={<Pod />} />
+                    <Route path="/manage-pods" element={<ManagePods />} />
                 </Route>
             </Routes>
         </BrowserRouter>
