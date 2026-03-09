@@ -1,24 +1,32 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { FiArrowLeft } from "react-icons/fi";
 import type { User } from "../utils/apiTypes";
-import { ApiError, authLogin, authRegister } from "../utils/api";
+import { ApiError, authLogin, authRegister, sendVerification } from "../utils/api";
 import "../styles/AuthPanel.css";
 import {useNavigate} from "react-router-dom";
 
 type AuthPanelProps = {
   onAuthSuccess: (user: User) => void;
+  initialMode?: Mode;
+  initialLoginEmail?: string;
 };
 
 type Mode = "login" | "signup";
 
-export default function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
-  const [mode, setMode] = useState<Mode>("login");
+export default function AuthPanel({
+  onAuthSuccess,
+  initialMode = "login",
+  initialLoginEmail = "",
+}: AuthPanelProps) {
+  const navigate = useNavigate();
+  const [mode, setMode] = useState<Mode>(initialMode);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const navigate = useNavigate();
 
   // login
-  const [loginEmail, setLoginEmail] = useState("");
+  const [loginEmail, setLoginEmail] = useState(initialLoginEmail);
   const [loginPassword, setLoginPassword] = useState("");
 
   // signup
@@ -38,12 +46,18 @@ export default function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
     e.preventDefault();
     if (loading) return;
     setError(null);
+    const normalizedLoginEmail = loginEmail.trim();
     setLoading(true);
     try {
-      const res = await authLogin({ email: loginEmail, password: loginPassword });
+      const res = await authLogin({ email: normalizedLoginEmail, password: loginPassword });
       onAuthSuccess(res.user);
       navigate("/")
     } catch (err) {
+      if (err instanceof ApiError && err.status === 403) {
+        const next = `/?${new URLSearchParams({ auth: "login", email: normalizedLoginEmail, verified: "1" }).toString()}`;
+        navigate(`/verify-email?${new URLSearchParams({ email: normalizedLoginEmail, next, reason: "login" }).toString()}`);
+        return;
+      }
       if (err instanceof ApiError && err.status === 400) {
         setError(err.message);
       } else {
@@ -58,19 +72,39 @@ export default function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
     e.preventDefault();
     if (loading) return;
     setError(null);
+    const normalizedSignupEmail = signupEmail.trim();
     if (signupPassword !== signupPasswordRetype) {
       setError("Passwords do not match.");
       return;
     }
     setLoading(true);
     try {
-      const res = await authRegister({
+      await authRegister({
         username: signupUsername,
-        email: signupEmail,
+        email: normalizedSignupEmail,
         password: signupPassword,
         phone_number: signupPhone.trim(),
       });
-      onAuthSuccess(res.user);
+
+      let verificationSent = true;
+      try {
+        await sendVerification({ email: normalizedSignupEmail });
+      } catch {
+        verificationSent = false;
+      }
+
+      const nextParams = new URLSearchParams({
+        auth: "login",
+        email: normalizedSignupEmail,
+        verified: "1",
+      });
+      const verificationParams = new URLSearchParams({
+        email: normalizedSignupEmail,
+        next: `/?${nextParams.toString()}`,
+        reason: "signup",
+        sent: verificationSent ? "1" : "0",
+      });
+      navigate(`/verify-email?${verificationParams.toString()}`);
     } catch (err) {
       if (err instanceof ApiError && err.status === 400) {
         setError(err.message);
@@ -232,4 +266,3 @@ export default function AuthPanel({ onAuthSuccess }: AuthPanelProps) {
     </div>
   );
 }
-

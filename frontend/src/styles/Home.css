@@ -22,3 +22,34 @@
 .controls-container .btn {
     width: 100%;
 }
+
+.home-info-banner {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding: 12px;
+    border-radius: 10px;
+    background: rgba(48, 164, 108, 0.2);
+    border: 1px solid rgba(48, 164, 108, 0.6);
+}
+
+.home-info-banner p {
+    margin: 0;
+    font-weight: 600;
+}
+
+.home-info-banner-dismiss {
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    border-radius: 8px;
+    background: transparent;
+    color: #fff;
+    cursor: pointer;
+    padding: 6px 10px;
+    white-space: nowrap;
+}
+
+.home-info-banner-dismiss:hover {
+    background: rgba(255, 255, 255, 0.1);
+}

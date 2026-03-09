@@ -67,8 +67,7 @@ module.exports = (db) => {
     // GET /pods/locations
     // -------------------------
     // returns public pods + user's pods, OR all pods if admin
-    router.get(
-        "/locations",
+    router.get("/locations",
         optionalAuth,
         [
             query("latitude").exists().isFloat({ min: -90, max: 90 }),
@@ -235,9 +234,7 @@ module.exports = (db) => {
     // GET /pods/:id/data
     // -------------------------
     // public pods accessible anonymously, otherwise owner/admin required
-    router.get(
-        "/:id/data",
-        optionalAuth,
+    router.get("/:id/data", optionalAuth,
         [param("id").isInt({ gt: 0 }).withMessage("Pod id must be a positive integer")],
         async (req, res) => {
             try {
@@ -308,8 +305,7 @@ module.exports = (db) => {
     // -------------------------
     // POST /pods/upload-pod-data
     // -------------------------
-    router.post(
-        "/upload-pod-data",
+    router.post("/upload-pod-data",
         authenticateToken,
         sanitizeRequestBody,
         [
@@ -413,12 +409,10 @@ module.exports = (db) => {
         }
     );
 
-
     // -------------------------
     // DELETE /pods/delete-pod-data
     // -------------------------
-    router.delete(
-        "/delete-pod-data",
+    router.delete("/delete-pod-data",
         authenticateToken,
         sanitizeRequestBody,
         [body("podDataId").isInt({ gt: 0 }).withMessage("podDataId must be a positive integer")],

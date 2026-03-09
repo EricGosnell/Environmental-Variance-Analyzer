@@ -20,6 +20,25 @@ erDiagram
         TEXT phone_number
         TEXT email UK
     }
+
+    pending_email_changes {
+        INT user_id PK,FK
+        TEXT new_email
+        TEXT code_hash
+        INT expires_at
+        INT created_at
+    }
+    
+    email_verification {
+        INT user_id PK,FK
+        TEXT code_hash
+        INT expires_at
+        INT attempts
+        INT send_count
+        INT last_sent_at
+        INT window_started_at
+        INT created_at
+    }
     
     pod {
         SERIAL pod_id PK
@@ -55,6 +74,8 @@ erDiagram
     }
     
     users ||--|| user_contact : "has"
+    users ||--o| pending_email_changes : "pending email change"
+    users ||--o| email_verification : "email verification attempts"
     users ||--o{ user_pod : "belongs to"
     pod ||--o{ user_pod : "contains"
     pod ||--o{ pod_data : "contains"
@@ -65,12 +86,16 @@ erDiagram
 
 ### Relationships
 - **users → user_contact**: One-to-one (one user has one contact entry)
+- **users → pending_email_changes**: One-to-zero/one (temporary pending email change verification state)
+- **users → email_verification**: One-to-zero/one (temporary signup/login verification state)
 - **users ↔ pod**: Many-to-many (users can belong to multiple pods, pods can have multiple users) via `user_pod` junction table
 - **pod → pod_data**: One-to-many (one pod can have multiple data entries)
 - **pod_data → sensor_data**: One-to-many (one pod_data entry can have multiple sensor readings)
 
 ### Indexes
 - `idx_user_contact_user_id` on `user_contact(user_id)`
+- `idx_email_verification_expires` on `email_verification(expires_at)`
+- `idx_pending_email_changes_expires` on `pending_email_changes(expires_at)`
 - `idx_user_pod_user_id` on `user_pod(user_id)`
 - `idx_user_pod_pod_id` on `user_pod(pod_id)`
 - `idx_pod_data_pod_id` on `pod_data(pod_id)`
@@ -83,5 +108,6 @@ erDiagram
 - `users.username` is UNIQUE
 - `user_contact.user_id` is UNIQUE (one-to-one relationship)
 - `user_contact.email` is UNIQUE
+- `pending_email_changes.user_id` is PRIMARY KEY and references `users(user_id)`
+- `email_verification.user_id` is PRIMARY KEY and references `users(user_id)`
 - `user_pod` has a composite primary key on `(user_id, pod_id)`
-

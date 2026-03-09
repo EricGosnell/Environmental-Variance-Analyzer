@@ -3,7 +3,12 @@ CREATE TABLE IF NOT EXISTS users (
     username TEXT UNIQUE NOT NULL,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     password_hash TEXT NOT NULL,
-    admin BOOLEAN DEFAULT FALSE
+
+    -- flags
+    admin BOOLEAN DEFAULT FALSE,
+    verified_email BOOLEAN DEFAULT FALSE,
+    account_locked BOOLEAN DEFAULT FALSE
+
 );
 
 -- 1 to 1 with users
@@ -14,6 +19,35 @@ CREATE TABLE IF NOT EXISTS user_contact (
     phone_number TEXT,
     email TEXT UNIQUE
 );
+
+-- email verification codes 
+
+CREATE TABLE IF NOT EXISTS email_verification (
+    user_id INTEGER PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
+    code_hash TEXT NOT NULL,
+    expires_at INTEGER NOT NULL,
+    attempts INTEGER NOT NULL DEFAULT 0,
+    send_count INTEGER NOT NULL DEFAULT 0,
+    last_sent_at INTEGER NOT NULL DEFAULT 0,
+    window_started_at INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_email_verification_expires 
+ON email_verification(expires_at);
+
+-- pending email change verification codes
+CREATE TABLE IF NOT EXISTS pending_email_changes (
+    user_id INTEGER PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
+    new_email TEXT NOT NULL,
+    code_hash TEXT NOT NULL,
+    expires_at INTEGER NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_pending_email_changes_expires
+ON pending_email_changes(expires_at);
+
 
 CREATE TABLE IF NOT EXISTS refresh_tokens (
     token TEXT PRIMARY KEY,

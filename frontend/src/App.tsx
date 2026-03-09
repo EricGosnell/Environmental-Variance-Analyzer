@@ -14,6 +14,7 @@ import FAQs from "./pages/FAQs";
 import Profile from "./pages/Profile"
 import Friends from "./pages/Friends"
 import Pod from "./pages/Pod";
+import VerifyEmail from "./pages/VerifyEmail";
 
 function App() {
     return (
@@ -35,6 +36,7 @@ function App() {
                     <Route path="/settings" element={<Navigate to="/profile" replace />} />
                     <Route path="/friends" element={<Friends />} />
                     <Route path="/pod/:podId" element={<Pod />} />
+                    <Route path="/verify-email" element={<VerifyEmail />} />
                 </Route>
             </Routes>
         </BrowserRouter>
