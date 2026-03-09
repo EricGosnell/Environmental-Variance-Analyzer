@@ -918,48 +918,24 @@ Request Parameters:
 | Parameter | Type | Required | Description |
 |-----------|------|----------|-------------|
 | podId | string | Yes | The pod ID |
-| data | file | Yes | CSV file containing the pod data |
+| data | file | Yes | NDJSON file containing the pod data |
 | notes | string | No | Optional notes for the pod data upload |
 
-Request Body:
+Request Body (multipart/form-data):
+```text
+podId=123
+data=<ndjson_file>
+notes=Optional notes
+```
+
+Response (501 Not Implemented):
 ```json
 {
-  "podId": "123", // Required: The pod ID
-  "data": "<csv_file>", // Required: CSV file with the pod data
-  "notes": "Optional notes" // Optional: Notes for the pod data upload
+  "error": "Not implemented: NDJSON pod data upload parsing is pending"
 }
 ```
 
-Response (200 OK):
-```json
-{
-  "podDataId": "123",
-  "message": "Pod data uploaded successfully"
-}
-```
-
-Response (400 Bad Request):
-```json
-{
-  "error": "Invalid pod data"
-}
-```
-
-Response (404 Not Found):
-```json
-{
-  "error": "Pod not registered"
-}
-```
-
-Response (403 Forbidden):
-```json
-{
-  "error": "Pod location not set"
-}
-```
-
-This endpoint uploads pod data to the database.
+This endpoint is currently a stub. NDJSON ingestion and persistence will be implemented later.
 
 ### Delete Pod Data
 
