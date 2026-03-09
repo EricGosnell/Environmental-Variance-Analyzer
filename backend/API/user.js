@@ -5,6 +5,7 @@ const { body, validationResult } = require("express-validator");
 const { sanitizeRequestBody } = require("./middleware/sanitize");
 const { authenticateToken } = require("../util/Tokens");
 const { sendEmail } = require("../util/email");
+const crypto = require("crypto");
 
 //USING THESE FOR VALIDATION RESTRICTIONS FOR NOW, 
 //CAN BE CHANGED LATER IF WE DECIDE TO - Ryan
@@ -13,6 +14,8 @@ const MAX_USERNAME_LENGTH = 16;
 const MIN_PASSWORD_LENGTH = 8;
 const MAX_PASSWORD_LENGTH = 128;
 const MAX_EMAIL_LENGTH = 255;
+const generateCode = () => Math.floor(100000 + Math.random() * 900000).toString();
+const hashCode = (code) => crypto.createHash("sha256").update(code).digest("hex");
 
 module.exports = (db) => {
     const router = express.Router();
@@ -203,18 +206,19 @@ module.exports = (db) => {
             }
 
             // Generate verification code (6-digit)
-            const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+            const verificationCode = generateCode();
+            const verificationCodeHash = hashCode(verificationCode);
 
             // Store pending email change with verification code for 15 minutes
             const expiresAt = Math.floor(Date.now() / 1000) + (15 * 60);
 
             await db.run(
                 `
-                INSERT INTO pending_email_changes (user_id, new_email, verification_code, expires_at)
+                INSERT INTO pending_email_changes (user_id, new_email, code_hash, expires_at)
                 VALUES (?, ?, ?, ?)
-                ON CONFLICT(user_id) DO UPDATE SET new_email = ?, verification_code = ?, expires_at = ?
+                ON CONFLICT(user_id) DO UPDATE SET new_email = ?, code_hash = ?, expires_at = ?
                 `,
-                [userId, newEmail, verificationCode, expiresAt, newEmail, verificationCode, expiresAt]
+                [userId, newEmail, verificationCodeHash, expiresAt, newEmail, verificationCodeHash, expiresAt]
             );
 
             await sendEmail({
@@ -272,7 +276,7 @@ module.exports = (db) => {
             }
 
             // Verify code matches
-            if (pendingChange.verification_code !== verificationCode) {
+            if (hashCode(verificationCode) !== pendingChange.code_hash) {
                 return res.status(400).json({ error: "Invalid or expired verification code" });
             }
 

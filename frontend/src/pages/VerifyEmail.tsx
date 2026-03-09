@@ -43,15 +43,17 @@ export default function VerifyEmail() {
         : null,
   );
   const [cooldownSeconds, setCooldownSeconds] = useState(sent === "1" ? RESEND_COOLDOWN_SECONDS : 0);
+  const isCooldownActive = cooldownSeconds > 0;
 
   useEffect(() => {
-    if (cooldownSeconds <= 0) return;
+    if (!isCooldownActive) return;
+
     const timerId = window.setInterval(() => {
       setCooldownSeconds((previous) => Math.max(0, previous - 1));
     }, 1000);
 
     return () => window.clearInterval(timerId);
-  }, [cooldownSeconds]);
+  }, [isCooldownActive]);
 
   async function handleVerifySubmit(e: React.FormEvent) {
     e.preventDefault();
