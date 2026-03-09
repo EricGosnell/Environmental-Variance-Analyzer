@@ -37,7 +37,7 @@ erDiagram
         INT send_count
         INT last_sent_at
         INT window_started_at
-        TIMESTAMP created_at
+        INT created_at
     }
     
     pod {

@@ -308,8 +308,15 @@ module.exports = (db) => {
     router.put("/send-verification", [body("email").isEmail().withMessage("Valid email required")],
         async (req, res) => {
             const errors = validationResult(req);
-            if (!errors.isEmpty())
-                return res.status(400).json({ errors: errors.array() });
+            if (!errors.isEmpty()) {
+                return res.status(400).json({
+                    error: "Validation failed",
+                    details: errors.array().map((err) => ({
+                        field: err.param,
+                        message: err.msg,
+                    })),
+                });
+            }
 
             const email = req.body.email.trim().toLowerCase();
             const now = getNowEpochSeconds();
@@ -406,8 +413,15 @@ module.exports = (db) => {
         async (req, res) => {
 
             const errors = validationResult(req);
-            if (!errors.isEmpty())
-                return res.status(400).json({ errors: errors.array() });
+            if (!errors.isEmpty()) {
+                return res.status(400).json({
+                    error: "Validation failed",
+                    details: errors.array().map((err) => ({
+                        field: err.param,
+                        message: err.msg,
+                    })),
+                });
+            }
 
             const email = req.body.email.trim().toLowerCase();
             const code = req.body.code;

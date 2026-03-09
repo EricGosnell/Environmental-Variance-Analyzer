@@ -14,7 +14,7 @@ const MAX_USERNAME_LENGTH = 16;
 const MIN_PASSWORD_LENGTH = 8;
 const MAX_PASSWORD_LENGTH = 128;
 const MAX_EMAIL_LENGTH = 255;
-const generateCode = () => Math.floor(100000 + Math.random() * 900000).toString();
+const generateCode = () => crypto.randomInt(0, 1_000_000).toString().padStart(6, "0");
 const hashCode = (code) => crypto.createHash("sha256").update(code).digest("hex");
 
 module.exports = (db) => {
