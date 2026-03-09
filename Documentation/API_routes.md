@@ -189,7 +189,7 @@ After registration, call `/auth/send-verification` and then `/auth/verify-email`
 ### Send verification
 
 ```
-PUT /auth/send-verification
+POST /auth/send-verification
 ```
 
 Request Body:

@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FiArrowLeft } from "react-icons/fi";
 import type { User } from "../utils/apiTypes";
@@ -33,14 +33,6 @@ export default function AuthPanel({
   const [signupPhone, setSignupPhone] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupPasswordRetype, setSignupPasswordRetype] = useState("");
-
-  useEffect(() => {
-    setMode(initialMode);
-  }, [initialMode]);
-
-  useEffect(() => {
-    setLoginEmail(initialLoginEmail);
-  }, [initialLoginEmail]);
 
   function switchMode(next: Mode) {
     setMode(next);

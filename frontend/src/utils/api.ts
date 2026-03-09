@@ -388,7 +388,7 @@ export async function sendVerification(
   signal?: AbortSignal,
 ): Promise<MessageResponse> {
   return await request<MessageResponse>({
-    method: "PUT",
+    method: "POST",
     path: "/auth/send-verification",
     body: payload,
     auth: false,

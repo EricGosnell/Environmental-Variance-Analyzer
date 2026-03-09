@@ -18,6 +18,20 @@
   margin: 0;
 }
 
+.verify-email-back-link {
+  align-self: flex-start;
+  color: #fff;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  opacity: 0.9;
+  text-decoration: none;
+}
+
+.verify-email-back-link:hover {
+  opacity: 1;
+}
+
 .verify-email-copy {
   margin: 0;
   opacity: 0.95;

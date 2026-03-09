@@ -15,21 +15,19 @@ const {
     getRefreshTokenExpiry,
 } = require("../util/Tokens");
 const { JWT_CONFIG } = require("../util/JWT");
-const crypto = require("crypto");
+const {
+    generateVerificationCode,
+    hashVerificationCode,
+} = require("../util/verificationCode");
 
 const VERIFICATION_TTL_SECONDS = 10 * 60;
 const VERIFICATION_MIN_RESEND_SECONDS = 60;
 const VERIFICATION_WINDOW_SECONDS = 15 * 60;
 const VERIFICATION_MAX_SENDS_PER_WINDOW = 5;
+const VERIFICATION_MAX_ATTEMPTS = 5;
 
 // ========= helpers ==========
 const getNowEpochSeconds = () => Math.floor(Date.now() / 1000);
-
-function generateCode() {
-    return crypto.randomInt(0, 1_000_000).toString().padStart(6, "0");
-}
-
-function hashCode(code) { return crypto.createHash("sha256").update(code).digest("hex"); }
 
 
 module.exports = (db) => {
@@ -303,9 +301,9 @@ module.exports = (db) => {
     );
 
     // -------------------------
-    // PUT /send-verification
+    // POST /send-verification
     // -------------------------
-    router.put("/send-verification", [body("email").isEmail().withMessage("Valid email required")],
+    router.post("/send-verification", [body("email").isEmail().withMessage("Valid email required")],
         async (req, res) => {
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
@@ -363,8 +361,8 @@ module.exports = (db) => {
                     }
                 }
 
-                const code = generateCode();
-                const hash = hashCode(code);
+                const code = generateVerificationCode();
+                const hash = hashVerificationCode(code);
                 const expires = now + VERIFICATION_TTL_SECONDS;
 
                 await sendEmail({
@@ -400,6 +398,7 @@ module.exports = (db) => {
                 res.json({ message: responseMessage });
 
             } catch (err) {
+                console.error("send-verification failed:", err);
                 res.status(500).json({ error: "Internal server error" });
             }
         }
@@ -409,7 +408,14 @@ module.exports = (db) => {
     // POST /verify-email
     // -------------------------
     router.post("/verify-email",
-        [body("email").isEmail().withMessage("Valid email required"), body("code").isLength({ min: 6, max: 6 }).withMessage("6 digit code required")],
+        [
+            body("email").isEmail().withMessage("Valid email required"),
+            body("code")
+                .isLength({ min: 6, max: 6 })
+                .withMessage("6 digit code required")
+                .isNumeric()
+                .withMessage("6 digit code required"),
+        ],
         async (req, res) => {
 
             const errors = validationResult(req);
@@ -442,10 +448,10 @@ module.exports = (db) => {
                 if (now > row.expires_at)
                     return res.status(400).json({ error: "Code expired" });
 
-                if (row.attempts >= 5)
+                if (row.attempts >= VERIFICATION_MAX_ATTEMPTS)
                     return res.status(429).json({ error: "Too many attempts" });
 
-                if (hashCode(code) !== row.code_hash) {
+                if (hashVerificationCode(code) !== row.code_hash) {
                     await db.run(
                         "UPDATE email_verification SET attempts = attempts + 1 WHERE user_id = ?",
                         [row.user_id]
@@ -463,6 +469,7 @@ module.exports = (db) => {
                 res.json({ message: "Email verified" });
 
             } catch (err) {
+                console.error("verify-email failed:", err);
                 res.status(500).json({ error: "Internal server error" });
             }
         }

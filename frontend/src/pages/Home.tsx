@@ -17,6 +17,7 @@ export default function Home() {
     const authParam = searchParams.get("auth");
     const emailParam = searchParams.get("email") ?? "";
     const verifiedParam = searchParams.get("verified");
+    const authPanelKey = authParam === "login" ? `login:${emailParam}` : "default";
 
     useEffect(() => {
         if (verifiedParam !== "1") return;
@@ -85,6 +86,7 @@ export default function Home() {
 
                 {isAuthenticated === false ? (
                     <AuthPanel
+                        key={authPanelKey}
                         initialMode={authParam === "login" ? "login" : undefined}
                         initialLoginEmail={authParam === "login" ? emailParam : undefined}
                         onAuthSuccess={async () => {

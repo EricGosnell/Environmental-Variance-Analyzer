@@ -5,7 +5,10 @@ const { body, validationResult } = require("express-validator");
 const { sanitizeRequestBody } = require("./middleware/sanitize");
 const { authenticateToken } = require("../util/Tokens");
 const { sendEmail } = require("../util/email");
-const crypto = require("crypto");
+const {
+    generateVerificationCode,
+    hashVerificationCode,
+} = require("../util/verificationCode");
 
 //USING THESE FOR VALIDATION RESTRICTIONS FOR NOW, 
 //CAN BE CHANGED LATER IF WE DECIDE TO - Ryan
@@ -14,8 +17,6 @@ const MAX_USERNAME_LENGTH = 16;
 const MIN_PASSWORD_LENGTH = 8;
 const MAX_PASSWORD_LENGTH = 128;
 const MAX_EMAIL_LENGTH = 255;
-const generateCode = () => crypto.randomInt(0, 1_000_000).toString().padStart(6, "0");
-const hashCode = (code) => crypto.createHash("sha256").update(code).digest("hex");
 
 module.exports = (db) => {
     const router = express.Router();
@@ -206,8 +207,8 @@ module.exports = (db) => {
             }
 
             // Generate verification code (6-digit)
-            const verificationCode = generateCode();
-            const verificationCodeHash = hashCode(verificationCode);
+            const verificationCode = generateVerificationCode();
+            const verificationCodeHash = hashVerificationCode(verificationCode);
 
             // Store pending email change with verification code for 15 minutes
             const expiresAt = Math.floor(Date.now() / 1000) + (15 * 60);
@@ -276,7 +277,7 @@ module.exports = (db) => {
             }
 
             // Verify code matches
-            if (hashCode(verificationCode) !== pendingChange.code_hash) {
+            if (hashVerificationCode(verificationCode) !== pendingChange.code_hash) {
                 return res.status(400).json({ error: "Invalid or expired verification code" });
             }
 

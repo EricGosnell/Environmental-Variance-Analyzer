@@ -110,14 +110,7 @@ export default function VerifyEmail() {
       <section className="verify-email-card" aria-labelledby="verify-email-title">
         <Link
           to="/"
-          style={{
-            alignSelf: "flex-start",
-            color: "#fff",
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "6px",
-            opacity: 0.9,
-          }}
+          className="verify-email-back-link"
         >
           <FiArrowLeft aria-hidden="true" focusable="false" />
           <span>Back to home</span>
