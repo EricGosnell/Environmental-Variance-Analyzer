@@ -80,12 +80,8 @@ export default function ForgotPasswordModal({
       setInfo("If the email exists, a password reset code was sent.");
       setCooldownSeconds(60);
       setStep("reset");
-    } catch (err) {
-      if (err instanceof ApiError) {
-        setError(err.message);
-      } else {
-        setError("Unable to send password reset code right now. Please try again.");
-      }
+    } catch {
+      setError("Unable to send password reset code right now. Please try again.");
     } finally {
       setSendLoading(false);
     }
@@ -136,6 +132,9 @@ export default function ForgotPasswordModal({
   function goBackToEmailStep() {
     if (sendLoading || submitLoading) return;
     setStep("email");
+    setCode("");
+    setNewPassword("");
+    setConfirmPassword("");
     setError(null);
   }
 

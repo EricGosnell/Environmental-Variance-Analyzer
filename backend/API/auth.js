@@ -68,10 +68,9 @@ const CODE_TABLE_CONFIG = {
                 window_started_at = excluded.window_started_at
         `,
         selectByEmailQuery: `
-            SELECT pr.*, u.user_id
+            SELECT pr.*
             FROM password_reset pr
             JOIN user_contact uc ON pr.user_id = uc.user_id
-            JOIN users u ON u.user_id = pr.user_id
             WHERE LOWER(uc.email) = LOWER(?)
         `,
         incrementAttemptsQuery: "UPDATE password_reset SET attempts = attempts + 1 WHERE user_id = ?",
@@ -99,10 +98,9 @@ const CODE_TABLE_CONFIG = {
                 window_started_at = excluded.window_started_at
         `,
         selectByEmailQuery: `
-            SELECT ev.*, u.user_id
+            SELECT ev.*
             FROM email_verification ev
             JOIN user_contact uc ON ev.user_id = uc.user_id
-            JOIN users u ON u.user_id = ev.user_id
             WHERE LOWER(uc.email) = LOWER(?)
         `,
         incrementAttemptsQuery: "UPDATE email_verification SET attempts = attempts + 1 WHERE user_id = ?",
@@ -168,6 +166,15 @@ const issueCodeForUser = async ({
     const expires = now + ttlSeconds;
     const expiresMinutes = Math.floor(ttlSeconds / 60);
 
+    await db.run(CODE_TABLE_CONFIG[tableKey].upsertQuery, [
+        userId,
+        hash,
+        expires,
+        sendCount,
+        now,
+        windowStartAt,
+    ]);
+
     await sendEmail({
         to: email,
         subject,
@@ -177,15 +184,6 @@ const issueCodeForUser = async ({
             <p>Expires in ${expiresMinutes} minutes.</p>
         `,
     });
-
-    await db.run(CODE_TABLE_CONFIG[tableKey].upsertQuery, [
-        userId,
-        hash,
-        expires,
-        sendCount,
-        now,
-        windowStartAt,
-    ]);
 };
 
 const validateCodeAttempt = async ({
@@ -205,15 +203,15 @@ const validateCodeAttempt = async ({
         return { status: 400, error: notFoundError };
     }
 
-    if (checkAttemptsFirst && row.attempts >= maxAttempts) {
-        return { status: 429, error: "Too many attempts" };
-    }
-
     if (now > row.expires_at) {
         if (deleteOnExpired) {
             await db.run(CODE_TABLE_CONFIG[tableKey].deleteByUserIdQuery, [row.user_id]);
         }
         return { status: 400, error: expiredError };
+    }
+
+    if (checkAttemptsFirst && row.attempts >= maxAttempts) {
+        return { status: 429, error: "Too many attempts" };
     }
 
     if (!checkAttemptsFirst && row.attempts >= maxAttempts) {
@@ -633,6 +631,7 @@ module.exports = (db) => {
                 try {
                     await db.run("ROLLBACK");
                 } catch (rollbackError) {
+                    console.error("reset-password rollback failed:", rollbackError);
                 }
             }
             console.error("reset-password failed:", err);
