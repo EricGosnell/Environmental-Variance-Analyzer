@@ -5,6 +5,7 @@ import "../styles/Map.css";
 import Controls from "./map/Controls";
 import PodMarkers from "./map/PodMarkers";
 import type { PodLocation } from "../utils/apiTypes";
+import type { MutableRefObject } from "react";
 
 const MAP_VIEW_STORAGE_KEY = "eva.mapView";
 const BASE_LAYER_STORAGE_KEY = "eva.baseLayer";
@@ -23,6 +24,9 @@ type BaseLayerPreference = typeof BASE_LAYER_OPEN_STREET_MAP | typeof BASE_LAYER
 
 type MapViewProps = {
     onVisiblePodsChange: (pods: PodLocation[]) => void;
+    selectedPods: string[];
+    onPodSelect: (podId: string) => void;
+    mapRef: MutableRefObject<any>;
 };
 
 function readSavedMapView(): StoredMapView | null {
@@ -92,7 +96,7 @@ function PersistMapView() {
     return null;
 }
 
-export default function MapView({ onVisiblePodsChange }: MapViewProps) {
+export default function MapView({ mapRef, onVisiblePodsChange, selectedPods, onPodSelect }: MapViewProps) {
     const savedView = readSavedMapView();
     const savedBaseLayer = readSavedBaseLayer();
     const initialCenter: [number, number] = savedView ? [savedView.lat, savedView.lng] : DEFAULT_CENTER;
@@ -104,12 +108,14 @@ export default function MapView({ onVisiblePodsChange }: MapViewProps) {
     const TileLayerAny = TileLayer as any;
     const ZoomControlAny = ZoomControl as any;
 
+
     return (
         <MapContainerAny
             center={initialCenter}
             zoom={initialZoom}
             zoomControl={false}
             style={{ width: "100%", height: "100%" }}
+            ref={mapRef}
         >
 
             <ZoomControlAny position="bottomright" />
@@ -124,7 +130,7 @@ export default function MapView({ onVisiblePodsChange }: MapViewProps) {
                 </LayersControlAny.BaseLayer>
             </LayersControlAny>
 
-            <PodMarkers onPodsLoaded={onVisiblePodsChange} />
+            <PodMarkers onPodsLoaded={onVisiblePodsChange} selectedPods={selectedPods} onPodSelect={onPodSelect} />
             <Controls />
             <PersistMapView />
         </MapContainerAny>

@@ -47,6 +47,8 @@ type PodTooltipContentProps = {
 
 type PodMarkersProps = {
   onPodsLoaded: (pods: PodLocation[]) => void;
+  selectedPods: string[];
+  onPodSelect: (podId: string) => void;
 };
 
 function PodTooltipContent({
@@ -82,7 +84,7 @@ function PodTooltipContent({
   );
 }
 
-export default function PodMarkers({ onPodsLoaded }: PodMarkersProps) {
+export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect }: PodMarkersProps) {
   const navigate = useNavigate();
   const [pods, setPods] = useState<PodLocation[]>([]);
   const abortRef = useRef<AbortController | null>(null);
@@ -106,6 +108,16 @@ export default function PodMarkers({ onPodsLoaded }: PodMarkersProps) {
         iconAnchor: [PIN_ICON_WIDTH_PX / 2, PIN_ICON_HEIGHT_PX],
       }),
     [],
+  );
+  const selectedPinIcon = useMemo(
+      () =>
+          L.divIcon({
+            className: "pod-pin-icon pod-pin-icon--selected",
+            html: '<span class="pod-pin-marker pod-pin-marker--selected" aria-hidden="true"></span>',
+            iconSize: [PIN_ICON_WIDTH_PX, PIN_ICON_HEIGHT_PX],
+            iconAnchor: [PIN_ICON_WIDTH_PX / 2, PIN_ICON_HEIGHT_PX],
+          }),
+      [],
   );
 
   async function fetchPods(map: MapLike) {
@@ -259,6 +271,7 @@ export default function PodMarkers({ onPodsLoaded }: PodMarkersProps) {
     // Prevent the map's click handler from immediately closing the tooltip.
     e?.originalEvent?.stopPropagation?.();
     lastPodClickAtRef.current = Date.now();
+    onPodSelect(p.id);
     void selectPod(p);
   }
 
@@ -271,6 +284,7 @@ export default function PodMarkers({ onPodsLoaded }: PodMarkersProps) {
     <>
       {pods.map((p) => {
         const isPin = shouldUsePinAtZoom(markerRadiusMeters, p.latitude, zoomLevel, MARKER_MIN_VISIBLE_RADIUS_PX);
+        const isSelected = selectedPods.includes(p.id);
         const tooltip = tooltipPodId === p.id ? (
           <Tooltip
             key={`tooltip-${p.id}-${zoomLevel}`}
@@ -296,7 +310,7 @@ export default function PodMarkers({ onPodsLoaded }: PodMarkersProps) {
             <Marker
               key={p.id}
               position={[p.latitude, p.longitude]}
-              icon={pinIcon}
+              icon={isSelected ? selectedPinIcon : pinIcon}
               eventHandlers={{
                 click: (e: any) => handlePodClick(p, e),
               }}
@@ -311,7 +325,11 @@ export default function PodMarkers({ onPodsLoaded }: PodMarkersProps) {
             key={p.id}
             center={[p.latitude, p.longitude]}
             radius={markerRadiusMeters}
-            pathOptions={{ color: "red", weight: 2, fillOpacity: 0.5 }}
+            pathOptions={
+              isSelected
+                  ? { color: "#25b6eb", weight: 3, fillOpacity: 0.6 }
+                  : { color: "red", weight: 2, fillOpacity: 0.5 }
+            }
             eventHandlers={{
               click: (e: any) => handlePodClick(p, e),
             }}

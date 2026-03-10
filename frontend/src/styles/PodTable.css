@@ -56,6 +56,29 @@
     background: var(--secondary-green);
 }
 
+.pod-table-drawer-header {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    height: 50px;
+    padding: 0 8px;
+}
+
+.pod-table-selection-controls {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+}
+
+.pod-table-selection-btn {
+    padding: 6px 16px;
+    margin-right: 4px;
+    margin-left: 4px;
+    height: 70%;
+    align-self: center
+}
+
 .pod-table-drawer-close-btn {
     position: absolute;
     top: 8px;
@@ -147,6 +170,7 @@
 
 .pod-data-table tbody tr {
     transition: background-color 0.15s ease;
+    cursor: pointer;
 }
 
 .pod-data-table tbody tr:hover {
@@ -155,4 +179,12 @@
 
 .pod-data-table tbody tr:last-child td {
     border-bottom: none;
+}
+
+tr.pod-row-selected {
+    background-color: var(--primary-green);
+    cursor: pointer;
+}
+.pod-data-table tbody tr.pod-row-selected:hover {
+    background-color: #56b889;
 }

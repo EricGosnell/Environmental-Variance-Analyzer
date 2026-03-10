@@ -8,9 +8,12 @@ interface PodTableProps {
     onClose: () => void;
     onHeightChange: (height: number) => void;
     visiblePodIds?: number[];
+    selectedPods: string[];
+    onSelectionChange: (selectedPods: string[]) => void;
+    onZoomTo: (pods: { lat: number; lon: number }[]) => void;
 }
 
-export default function PodTable({ isOpen, onClose, onHeightChange, visiblePodIds = [] }: PodTableProps) {
+export default function PodTable({ isOpen, onClose, onHeightChange, visiblePodIds = [], selectedPods, onSelectionChange, onZoomTo}: PodTableProps) {
     const [podTableHeight, setPodTableHeight] = useState(33);
     const [isDragging, setIsDragging] = useState(false);
     const [startY, setStartY] = useState(0);
@@ -50,11 +53,45 @@ export default function PodTable({ isOpen, onClose, onHeightChange, visiblePodId
         }
     }, []);
 
+    // Get pod data for visible pods
     useEffect(() => {
         const controller = new AbortController();
         fetchPodData(visiblePodIds, controller.signal);
         return () => controller.abort();
     }, [visiblePodIds, fetchPodData]);
+
+    // Toggle a pod's selection state
+    const handleRowClick = (podName: string) => {
+        const isSelected = selectedPods.includes(podName);
+        if (isSelected) {
+            onSelectionChange(selectedPods.filter(p => p !== podName));
+        } else {
+            onSelectionChange([...selectedPods, podName]);
+        }
+    };
+
+    // Zoom map to all currently selected pods
+    const zoomToSelection = () => {
+        const targets = pods.filter(pod => selectedPods.includes(pod.podId));
+        onZoomTo(targets.map(pod => ({
+            lat: pod.latestReadings[Object.keys(pod.latestReadings)[0]]?.location.latitude,
+            lon: pod.latestReadings[Object.keys(pod.latestReadings)[0]]?.location.longitude,
+        })).filter(coords => coords.lat !== undefined && coords.lon !== undefined) as { lat: number; lon: number }[]);
+    };
+
+    // Clear pod selection
+
+    const clearSelection = () => {
+        onSelectionChange([]);
+    };
+
+    // Invert selection from list of pods in table
+    const invertSelection = () => {
+        const invertedPods = pods
+            .map(pod => pod.podId)
+            .filter(podId => !selectedPods.includes(podId));
+        onSelectionChange(invertedPods);
+    };
 
     // Notify parent of height changes
     useEffect(() => {
@@ -131,15 +168,35 @@ export default function PodTable({ isOpen, onClose, onHeightChange, visiblePodId
         <div className={`pod-table-drawer ${isOpen ? "open" : "closed"}`}
              style={{height: isOpen ? `${podTableHeight}%` : '33%'}}>
 
-            <h2 className="pod-table-drawer-title">Pod Data</h2>
+            <div className="pod-table-drawer-header">
+                <div className="pod-table-selection-controls">
+                    {selectedPods.length > 0 && (
+                        <>
+                            <span>{selectedPods.length} Selected</span>
+                            <button className="btn primary-btn pod-table-selection-btn" onClick={zoomToSelection}>Zoom
+                                to
+                            </button>
+                            <button className="btn primary-btn pod-table-selection-btn" onClick={clearSelection}>Clear
+                            </button>
+                            <button className="btn primary-btn pod-table-selection-btn"
+                                    onClick={invertSelection}>Invert
+                            </button>
+                        </>
+                    )}
+                </div>
 
-            <div className="pod-table-drawer-handle" onMouseDown={handleDragStart} onTouchStart={handleDragStart}>
-                <div className="pod-table-drawer-handle-bar"></div>
+                <div className="pod-table-drawer-handle" onMouseDown={handleDragStart} onTouchStart={handleDragStart}>
+                    <div className="pod-table-drawer-handle-bar"></div>
+                </div>
+
+                <div className="pod-table-drawer-header-right">
+                    {/*    Noting on the right side, just for spacing */}
+                </div>
+
+                <button className="pod-table-drawer-close-btn" onClick={handleClose} aria-label="Close drawer">
+                    ×
+                </button>
             </div>
-
-            <button className="pod-table-drawer-close-btn" onClick={handleClose} aria-label="Close drawer">
-                ×
-            </button>
 
             <div className="pod-table-drawer-content">
                 {isLoading && <p className="pod-table-status">Loading pod data…</p>}
@@ -159,7 +216,10 @@ export default function PodTable({ isOpen, onClose, onHeightChange, visiblePodId
                         </thead>
                         <tbody>
                         {pods.map(pod => (
-                            <tr key={pod.podId}>
+                            <tr key={pod.podId}
+                                className={selectedPods.includes(pod.podId) ? "pod-row-selected" : ""}
+                                onClick={() => handleRowClick(pod.podId)}
+                            >
                                 <td>{pod.podName ?? pod.podId}</td>
                                 {sensorTypes.map(type => (
                                     <td key={type}>
