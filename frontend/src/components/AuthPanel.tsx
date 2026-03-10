@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { FiArrowLeft } from "react-icons/fi";
 import type { User } from "../utils/apiTypes";
 import { ApiError, authLogin, authRegister, sendVerification } from "../utils/api";
+import ForgotPasswordModal from "./ForgotPasswordModal";
 import "../styles/AuthPanel.css";
 
 type AuthPanelProps = {
@@ -22,10 +23,12 @@ export default function AuthPanel({
   const [mode, setMode] = useState<Mode>(initialMode);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [loginInfo, setLoginInfo] = useState<string | null>(null);
 
   // login
   const [loginEmail, setLoginEmail] = useState(initialLoginEmail);
   const [loginPassword, setLoginPassword] = useState("");
+  const [showResetModal, setShowResetModal] = useState(false);
 
   // signup
   const [signupUsername, setSignupUsername] = useState("");
@@ -37,19 +40,37 @@ export default function AuthPanel({
   function switchMode(next: Mode) {
     setMode(next);
     setError(null);
+    setLoginInfo(null);
     setLoading(false);
+    setShowResetModal(false);
+  }
+
+  function openResetModal() {
+    setShowResetModal(true);
+  }
+
+  function closeResetModal() {
+    setShowResetModal(false);
+  }
+
+  function handleResetSuccess(email: string) {
+    setLoginEmail(email);
+    setLoginPassword("");
+    setError(null);
+    setLoginInfo("Password reset successfully. You can now log in with your new password.");
   }
 
   async function submitLogin(e: React.FormEvent) {
     e.preventDefault();
     if (loading) return;
     setError(null);
+    setLoginInfo(null);
     const normalizedLoginEmail = loginEmail.trim();
     setLoading(true);
     try {
       const res = await authLogin({ email: normalizedLoginEmail, password: loginPassword });
       onAuthSuccess(res.user);
-      navigate("/")
+      navigate("/");
     } catch (err) {
       if (err instanceof ApiError && err.status === 403) {
         const next = `/?${new URLSearchParams({ auth: "login", email: normalizedLoginEmail, verified: "1" }).toString()}`;
@@ -70,6 +91,7 @@ export default function AuthPanel({
     e.preventDefault();
     if (loading) return;
     setError(null);
+    setLoginInfo(null);
     const normalizedSignupEmail = signupEmail.trim();
     if (signupPassword !== signupPasswordRetype) {
       setError("Passwords do not match.");
@@ -147,6 +169,21 @@ export default function AuthPanel({
               disabled={loading}
             />
           </label>
+
+          <button
+            type="button"
+            className="auth-link auth-forgot-link"
+            onClick={openResetModal}
+            disabled={loading}
+          >
+            Forgot password?
+          </button>
+
+          {loginInfo && (
+            <div className="auth-info" role="status">
+              {loginInfo}
+            </div>
+          )}
 
           {error && (
             <div className="auth-error" role="alert">
@@ -261,6 +298,13 @@ export default function AuthPanel({
           </button>
         </form>
       )}
+
+      <ForgotPasswordModal
+        isOpen={showResetModal}
+        initialEmail={loginEmail.trim()}
+        onClose={closeResetModal}
+        onResetSuccess={handleResetSuccess}
+      />
     </div>
   );
 }
