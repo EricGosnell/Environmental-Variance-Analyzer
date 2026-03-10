@@ -143,12 +143,15 @@ export default function ForgotPasswordModal({
   return (
     <div
       className="forgot-password-overlay"
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="forgot-password-title"
       onClick={handleClose}
     >
-      <section className="forgot-password-modal" onClick={(e) => e.stopPropagation()}>
+      <section
+        className="forgot-password-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="forgot-password-title"
+        onClick={(e) => e.stopPropagation()}
+      >
         {step === "email" ? (
           <>
             <div className="forgot-password-header">
