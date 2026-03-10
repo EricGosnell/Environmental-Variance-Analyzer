@@ -45,6 +45,10 @@ type PodTooltipContentProps = {
   onViewFullData: (podId: string, event: MouseEvent<HTMLButtonElement>) => void;
 };
 
+type PodMarkersProps = {
+  onPodsLoaded: (pods: PodLocation[]) => void;
+};
+
 function PodTooltipContent({
   pod,
   selectedPodData,
@@ -78,7 +82,7 @@ function PodTooltipContent({
   );
 }
 
-export default function PodMarkers() {
+export default function PodMarkers({ onPodsLoaded }: PodMarkersProps) {
   const navigate = useNavigate();
   const [pods, setPods] = useState<PodLocation[]>([]);
   const abortRef = useRef<AbortController | null>(null);
@@ -124,11 +128,14 @@ export default function PodMarkers() {
         },
         ac.signal,
       );
-      setPods(Array.isArray(res.pods) ? res.pods : []);
+      const loadedPods = Array.isArray(res.pods) ? res.pods : [];
+      setPods(loadedPods);
+      onPodsLoaded(loadedPods);
     } catch (err) {
       // Ignore abort errors; other errors just result in no markers.
       if ((err as any)?.name === "AbortError") return;
       setPods([]);
+      onPodsLoaded([]);
     }
   }
 

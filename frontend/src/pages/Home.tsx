@@ -4,6 +4,7 @@ import PodTable from "../components/PodTable.tsx";
 
 import { getMe, getMeSilent } from "../utils/api.ts";
 import type { User } from "../utils/apiTypes.ts";
+import type { PodLocation } from "../utils/apiTypes.ts";
 import AuthPanel from "../components/AuthPanel.tsx";
 
 import "../styles/Home.css";
@@ -13,6 +14,7 @@ export default function Home() {
     const [user, setUser] = useState<User | null>(null);
     const [isPodTableOpen, setIsPodTableOpen] = useState(false);
     const [podTableHeight, setPodTableHeight] = useState(33);
+    const [visiblePods, setVisiblePods] = useState<PodLocation[]>([]);
 
     useEffect(() => {
         const ac = new AbortController();
@@ -74,7 +76,7 @@ export default function Home() {
 
             <div className="map-container">
                 <div className="map-content" style={{flex: isPodTableOpen ? `0 0 ${100 - podTableHeight}%` : '1'}}>
-                    <MapView />
+                    <MapView onVisiblePodsChange={setVisiblePods} />
                 </div>
 
                 {!isPodTableOpen && (
@@ -87,6 +89,7 @@ export default function Home() {
                     isOpen={isPodTableOpen}
                     onClose={() => setIsPodTableOpen(false)}
                     onHeightChange={setPodTableHeight}
+                    visiblePodIds={visiblePods.map(p => Number(p.id))}
                 />
             </div>
         </div>

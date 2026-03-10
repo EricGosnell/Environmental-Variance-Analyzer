@@ -1,17 +1,60 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import "../styles/PodTable.css";
+import { getPodsLatestReadings } from "../utils/api";
+import type { PodLatestReadings } from "../utils/apiTypes";
 
 interface PodTableProps {
     isOpen: boolean;
     onClose: () => void;
     onHeightChange: (height: number) => void;
+    visiblePodIds?: number[];
 }
 
-export default function PodTable({ isOpen, onClose, onHeightChange }: PodTableProps) {
+export default function PodTable({ isOpen, onClose, onHeightChange, visiblePodIds = [] }: PodTableProps) {
     const [podTableHeight, setPodTableHeight] = useState(33);
     const [isDragging, setIsDragging] = useState(false);
     const [startY, setStartY] = useState(0);
     const [startHeight, setStartHeight] = useState(33);
+
+    const [pods, setPods] = useState<PodLatestReadings[]>([]);
+    const [sensorTypes, setSensorTypes] = useState<string[]>([]);
+    const [isLoading, setIsLoading] = useState(false);
+    const [error, setError] = useState<string | null>(null);
+
+    const fetchPodData = useCallback(async (podIds: number[], signal: AbortSignal) => {
+        if (!podIds?.length) {
+            setPods([]);
+            setSensorTypes([]);
+            return;
+        }
+        setIsLoading(true);
+        setError(null);
+        try {
+            const { pods: fetchedPods } = await getPodsLatestReadings(podIds, signal);
+
+            const allTypes = new Set<string>();
+            for (const pod of fetchedPods) {
+                for (const metric of Object.keys(pod.latestReadings)) {
+                    allTypes.add(metric);
+                }
+            }
+
+            setPods(fetchedPods);
+            setSensorTypes([...allTypes]);
+        } catch (err: any) {
+            if (err?.name !== "AbortError") {
+                setError("Failed to load pod data.");
+            }
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
+    useEffect(() => {
+        const controller = new AbortController();
+        fetchPodData(visiblePodIds, controller.signal);
+        return () => controller.abort();
+    }, [visiblePodIds, fetchPodData]);
 
     // Notify parent of height changes
     useEffect(() => {
@@ -78,42 +121,11 @@ export default function PodTable({ isOpen, onClose, onHeightChange }: PodTablePr
         setPodTableHeight(33);
     };
 
-    // Mock data
-    const mockData = [
-        {
-            pod: 'Pod 1',
-            lat: 40.0150,
-            lon: -105.2705,
-            battery: 87,
-            airTemp: 22.4,
-            airPressure: 101.3,
-            humidity: 45,
-            soilTemp: 18.2,
-            soilPH: 6.8
-        },
-        {
-            pod: 'Pod 2',
-            lat: 40.0162,
-            lon: -105.2798,
-            battery: 92,
-            airTemp: 23.1,
-            airPressure: 101.2,
-            humidity: 48,
-            soilTemp: 19.1,
-            soilPH: 7.1
-        },
-        {
-            pod: 'Pod 3',
-            lat: 40.0138,
-            lon: -105.2689,
-            battery: 65,
-            airTemp: 21.8,
-            airPressure: 101.4,
-            humidity: 43,
-            soilTemp: 17.9,
-            soilPH: 6.5
-        }
-    ];
+    const formatReading = (reading: PodLatestReadings["latestReadings"][string] | undefined): string => {
+        if (!reading) return "N/A";
+        const val = reading.value.toFixed(2).replace(/\.?0+$/, "");
+        return reading.units ? `${val} ${reading.units}` : val;
+    };
 
     return (
         <div className={`pod-table-drawer ${isOpen ? "open" : "closed"}`}
@@ -130,43 +142,35 @@ export default function PodTable({ isOpen, onClose, onHeightChange }: PodTablePr
             </button>
 
             <div className="pod-table-drawer-content">
-                <table className="pod-data-table">
-                    <thead>
-                    <tr>
-                        {/* for sensor_type in [api get all sensor_types]
-                                <th>sensor_type</th> */}
-                        <th>Pod</th>
-                        <th>Lat</th>
-                        <th>Lon</th>
-                        <th>Battery %</th>
-                        <th>Air Temp (°C)</th>
-                        <th>Air Pressure (kPa)</th>
-                        <th>Humidity %</th>
-                        <th>Soil Temp (°C)</th>
-                        <th>Soil pH</th>
-                    </tr>
-                    </thead>
-                    <tbody>
-                    {/* for pod in [api get all visible pods
-                            <tr>
-                            for sensor_type in [api get all sensor types]
-                                <td> [api get latest reading for this sensor from this pod]
-                    */}
-                    {mockData.map((row) => (
-                        <tr key={row.pod}>
-                            <td>{row.pod}</td>
-                            <td>{row.lat.toFixed(4)}</td>
-                            <td>{row.lon.toFixed(4)}</td>
-                            <td>{row.battery}%</td>
-                            <td>{row.airTemp.toFixed(1)}</td>
-                            <td>{row.airPressure.toFixed(1)}</td>
-                            <td>{row.humidity}%</td>
-                            <td>{row.soilTemp.toFixed(1)}</td>
-                            <td>{row.soilPH.toFixed(1)}</td>
+                {isLoading && <p className="pod-table-status">Loading pod data…</p>}
+                {error && <p className="pod-table-status pod-table-error">{error}</p>}
+                {!isLoading && !error && pods.length === 0 && (
+                    <p className="pod-table-status">No pods visible.</p>
+                )}
+                {!isLoading && !error && pods.length > 0 && (
+                    <table className="pod-data-table">
+                        <thead>
+                        <tr>
+                            <th>Pod</th>
+                            {sensorTypes.map(type => (
+                                <th key={type}>{type}</th>
+                            ))}
                         </tr>
-                    ))}
-                    </tbody>
-                </table>
+                        </thead>
+                        <tbody>
+                        {pods.map(pod => (
+                            <tr key={pod.podId}>
+                                <td>{pod.podName ?? pod.podId}</td>
+                                {sensorTypes.map(type => (
+                                    <td key={type}>
+                                        {formatReading(pod.latestReadings[type])}
+                                    </td>
+                                ))}
+                            </tr>
+                        ))}
+                        </tbody>
+                    </table>
+                )}
             </div>
         </div>
     );
