@@ -36,6 +36,21 @@ CREATE TABLE IF NOT EXISTS email_verification (
 CREATE INDEX IF NOT EXISTS idx_email_verification_expires 
 ON email_verification(expires_at);
 
+-- password reset codes
+CREATE TABLE IF NOT EXISTS password_reset (
+    user_id INTEGER PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
+    code_hash TEXT NOT NULL,
+    expires_at INTEGER NOT NULL,
+    attempts INTEGER NOT NULL DEFAULT 0,
+    send_count INTEGER NOT NULL DEFAULT 0,
+    last_sent_at INTEGER NOT NULL DEFAULT 0,
+    window_started_at INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_password_reset_expires
+ON password_reset(expires_at);
+
 -- pending email change verification codes
 CREATE TABLE IF NOT EXISTS pending_email_changes (
     user_id INTEGER PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,

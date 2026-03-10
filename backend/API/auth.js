@@ -25,6 +25,15 @@ const VERIFICATION_MIN_RESEND_SECONDS = 60;
 const VERIFICATION_WINDOW_SECONDS = 15 * 60;
 const VERIFICATION_MAX_SENDS_PER_WINDOW = 5;
 const VERIFICATION_MAX_ATTEMPTS = 5;
+const PASSWORD_RESET_TTL_SECONDS = 10 * 60;
+const PASSWORD_RESET_MIN_RESEND_SECONDS = 60;
+const PASSWORD_RESET_WINDOW_SECONDS = 15 * 60;
+const PASSWORD_RESET_MAX_SENDS_PER_WINDOW = 5;
+const PASSWORD_RESET_MAX_ATTEMPTS = 5;
+const PASSWORD_RESET_RESPONSE_MESSAGE = "If the email exists, a password reset code was sent.";
+const MIN_PASSWORD_LENGTH = 8;
+const MAX_PASSWORD_LENGTH = 128;
+const PASSWORD_REGEX = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/;
 
 // ========= helpers ==========
 const getNowEpochSeconds = () => Math.floor(Date.now() / 1000);
@@ -299,6 +308,210 @@ module.exports = (db) => {
         }
     }
     );
+
+    // -------------------------
+    // POST /forgot-password
+    // -------------------------
+    router.post("/forgot-password", sanitizeRequestBody, [
+        body("email")
+            .isEmail()
+            .withMessage("Valid email required"),
+    ], async (req, res) => {
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({
+                error: "Validation failed",
+                details: errors.array().map((err) => ({
+                    field: err.param,
+                    message: err.msg,
+                })),
+            });
+        }
+
+        const email = req.body.email.trim().toLowerCase();
+        const now = getNowEpochSeconds();
+
+        try {
+            const user = await db.get(`
+                SELECT u.user_id
+                FROM users u
+                JOIN user_contact uc ON u.user_id = uc.user_id
+                WHERE LOWER(uc.email) = LOWER(?)
+            `, [email]);
+
+            if (!user) {
+                return res.status(200).json({ message: PASSWORD_RESET_RESPONSE_MESSAGE });
+            }
+
+            const existingRow = await db.get(
+                "SELECT send_count, last_sent_at, window_started_at FROM password_reset WHERE user_id = ?",
+                [user.user_id]
+            );
+
+            let sendCount = 1;
+            let windowStartAt = now;
+            const existingSendCount = existingRow?.send_count ?? 0;
+            const existingWindowStart = existingRow?.window_started_at ?? now;
+            const existingLastSentAt = existingRow?.last_sent_at ?? 0;
+
+            if (existingRow) {
+                if (existingLastSentAt + PASSWORD_RESET_MIN_RESEND_SECONDS > now) {
+                    return res.status(200).json({ message: PASSWORD_RESET_RESPONSE_MESSAGE });
+                }
+
+                if ((now - existingWindowStart) <= PASSWORD_RESET_WINDOW_SECONDS) {
+                    if (existingSendCount >= PASSWORD_RESET_MAX_SENDS_PER_WINDOW) {
+                        return res.status(200).json({ message: PASSWORD_RESET_RESPONSE_MESSAGE });
+                    }
+
+                    sendCount = existingSendCount + 1;
+                    windowStartAt = existingWindowStart;
+                } else {
+                    sendCount = 1;
+                    windowStartAt = now;
+                }
+            }
+
+            const code = generateVerificationCode();
+            const hash = hashVerificationCode(code);
+            const expires = now + PASSWORD_RESET_TTL_SECONDS;
+
+            await sendEmail({
+                to: email,
+                subject: "Reset your password",
+                html: `
+                    <h2>Your password reset code</h2>
+                    <p style="font-size:24px;"><b>${code}</b></p>
+                    <p>Expires in 10 minutes.</p>
+                `
+            });
+
+            await db.run(`
+                INSERT INTO password_reset (
+                    user_id,
+                    code_hash,
+                    expires_at,
+                    attempts,
+                    send_count,
+                    last_sent_at,
+                    window_started_at
+                )
+                VALUES (?, ?, ?, 0, ?, ?, ?)
+                ON CONFLICT(user_id) DO UPDATE SET
+                    code_hash = excluded.code_hash,
+                    expires_at = excluded.expires_at,
+                    attempts = excluded.attempts,
+                    send_count = excluded.send_count,
+                    last_sent_at = excluded.last_sent_at,
+                    window_started_at = excluded.window_started_at
+            `, [user.user_id, hash, expires, sendCount, now, windowStartAt]);
+
+            return res.status(200).json({ message: PASSWORD_RESET_RESPONSE_MESSAGE });
+        } catch (err) {
+            console.error("forgot-password failed:", err);
+            return res.status(200).json({ message: PASSWORD_RESET_RESPONSE_MESSAGE });
+        }
+    });
+
+    // -------------------------
+    // POST /reset-password
+    // -------------------------
+    router.post("/reset-password", sanitizeRequestBody, [
+        body("email")
+            .isEmail()
+            .withMessage("Valid email required"),
+        body("token")
+            .isLength({ min: 6, max: 6 })
+            .withMessage("6 digit code required")
+            .isNumeric()
+            .withMessage("6 digit code required"),
+        body("newPassword")
+            .isLength({ min: MIN_PASSWORD_LENGTH, max: MAX_PASSWORD_LENGTH })
+            .withMessage(`Password must be between ${MIN_PASSWORD_LENGTH} and ${MAX_PASSWORD_LENGTH} characters`)
+            .matches(PASSWORD_REGEX)
+            .withMessage("Password must contain at least one lowercase letter, one uppercase letter, and one number"),
+    ], async (req, res) => {
+        let transaction = false;
+
+        const errors = validationResult(req);
+        if (!errors.isEmpty()) {
+            return res.status(400).json({
+                error: "Validation failed",
+                details: errors.array().map((err) => ({
+                    field: err.param,
+                    message: err.msg,
+                })),
+            });
+        }
+
+        const email = req.body.email.trim().toLowerCase();
+        const token = req.body.token;
+        const newPassword = req.body.newPassword;
+        const now = getNowEpochSeconds();
+
+        try {
+            const row = await db.get(`
+                SELECT pr.*, u.user_id
+                FROM password_reset pr
+                JOIN user_contact uc ON pr.user_id = uc.user_id
+                JOIN users u ON u.user_id = pr.user_id
+                WHERE LOWER(uc.email) = LOWER(?)
+            `, [email]);
+
+            if (!row) {
+                return res.status(400).json({ error: "Invalid or expired reset token" });
+            }
+
+            if (row.attempts >= PASSWORD_RESET_MAX_ATTEMPTS) {
+                return res.status(429).json({ error: "Too many attempts" });
+            }
+
+            if (now > row.expires_at) {
+                await db.run("DELETE FROM password_reset WHERE user_id = ?", [row.user_id]);
+                return res.status(400).json({ error: "Invalid or expired reset token" });
+            }
+
+            if (hashVerificationCode(token) !== row.code_hash) {
+                await db.run(
+                    "UPDATE password_reset SET attempts = attempts + 1 WHERE user_id = ?",
+                    [row.user_id]
+                );
+                return res.status(400).json({ error: "Invalid or expired reset token" });
+            }
+
+            const hashedPassword = await bcrypt.hash(newPassword, 12);
+
+            await db.run("BEGIN TRANSACTION");
+            transaction = true;
+
+            await db.run(
+                "UPDATE users SET password_hash = ? WHERE user_id = ?",
+                [hashedPassword, row.user_id]
+            );
+            await db.run(
+                "DELETE FROM password_reset WHERE user_id = ?",
+                [row.user_id]
+            );
+            await db.run(
+                "DELETE FROM refresh_tokens WHERE user_id = ?",
+                [row.user_id]
+            );
+
+            await db.run("COMMIT");
+            transaction = false;
+
+            return res.status(200).json({ message: "Password reset successfully" });
+        } catch (err) {
+            if (transaction) {
+                try {
+                    await db.run("ROLLBACK");
+                } catch (rollbackError) {
+                }
+            }
+            console.error("reset-password failed:", err);
+            return res.status(500).json({ error: "Internal server error" });
+        }
+    });
 
     // -------------------------
     // POST /send-verification
