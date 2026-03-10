@@ -179,6 +179,43 @@ describe("Auth Password Reset API Tests", function () {
     expect(tokenCount.c).to.equal(0);
   });
 
+  it("POST /api/auth/reset-password preserves password characters that must not be XSS-sanitized", async () => {
+    const { userId } = await createUserWithEmail("chars@example.com", "Password1");
+    const now = Math.floor(Date.now() / 1000);
+    const newPassword = "Aa1<Safe>Pass";
+
+    await db.run(
+      "UPDATE users SET verified_email = 1 WHERE user_id = ?",
+      [userId]
+    );
+
+    await db.run(
+      `INSERT INTO password_reset (user_id, code_hash, expires_at, attempts, send_count, last_sent_at, window_started_at)
+       VALUES (?, ?, ?, 0, 1, ?, ?)`,
+      [userId, hashCode("123456"), now + 600, now, now]
+    );
+
+    const resetRes = await request(app)
+      .post("/api/auth/reset-password")
+      .send({
+        email: "chars@example.com",
+        token: "123456",
+        newPassword,
+      });
+
+    expect(resetRes.status).to.equal(200);
+
+    const loginRes = await request(app)
+      .post("/api/auth/login")
+      .send({
+        email: "chars@example.com",
+        password: newPassword,
+      });
+
+    expect(loginRes.status).to.equal(200);
+    expect(loginRes.body.accessToken).to.be.a("string");
+  });
+
   it("POST /api/auth/reset-password rejects token reuse after successful reset", async () => {
     const { userId } = await createUserWithEmail("reuse@example.com");
     const now = Math.floor(Date.now() / 1000);
