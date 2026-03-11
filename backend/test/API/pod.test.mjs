@@ -12,9 +12,11 @@ describe("Pod API Tests", function () {
   let accessTokenAdmin;
   let userId;
   let adminId;
+  let collaboratorId;
 
   const userEmail = "testuser1@example.com";
   const adminEmail = "admin@example.com";
+  const collaboratorEmail = "collab@example.com";
 
   beforeEach(async () => {
     db = await createTestDb();
@@ -44,6 +46,19 @@ describe("Pod API Tests", function () {
     await db.run(
       "INSERT INTO user_contact (user_id, user_name, email) VALUES (?, ?, ?)",
       [adminId, "Admin User", adminEmail]
+    );
+
+    // collaborator user
+    const collaboratorHash = await bcrypt.hash("Password1", 12);
+    const collaboratorInsert = await db.run(
+      "INSERT INTO users (username, password_hash, admin) VALUES (?, ?, ?)",
+      ["CollaboratorUser", collaboratorHash, 0]
+    );
+    collaboratorId = collaboratorInsert.lastID;
+
+    await db.run(
+      "INSERT INTO user_contact (user_id, user_name, email) VALUES (?, ?, ?)",
+      [collaboratorId, "Collaborator User", collaboratorEmail]
     );
 
     // login user
@@ -266,6 +281,92 @@ describe("Pod API Tests", function () {
 
       const res = await request(app).get(`/api/pods/${podRes.lastID}/data`);
       expect(res.status).to.equal(403);
+    });
+  });
+
+  // -------------------------
+  // POST /api/pods/:id/owners
+  // -------------------------
+  describe("POST /api/pods/:id/owners", () => {
+    it("should allow a pod owner to add another owner", async () => {
+      const podRes = await db.run(
+        "INSERT INTO pod (pod_name, pod_data_public) VALUES (?, ?)",
+        ["OwnedPod", 0]
+      );
+
+      await db.run("INSERT INTO user_pod (user_id, pod_id) VALUES (?, ?)", [
+        userId,
+        podRes.lastID,
+      ]);
+
+      const res = await request(app)
+        .post(`/api/pods/${podRes.lastID}/owners`)
+        .set("Authorization", `Bearer ${accessTokenUser}`)
+        .send({ userId: collaboratorId });
+
+      expect(res.status).to.equal(201);
+
+      const ownerRow = await db.get(
+        "SELECT 1 FROM user_pod WHERE user_id = ? AND pod_id = ?",
+        [collaboratorId, podRes.lastID]
+      );
+      expect(ownerRow).to.not.equal(undefined);
+    });
+
+    it("should reject adding an owner when requester does not own pod", async () => {
+      const podRes = await db.run(
+        "INSERT INTO pod (pod_name, pod_data_public) VALUES (?, ?)",
+        ["NotOwnedPod", 0]
+      );
+
+      const res = await request(app)
+        .post(`/api/pods/${podRes.lastID}/owners`)
+        .set("Authorization", `Bearer ${accessTokenUser}`)
+        .send({ userId: collaboratorId });
+
+      expect(res.status).to.equal(403);
+    });
+
+    it("should return 404 when target user does not exist", async () => {
+      const podRes = await db.run(
+        "INSERT INTO pod (pod_name, pod_data_public) VALUES (?, ?)",
+        ["OwnedPod", 0]
+      );
+
+      await db.run("INSERT INTO user_pod (user_id, pod_id) VALUES (?, ?)", [
+        userId,
+        podRes.lastID,
+      ]);
+
+      const res = await request(app)
+        .post(`/api/pods/${podRes.lastID}/owners`)
+        .set("Authorization", `Bearer ${accessTokenUser}`)
+        .send({ userId: 99999 });
+
+      expect(res.status).to.equal(404);
+    });
+
+    it("should return 409 when target user is already an owner", async () => {
+      const podRes = await db.run(
+        "INSERT INTO pod (pod_name, pod_data_public) VALUES (?, ?)",
+        ["OwnedPod", 0]
+      );
+
+      await db.run("INSERT INTO user_pod (user_id, pod_id) VALUES (?, ?)", [
+        userId,
+        podRes.lastID,
+      ]);
+      await db.run("INSERT INTO user_pod (user_id, pod_id) VALUES (?, ?)", [
+        collaboratorId,
+        podRes.lastID,
+      ]);
+
+      const res = await request(app)
+        .post(`/api/pods/${podRes.lastID}/owners`)
+        .set("Authorization", `Bearer ${accessTokenUser}`)
+        .send({ userId: collaboratorId });
+
+      expect(res.status).to.equal(409);
     });
   });
 

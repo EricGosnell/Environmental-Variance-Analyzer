@@ -979,7 +979,13 @@ Response (200 OK):
       },
       "visibility": "public" // "public" or "private"
     }
-  ]
+  ],
+  "viewer": {
+    "isAuthenticated": true,
+    "isOwner": true,
+    "isAdmin": false,
+    "canManagePod": true
+  }
 }
 ```
 
