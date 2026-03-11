@@ -311,6 +311,86 @@ module.exports = (db) => {
     );
 
     // -------------------------
+    // POST /pods/:id/owners
+    // -------------------------
+    // owner (or admin) can add another user as a pod owner
+    router.post("/:id/owners",
+        authenticateToken,
+        sanitizeRequestBody,
+        [
+            param("id").isInt({ gt: 0 }).withMessage("Pod id must be a positive integer"),
+            body("userId").isInt({ gt: 0 }).withMessage("userId must be a positive integer"),
+        ],
+        async (req, res) => {
+            try {
+                const errors = validationResult(req);
+                if (!errors.isEmpty()) {
+                    return res.status(400).json({
+                        error: "Validation failed",
+                        details: errors.array().map((err) => ({
+                            field: err.param,
+                            message: err.msg,
+                        })),
+                    });
+                }
+
+                const podId = Number(req.params.id);
+                const targetUserId = Number(req.body.userId);
+                const requestingUserId = req.user.id;
+
+                const pod = await getPodById(db, podId);
+                if (!pod) return res.status(404).json({ error: "Pod not found" });
+
+                const isAdmin = await getIsAdmin(requestingUserId);
+                const requesterOwnsPod = await userOwnsPod(db, requestingUserId, podId);
+
+                if (!requesterOwnsPod && !isAdmin) {
+                    return res.status(403).json({ error: "Forbidden" });
+                }
+
+                const targetUser = await db.get(
+                    `
+                    SELECT user_id
+                    FROM users
+                    WHERE user_id = ?
+                    `,
+                    [targetUserId]
+                );
+
+                if (!targetUser) {
+                    return res.status(404).json({ error: "User not found" });
+                }
+
+                const targetAlreadyOwnsPod = await userOwnsPod(db, targetUserId, podId);
+                if (targetAlreadyOwnsPod) {
+                    return res.status(409).json({ error: "User is already an owner of this pod" });
+                }
+
+                await db.run(
+                    `
+                    INSERT INTO user_pod (user_id, pod_id)
+                    VALUES (?, ?)
+                    `,
+                    [targetUserId, podId]
+                );
+
+                return res.status(201).json({
+                    message: "Pod owner added successfully",
+                    podId: String(podId),
+                    userId: String(targetUserId),
+                });
+            } catch (error) {
+                return res.status(500).json({
+                    error: "Internal server error",
+                    where: "/pods/:id/owners",
+                    message: error?.message,
+                    code: error?.code,
+                });
+            }
+        }
+    );
+
+    // -------------------------
     // POST /pods/upload-pod-data
     // -------------------------
     router.post("/upload-pod-data",
