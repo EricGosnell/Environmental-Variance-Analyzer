@@ -290,7 +290,15 @@ module.exports = (db) => {
                 }
 
 
-                return res.status(200).json({ data });
+                return res.status(200).json({
+                    data,
+                    viewer: {
+                        isAuthenticated: !!userId,
+                        isOwner: owns,
+                        isAdmin,
+                        canManagePod: owns || isAdmin,
+                    },
+                });
             } catch (error) {
                 return res.status(500).json({
                     error: "Internal server error",
