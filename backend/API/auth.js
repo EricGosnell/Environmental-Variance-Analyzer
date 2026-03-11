@@ -196,6 +196,7 @@ const validateCodeAttempt = async ({
     notFoundError,
     expiredError,
     invalidError,
+    checkAttemptsFirst = true,
     deleteOnExpired = false,
 }) => {
     if (!row) {
@@ -209,7 +210,11 @@ const validateCodeAttempt = async ({
         return { status: 400, error: expiredError };
     }
 
-    if (row.attempts >= maxAttempts) {
+    if (checkAttemptsFirst && row.attempts >= maxAttempts) {
+        return { status: 429, error: "Too many attempts" };
+    }
+
+    if (!checkAttemptsFirst && row.attempts >= maxAttempts) {
         return { status: 429, error: "Too many attempts" };
     }
 
@@ -591,6 +596,7 @@ module.exports = (db) => {
                 notFoundError: "Invalid or expired reset token",
                 expiredError: "Invalid or expired reset token",
                 invalidError: "Invalid or expired reset token",
+                checkAttemptsFirst: true,
                 deleteOnExpired: true,
             });
 
@@ -729,6 +735,7 @@ module.exports = (db) => {
                     notFoundError: "No verification code found",
                     expiredError: "Code expired",
                     invalidError: "Invalid code",
+                    checkAttemptsFirst: false,
                     deleteOnExpired: false,
                 });
 

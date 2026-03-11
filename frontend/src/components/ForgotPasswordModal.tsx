@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { FiArrowLeft, FiX } from "react-icons/fi";
+import { FiArrowLeft } from "react-icons/fi";
 import { ApiError, authForgotPassword, authResetPassword } from "../utils/api";
 import "../styles/ForgotPasswordModal.css";
 
@@ -160,10 +160,9 @@ export default function ForgotPasswordModal({
                 type="button"
                 className="forgot-password-close"
                 onClick={handleClose}
-                aria-label="Close forgot password modal"
                 disabled={sendLoading || submitLoading}
               >
-                <FiX aria-hidden="true" focusable="false" />
+                Close
               </button>
             </div>
 
@@ -203,26 +202,15 @@ export default function ForgotPasswordModal({
         ) : (
           <>
             <div className="forgot-password-header forgot-password-header--reset">
-              <div className="forgot-password-header-row">
-                <button
-                  type="button"
-                  className="forgot-password-back-link"
-                  onClick={goBackToEmailStep}
-                  disabled={sendLoading || submitLoading}
-                >
-                  <FiArrowLeft aria-hidden="true" focusable="false" />
-                  <span>Didn't receive any code?</span>
-                </button>
-                <button
-                  type="button"
-                  className="forgot-password-close"
-                  onClick={handleClose}
-                  aria-label="Close forgot password modal"
-                  disabled={sendLoading || submitLoading}
-                >
-                  <FiX aria-hidden="true" focusable="false" />
-                </button>
-              </div>
+              <button
+                type="button"
+                className="forgot-password-back-link"
+                onClick={goBackToEmailStep}
+                disabled={sendLoading || submitLoading}
+              >
+                <FiArrowLeft aria-hidden="true" focusable="false" />
+                <span>Didn't receive any code?</span>
+              </button>
               <h3 id="forgot-password-title" className="forgot-password-title">Reset password</h3>
             </div>
 
