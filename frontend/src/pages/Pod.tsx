@@ -139,7 +139,7 @@ export default function Pod() {
     const seen = new Set<string>();
     const days: { key: string; label: string }[] = [];
     for (const e of data) {
-      const ts = e?.data?.reading_timestamp || e?.timestamp;
+      const ts = e?.timestamp;
       if (!ts) continue;
       const d = new Date(ts);
       if (isNaN(d.getTime())) continue;

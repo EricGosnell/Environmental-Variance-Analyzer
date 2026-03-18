@@ -305,7 +305,17 @@ module.exports = (db) => {
                 }
 
 
+                const latestPodData = podDataRows.length > 0 ? podDataRows[0] : null;
+
                 return res.status(200).json({
+                    id: String(pod.pod_id),
+                    nickname: pod.pod_name ?? null,
+                    latitude: latestPodData ? Number(latestPodData.latitude) : null,
+                    longitude: latestPodData ? Number(latestPodData.longitude) : null,
+                    visibility: isPublic ? "public" : "private",
+                    lastUpdated: latestPodData?.created_at
+                        ? new Date(latestPodData.created_at).toISOString()
+                        : null,
                     data,
                     viewer: {
                         isAuthenticated: !!userId,

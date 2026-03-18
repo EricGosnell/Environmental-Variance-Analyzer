@@ -113,6 +113,8 @@ module.exports = (db) => {
                 SELECT u.user_id, u.username
                 FROM users u
                 WHERE LOWER(u.username) LIKE ? ESCAPE '\\'
+                AND u.admin = 0
+                AND u.user_id != ?
                 ORDER BY
                     CASE
                         WHEN LOWER(u.username) = ? THEN 0
@@ -122,7 +124,7 @@ module.exports = (db) => {
                     LOWER(u.username) ASC
                 LIMIT ?
                 `,
-                [containsPattern, searchTerm, prefixPattern, limit]
+                [containsPattern, req.user.id, searchTerm, prefixPattern, limit]
             );
 
             return res.status(200).json({

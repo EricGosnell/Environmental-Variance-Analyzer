@@ -94,6 +94,7 @@ export default function Home() {
                                 const profile = await getMe();
                                 setUser(profile.user);
                                 setIsAuthenticated(true);
+                                window.dispatchEvent(new Event("eva.login"));
                             } catch {
                                 setUser(null);
                                 setIsAuthenticated(false);

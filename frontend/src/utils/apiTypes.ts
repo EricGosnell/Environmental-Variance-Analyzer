@@ -52,14 +52,13 @@ export type PodDataEntry = {
   id: string;
   timestamp: string;
   data: {
-    sensor_data_id: string;
-    pod_data_id: string;
     sensor_type: string;
     reading_value: number;
     reading_units: string;
-    reading_timestamp: string;
-    raw_data: Record<string, unknown>; // JSONB raw sensor payload
-    created_at: string;
+    location: {
+      latitude: number;
+      longitude: number;
+    };
   };
   visibility: "public" | "private";
 };
@@ -160,9 +159,8 @@ export type DeletePodDataRequest = { podDataId: string };
 export type DeletePodDataResponse = MessageResponse & { podDataId: string };
 
 export type PodOwnerCandidate = {
-  id: string;
+  id: number;
   username: string;
-  email: string | null;
 };
 
 export type SearchPodOwnerCandidatesResponse = {
@@ -170,7 +168,7 @@ export type SearchPodOwnerCandidatesResponse = {
 };
 
 export type AddPodOwnerRequest = {
-  userId: string;
+  userId: number;
 };
 
 export type AddPodOwnerResponse = MessageResponse & {

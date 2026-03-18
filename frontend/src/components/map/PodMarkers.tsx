@@ -172,6 +172,12 @@ export default function PodMarkers() {
     // map is stable for the lifetime of the MapContainer
   }, [map]);
 
+  useEffect(() => {
+    const handleLogin = () => void fetchPods(map as unknown as MapLike);
+    window.addEventListener("eva.login", handleLogin);
+    return () => window.removeEventListener("eva.login", handleLogin);
+  }, [map]);
+
   function closeTooltip() {
     if (!tooltipPodId) return;
     setTooltipVisible(false);

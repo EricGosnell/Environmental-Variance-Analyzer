@@ -35,6 +35,7 @@ This document outlines the API routes for the project.
   - [Get Pod Locations: `/pods/locations`](#get-pod-locations)
   - [Get Pod Data: `/pods/{id}/data`](#get-pod-data)
   - [Upload Pod Data: `/pods/upload-pod-data`](#upload-pod-data)
+  - [Add Pod Owner: `/pods/{id}/owners`](#add-pod-owner)
   - [Delete Pod Data: `/pods/delete-pod-data`](#delete-pod-data)
 ## Authentication
 
@@ -412,17 +413,24 @@ Response (200 OK):
 ```json
 {
   "user": {
-    "id": "123",
+    "id": 123,
     "email": "user@example.com",
     "phone_number": "1234567890",
     "username": "user",
-    "pods": ["pod_id_1", "pod_id_2"], // Array of pod IDs
-    "podData": ["pod_data_id_1", "pod_data_id_2"] // Array of pod data IDs
+    "pods": [
+      {
+        "id": 1,
+        "name": "My Pod",
+        "visibility": true,
+        "lat": "40.014",
+        "long": "-105.270"
+      }
+    ]
   }
 }
 ```
 
-This endpoint returns the current user's information.
+This endpoint returns the current user's information including their registered pods.
 
 ### Search Users by Username
 
@@ -1003,30 +1011,32 @@ This endpoint returns all pod names and their locations. Will return all pods if
 GET /pods/{id}/data
 ```
 
+Authentication:
+- Optional. Public pods are accessible anonymously. Private pods require the requesting user to be the owner or an admin.
+
 Response (200 OK):
 ```json
 {
   "id": "123",
   "nickname": "nickname",
-  "latitude": 123.456,
-  "longitude": 123.456,
-  "visibility": "public", // "public" or "private"
+  "latitude": 40.014,
+  "longitude": -105.270,
+  "visibility": "public",
   "lastUpdated": "2021-01-01T00:00:00.000Z",
   "data": [
     {
-      "id": "123",
+      "id": "456",
       "timestamp": "2021-01-01T00:00:00.000Z",
       "data": {
-        "sensor_data_id": "123",
-        "pod_data_id": "pod_data_id_1",
         "sensor_type": "temperature",
         "reading_value": 23.5,
         "reading_units": "C",
-        "reading_timestamp": "2021-01-01T00:00:00.000Z",
-        "raw_data": {}, // JSONB raw sensor payload
-        "created_at": "2021-01-01T00:00:00.000Z"
+        "location": {
+          "latitude": 40.014,
+          "longitude": -105.270
+        }
       },
-      "visibility": "public" // "public" or "private"
+      "visibility": "public"
     }
   ],
   "viewer": {
@@ -1038,6 +1048,13 @@ Response (200 OK):
 }
 ```
 
+Response (403 Forbidden):
+```json
+{
+  "error": "Forbidden"
+}
+```
+
 Response (404 Not Found):
 ```json
 {
@@ -1045,9 +1062,7 @@ Response (404 Not Found):
 }
 ```
 
-This endpoint returns all recorded data for a specific pod sorted by timestamp in descending order. Only accessible if pod is public or the user is the owner of the pod.
-
-TODO: Location history of pod.
+This endpoint returns all recorded sensor data for a specific pod. The `viewer` object indicates the requesting user's permissions. Pod metadata (`id`, `nickname`, `latitude`, `longitude`, `visibility`, `lastUpdated`) is derived from the pod record and the most recent `pod_data` row.
 
 ### Upload Pod Data
 
@@ -1102,6 +1117,77 @@ Response (403 Forbidden):
 ```
 
 This endpoint uploads pod data to the database.
+
+### Add Pod Owner
+
+```
+POST /pods/{id}/owners
+```
+
+Authentication:
+- Bearer token required. The requesting user must own the pod or be an admin.
+
+Request Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | integer | Yes | Pod ID (URL parameter, positive integer) |
+| userId | integer | Yes | ID of the user to add as an owner (positive integer) |
+
+Request Body:
+```json
+{
+  "userId": 42
+}
+```
+
+Response (201 Created):
+```json
+{
+  "message": "Pod owner added successfully",
+  "podId": "123",
+  "userId": "42"
+}
+```
+
+Response (400 Bad Request):
+```json
+{
+  "error": "Validation failed",
+  "details": [
+    { "field": "userId", "message": "userId must be a positive integer" }
+  ]
+}
+```
+
+Response (403 Forbidden):
+```json
+{
+  "error": "Forbidden"
+}
+```
+
+Response (404 Not Found):
+```json
+{
+  "error": "Pod not found"
+}
+```
+
+```json
+{
+  "error": "User not found"
+}
+```
+
+Response (409 Conflict):
+```json
+{
+  "error": "User is already an owner of this pod"
+}
+```
+
+This endpoint adds a user as a co-owner of a pod. The requesting user must already own the pod (or be an admin). The target user is looked up by `userId` — use `GET /users/search` to find users by username.
 
 ### Delete Pod Data
 

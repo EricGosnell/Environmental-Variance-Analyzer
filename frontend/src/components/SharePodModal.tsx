@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { FiSearch, FiX } from "react-icons/fi";
 
-import { addPodOwner, ApiError } from "../utils/api";
+import { addPodOwner, ApiError, searchUsers } from "../utils/api";
 import type { PodOwnerCandidate } from "../utils/apiTypes";
 import "../styles/SharePodModal.css";
 
@@ -12,8 +12,7 @@ type SharePodModalProps = {
 };
 
 function getCandidateInitial(candidate: PodOwnerCandidate): string {
-  const source = candidate.username || candidate.email || "?";
-  return source.charAt(0).toUpperCase();
+  return (candidate.username || "?").charAt(0).toUpperCase();
 }
 
 export default function SharePodModal({ show, podId, onClose }: SharePodModalProps) {
@@ -21,7 +20,7 @@ export default function SharePodModal({ show, podId, onClose }: SharePodModalPro
   const [results, setResults] = useState<PodOwnerCandidate[]>([]);
   const [isSearching, setIsSearching] = useState(false);
   const [searchError, setSearchError] = useState<string | null>(null);
-  const [addingUserId, setAddingUserId] = useState<string | null>(null);
+  const [addingUserId, setAddingUserId] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
 
   const trimmedQuery = useMemo(() => query.trim(), [query]);
@@ -61,7 +60,22 @@ export default function SharePodModal({ show, podId, onClose }: SharePodModalPro
       setIsSearching(true);
       setSearchError(null);
 
-      // TODO:
+      searchUsers(trimmedQuery, ac.signal)
+        .then((res) => {
+          if (cancelled) return;
+          setResults(Array.isArray(res.users) ? res.users : []);
+        })
+        .catch((e: unknown) => {
+          if (cancelled) return;
+          if ((e as { name?: string })?.name === "AbortError") return;
+          const message = e instanceof Error ? e.message : "Failed to search users.";
+          setSearchError(message);
+          setResults([]);
+        })
+        .finally(() => {
+          if (cancelled) return;
+          setIsSearching(false);
+        });
     }, 250);
 
     return () => {
@@ -104,7 +118,7 @@ export default function SharePodModal({ show, podId, onClose }: SharePodModalPro
         <header className="share-modal-header">
           <div>
             <h2 className="share-modal-title">Add collaborators</h2>
-            <p className="share-modal-subtitle">Search by username or email</p>
+            <p className="share-modal-subtitle">Search by username</p>
           </div>
           <button type="button" className="share-modal-close" aria-label="Close" onClick={onClose}>
             <FiX size={18} />
@@ -143,7 +157,6 @@ export default function SharePodModal({ show, podId, onClose }: SharePodModalPro
                     </span>
                     <div className="share-modal-user-text">
                       <span className="share-modal-username">{candidate.username}</span>
-                      <span className="share-modal-email">{candidate.email ?? "No email available"}</span>
                     </div>
                   </div>
                   <button

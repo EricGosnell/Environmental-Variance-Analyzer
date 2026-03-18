@@ -29,6 +29,7 @@ import type {
   PodLocationsResponse,
   RegisterPodRequest,
   RequestEmailChangeRequest,
+  SearchPodOwnerCandidatesResponse,
   UnregisterPodRequest,
   UpdatePasswordRequest,
   UpdatePodRequest,
@@ -591,7 +592,18 @@ export async function deletePodData(payload: DeletePodDataRequest, signal?: Abor
   });
 }
 
-// TODO:
+export async function searchUsers(
+  username: string,
+  signal?: AbortSignal,
+): Promise<SearchPodOwnerCandidatesResponse> {
+  return await request<SearchPodOwnerCandidatesResponse>({
+    method: "GET",
+    path: "/users/search",
+    query: { username, limit: 10 },
+    auth: true,
+    signal,
+  });
+}
 
 export async function addPodOwner(
   podId: string,
