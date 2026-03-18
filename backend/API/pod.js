@@ -218,7 +218,22 @@ module.exports = (db) => {
                     })
                     .filter(Boolean);
 
-                return res.status(200).json({ pods });
+                let ownedPodIds = new Set();
+                if (userId && pods.length > 0) {
+                    const placeholders = pods.map(() => "?").join(",");
+                    const ownedRows = await db.all(
+                        `SELECT pod_id FROM user_pod WHERE user_id = ? AND pod_id IN (${placeholders})`,
+                        [userId, ...pods.map((p) => p.id)]
+                    );
+                    ownedPodIds = new Set(ownedRows.map((r) => String(r.pod_id)));
+                }
+
+                const podsWithOwnership = pods.map((p) => ({
+                    ...p,
+                    isOwner: ownedPodIds.has(p.id),
+                }));
+
+                return res.status(200).json({ pods: podsWithOwnership });
             } catch (error) {
                 return res.status(500).json({
                     error: "Internal server error",

@@ -933,7 +933,8 @@ Response (200 OK):
       "latitude": 123.456,
       "longitude": 123.456,
       "visibility": "public", // "public" or "private"
-      "lastUpdated": "2021-01-01T00:00:00.000Z"
+      "lastUpdated": "2021-01-01T00:00:00.000Z",
+      "isOwner": true // true if authenticated user owns this pod, false otherwise
     }
   ]
 }

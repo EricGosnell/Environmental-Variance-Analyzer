@@ -174,6 +174,62 @@ describe("Pod API Tests", function () {
       expect(names).to.include("PublicPod");
       expect(names).to.include("PrivatePod");
     });
+
+    it("should set isOwner=true only for pods the authenticated user owns", async () => {
+      const ownedPod = await db.run(
+        "INSERT INTO pod (pod_name, pod_data_public) VALUES (?, ?)",
+        ["OwnedPod", 1]
+      );
+      const otherPod = await db.run(
+        "INSERT INTO pod (pod_name, pod_data_public) VALUES (?, ?)",
+        ["OtherPod", 1]
+      );
+
+      await db.run("INSERT INTO user_pod (user_id, pod_id) VALUES (?, ?)", [
+        userId,
+        ownedPod.lastID,
+      ]);
+
+      await db.run(
+        "INSERT INTO pod_data (pod_id, latitude, longitude) VALUES (?, ?, ?)",
+        [ownedPod.lastID, 40, -74]
+      );
+      await db.run(
+        "INSERT INTO pod_data (pod_id, latitude, longitude) VALUES (?, ?, ?)",
+        [otherPod.lastID, 40, -74]
+      );
+
+      const res = await request(app)
+        .get("/api/pods/locations")
+        .set("Authorization", `Bearer ${accessTokenUser}`)
+        .query({ latitude: 40, longitude: -74, radius: 5000 });
+
+      expect(res.status).to.equal(200);
+      const owned = res.body.pods.find((p) => p.nickname === "OwnedPod");
+      const other = res.body.pods.find((p) => p.nickname === "OtherPod");
+      expect(owned.isOwner).to.equal(true);
+      expect(other.isOwner).to.equal(false);
+    });
+
+    it("should set isOwner=false for all pods when anonymous", async () => {
+      const pubPod = await db.run(
+        "INSERT INTO pod (pod_name, pod_data_public) VALUES (?, ?)",
+        ["PublicPod", 1]
+      );
+
+      await db.run(
+        "INSERT INTO pod_data (pod_id, latitude, longitude) VALUES (?, ?, ?)",
+        [pubPod.lastID, 40, -74]
+      );
+
+      const res = await request(app)
+        .get("/api/pods/locations")
+        .query({ latitude: 40, longitude: -74, radius: 5000 });
+
+      expect(res.status).to.equal(200);
+      const pod = res.body.pods.find((p) => p.nickname === "PublicPod");
+      expect(pod.isOwner).to.equal(false);
+    });
   });
 
   // -------------------------

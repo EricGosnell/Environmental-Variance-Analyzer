@@ -7,6 +7,8 @@
  */
 
 import type {
+  AddPodOwnerRequest,
+  AddPodOwnerResponse,
   AdminDeactivateUserRequest,
   AdminGenerateInvitationTokenResponse,
   AdminRevokeInvitationTokenRequest,
@@ -552,7 +554,7 @@ export async function getPodLocations(
     method: "GET",
     path: "/pods/locations",
     query: params,
-    auth: false,
+    auth: true,
     signal,
   });
 }
@@ -583,6 +585,22 @@ export async function deletePodData(payload: DeletePodDataRequest, signal?: Abor
   return await request<DeletePodDataResponse>({
     method: "DELETE",
     path: "/pods/delete-pod-data",
+    body: payload,
+    auth: true,
+    signal,
+  });
+}
+
+// TODO:
+
+export async function addPodOwner(
+  podId: string,
+  payload: AddPodOwnerRequest,
+  signal?: AbortSignal,
+): Promise<AddPodOwnerResponse> {
+  return await request<AddPodOwnerResponse>({
+    method: "POST",
+    path: `/pods/${encodeURIComponent(podId)}/owners`,
     body: payload,
     auth: true,
     signal,

@@ -43,6 +43,7 @@ export type PodLocation = {
   longitude: number;
   visibility: "public" | "private";
   lastUpdated?: string;
+  isOwner?: boolean;
 };
 
 export type PodLocationsResponse = { pods: PodLocation[] };
@@ -71,6 +72,12 @@ export type PodDataResponse = {
   visibility: "public" | "private";
   lastUpdated: string;
   data: PodDataEntry[];
+  viewer?: {
+    isAuthenticated: boolean;
+    isOwner: boolean;
+    isAdmin: boolean;
+    canManagePod: boolean;
+  };
 };
 
 // ----------------------------
@@ -152,3 +159,21 @@ export type UploadPodDataResponse = MessageResponse & { podDataId: string };
 export type DeletePodDataRequest = { podDataId: string };
 export type DeletePodDataResponse = MessageResponse & { podDataId: string };
 
+export type PodOwnerCandidate = {
+  id: string;
+  username: string;
+  email: string | null;
+};
+
+export type SearchPodOwnerCandidatesResponse = {
+  users: PodOwnerCandidate[];
+};
+
+export type AddPodOwnerRequest = {
+  userId: string;
+};
+
+export type AddPodOwnerResponse = MessageResponse & {
+  podId: string;
+  userId: string;
+};

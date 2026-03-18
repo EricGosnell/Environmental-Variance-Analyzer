@@ -1,10 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { FiUpload } from "react-icons/fi";
+import { FiUpload, FiShare2 } from "react-icons/fi";
 
 import "../styles/Pod.css";
 import { getPodData } from "../utils/api";
 import type { PodDataEntry } from "../utils/apiTypes";
+import SharePodModal from "../components/SharePodModal";
 
 function titleCaseSensor(value: string): string {
   const raw = String(value ?? "").trim();
@@ -58,10 +59,17 @@ export default function Pod() {
     visibility: "public" | "private";
     lastUpdated: string;
   } | null>(null);
+  const [viewer, setViewer] = useState<{
+    isAuthenticated: boolean;
+    isOwner: boolean;
+    isAdmin: boolean;
+    canManagePod: boolean;
+  } | null>(null);
 
   const [selectedSensor, setSelectedSensor] = useState<string>("");
   const [selectedRange, setSelectedRange] = useState<string>("Last 7 Days");
   const [selectedDay, setSelectedDay] = useState<string>("");
+  const [showShareModal, setShowShareModal] = useState<boolean>(false);
 
   useEffect(() => {
     if (!podId) {
@@ -85,12 +93,14 @@ export default function Pod() {
           visibility: res.visibility,
           lastUpdated: res.lastUpdated,
         });
+        setViewer(res.viewer ?? null);
         setData(Array.isArray(res.data) ? res.data : []);
       } catch (e: any) {
         if (e?.name === "AbortError") return;
         setError(e?.message ? String(e.message) : "Failed to load pod data.");
         setData([]);
         setPodMeta(null);
+        setViewer(null);
       } finally {
         setLoading(false);
       }
@@ -167,9 +177,21 @@ export default function Pod() {
           <div className="pod-meta">
             <div>Last updated: {lastUpdatedDate ? formatDateMDY(lastUpdatedDate) : "—"}</div>
           </div>
-          <button className="pod-action" type="button" title="Upload/Export (placeholder)">
-            <FiUpload size={28} />
-          </button>
+          {viewer?.isOwner && (
+            <>
+            <button className="pod-action" type="button" title="Upload/Export (placeholder)">
+              <FiUpload size={28} />
+            </button>
+            <button
+              className="pod-action"
+              type="button"
+              title="Share Pod"
+              onClick={() => setShowShareModal(true)}
+            >
+              <FiShare2 size={28} />
+            </button>
+            </>
+          )}
         </div>
       </section>
 
@@ -283,8 +305,13 @@ export default function Pod() {
           ) : null}
         </>
       )}
+
+      <SharePodModal
+        show={showShareModal}
+        podId={podMeta?.id ?? podId ?? ""}
+        onClose={() => setShowShareModal(false)}
+      />
     </div>
   );
 }
-
 
