@@ -1,7 +1,7 @@
 // API/user.js
 const express = require("express");
 const bcrypt = require("bcryptjs");
-const { body, validationResult } = require("express-validator");
+const { body, query, validationResult } = require("express-validator");
 const { sanitizeRequestBody } = require("./middleware/sanitize");
 const { authenticateToken } = require("../util/Tokens");
 const { sendEmail } = require("../util/email");
@@ -72,6 +72,65 @@ module.exports = (db) => {
                 }
             });
 
+        } catch (error) {
+            return res.status(500).json({
+                error: "Internal server error",
+                message: error?.message,
+            });
+        }
+    });
+
+    // -------------------------
+    // GET /search - Search users by username
+    // -------------------------
+    router.get("/search", authenticateToken, [
+        query("username")
+            .trim()
+            .isLength({ min: 2, max: MAX_USERNAME_LENGTH })
+            .withMessage(`Username search term must be between 2 and ${MAX_USERNAME_LENGTH} characters`)
+            .matches(/^[a-zA-Z0-9_-]+$/)
+            .withMessage("Username search term can only contain letters, numbers, underscores, and hyphens"),
+        query("limit")
+            .optional()
+            .isInt({ min: 1, max: 50 })
+            .withMessage("Limit must be an integer between 1 and 50")
+            .toInt(),
+    ], async (req, res) => {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({ error: "Invalid search parameters" });
+            }
+
+            const searchTerm = req.query.username.toLowerCase();
+            const limit = req.query.limit ?? 20;
+            const escapedSearchTerm = searchTerm.replace(/([\\%_])/g, "\\$1");
+            const containsPattern = `%${escapedSearchTerm}%`;
+            const prefixPattern = `${escapedSearchTerm}%`;
+
+            const users = await db.all(
+                `
+                SELECT u.user_id, u.username
+                FROM users u
+                WHERE LOWER(u.username) LIKE ? ESCAPE '\\'
+                ORDER BY
+                    CASE
+                        WHEN LOWER(u.username) = ? THEN 0
+                        WHEN LOWER(u.username) LIKE ? ESCAPE '\\' THEN 1
+                        ELSE 2
+                    END ASC,
+                    LOWER(u.username) ASC
+                LIMIT ?
+                `,
+                [containsPattern, searchTerm, prefixPattern, limit]
+            );
+
+            return res.status(200).json({
+                users: users.map((user) => ({
+                    id: user.user_id,
+                    username: user.username,
+                })),
+            });
         } catch (error) {
             return res.status(500).json({
                 error: "Internal server error",
