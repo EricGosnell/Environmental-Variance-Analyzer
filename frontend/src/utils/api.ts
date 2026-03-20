@@ -331,15 +331,13 @@ export async function authRefresh(payload: AuthRefreshRequest, signal?: AbortSig
 }
 
 export async function authRegister(payload: AuthRegisterRequest, signal?: AbortSignal): Promise<AuthRegisterResponse> {
-  const res = await request<AuthRegisterResponse>({
+  return await request<AuthRegisterResponse>({
     method: "POST",
     path: "/auth/register",
     body: payload,
     auth: false,
     signal,
   });
-  setTokens(res);
-  return res;
 }
 
 export async function authLogout(
@@ -379,6 +377,32 @@ export async function authResetPassword(
   return await request<MessageResponse>({
     method: "POST",
     path: "/auth/reset-password",
+    body: payload,
+    auth: false,
+    signal,
+  });
+}
+
+export async function sendVerification(
+  payload: { email: string },
+  signal?: AbortSignal,
+): Promise<MessageResponse> {
+  return await request<MessageResponse>({
+    method: "POST",
+    path: "/auth/send-verification",
+    body: payload,
+    auth: false,
+    signal,
+  });
+}
+
+export async function verifyEmail(
+  payload: { email: string; code: string },
+  signal?: AbortSignal,
+): Promise<MessageResponse> {
+  return await request<MessageResponse>({
+    method: "POST",
+    path: "/auth/verify-email",
     body: payload,
     auth: false,
     signal,

@@ -8,11 +8,14 @@ This document outlines the API routes for the project.
   - [Login: `/auth/login`](#login-authlogin)
   - [Refresh: `/auth/refresh`](#refresh-authrefresh)
   - [Register: `/auth/register`](#register-authregister)
+  - [Send Verification: `/auth/send-verification`](#send-verification-authsend-verification)
+  - [Verify Email: `/auth/verify-email`](#verify-email-authverify-email)
   - [Logout: `/auth/logout`](#logout)
   - [Forgot Password: `/auth/forgot-password`](#forgot-password)
   - [Reset Password: `/auth/reset-password`](#reset-password)
 - [User Management](#user-management)
   - [Get User: `/users/me`](#get-user)
+  - [Search Users by Username: `/users/search`](#search-users-by-username)
   - [Get User by ID: `/users/{id}`](#get-user-by-id)
   - [Update User Username: `/users/me/username`](#update-user-username)
   - [Update User Email:](#update-user-email)
@@ -143,7 +146,7 @@ Request Parameters:
 | email | string | Yes | User email address |
 | password | string | Yes | User password |
 | username | string | Yes | Username |
-| phone_number | string | Yes | User phone number |
+| phone_number | string | No | User phone number |
 
 Request Body:
 ```json
@@ -151,11 +154,11 @@ Request Body:
   "email": "user@example.com", // Required
   "password": "password", // Required
   "username": "user", // Required
-  "phone_number": "1234567890", // Required
+  "phone_number": "1234567890" // Optional
 }
 ```
 
-Response (200 OK):
+Response (201 Created):
 ```json
 {
   "user": {
@@ -163,15 +166,14 @@ Response (200 OK):
     "email": "user@example.com",
     "username": "user"
   },
-  "accessToken": "access_token",
-  "refreshToken": "refresh_token"
+  "message": "Registration successful. Please verify your email."
 }
 ```
 
 Response (400 Bad Request):
 ```json
 {
-  "error": "Invalid input data or invalid invitation token"
+  "error": "Validation failed"
 }
 ```
 
@@ -182,7 +184,93 @@ Response (409 Conflict):
 }
 ```
 
-This endpoint creates a new user account.
+This endpoint creates a new user account and marks it as unverified. It does not issue login tokens.  
+After registration, call `/auth/send-verification` and then `/auth/verify-email` before login.
+
+### Send verification
+
+```
+POST /auth/send-verification
+```
+
+Request Body:
+```json
+{
+  "email": "user@example.com" // Required
+}
+```
+
+Response (200 OK):
+```json
+{
+  "message": "If the email exists, a verification code was sent."
+}
+```
+
+Response (400 Bad Request):
+```json
+{
+  "errors": [
+    {
+      "msg": "Valid email required"
+    }
+  ]
+}
+```
+
+Notes:
+- This endpoint always returns a generic success message to avoid account enumeration.
+- Resend throttling is enforced internally.
+- Verification state is persisted only after the email provider accepts the send request.
+
+### Verify email
+
+```
+POST /auth/verify-email
+```
+
+Request Body:
+```json
+{
+  "email": "user@example.com", // Required
+  "code": "123456" // Required, 6 digits
+}
+```
+
+Response (200 OK):
+```json
+{
+  "message": "Email verified"
+}
+```
+
+Response (400 Bad Request):
+```json
+{
+  "error": "No verification code found"
+}
+```
+
+Response (400 Bad Request):
+```json
+{
+  "error": "Invalid code"
+}
+```
+
+Response (400 Bad Request):
+```json
+{
+  "error": "Code expired"
+}
+```
+
+Response (429 Too Many Requests):
+```json
+{
+  "error": "Too many attempts"
+}
+```
 
 ### Logout
 
@@ -336,6 +424,53 @@ Response (200 OK):
 
 This endpoint returns the current user's information.
 
+### Search Users by Username
+
+```
+GET /users/search
+```
+
+Authentication:
+- Bearer token required.
+
+Request Query Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| username | string | Yes | Username search term (2-16 chars, letters/numbers/underscore/hyphen) |
+| limit | integer | No | Max number of results to return (1-50, default 20) |
+
+Example Request:
+```
+GET /users/search?username=ann&limit=10
+```
+
+Response (200 OK):
+```json
+{
+  "users": [
+    { "id": 12, "username": "anna" },
+    { "id": 35, "username": "joanna" }
+  ]
+}
+```
+
+Response (400 Bad Request):
+```json
+{
+  "error": "Invalid search parameters"
+}
+```
+
+Response (401 Unauthorized):
+```json
+{
+  "error": "No token provided"
+}
+```
+
+This endpoint searches users by username using case-insensitive contains matching. Results are ranked in this order: exact match, prefix match, then contains match, with alphabetical ordering as the tiebreaker.
+
 ### Get User by ID
 
 ```
@@ -452,7 +587,7 @@ Response (409 Conflict):
 }
 ```
 
-This endpoint sends a verification code to the new email address. The user must verify this code before the email can be updated.
+This endpoint sends a verification code to the new email address via the email service. The user must verify this code before the email can be updated.
 
 #### Verify and Update Email
 
