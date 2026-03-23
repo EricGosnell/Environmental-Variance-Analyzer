@@ -77,6 +77,7 @@ CREATE TABLE IF NOT EXISTS pod_data (
     date_collected DATE NOT NULL DEFAULT CURRENT_DATE,
     longitude REAL NOT NULL,
     latitude REAL NOT NULL,
+    notes TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
