@@ -203,7 +203,7 @@ export default function Pod() {
           <div className="pod-meta">
             <div>Last updated: {lastUpdatedDate ? formatDateMDY(lastUpdatedDate) : "—"}</div>
           </div>
-          {viewer?.isOwner && (
+          {viewer?.canManagePod && (
             <>
             <button className="pod-action" type="button" title="Upload/Export (placeholder)">
               <FiUpload size={28} />
