@@ -23,6 +23,7 @@ export default function SharePodModal({ show, podId, onClose, currentOwnerIds = 
   const [searchError, setSearchError] = useState<string | null>(null);
   const [addingUserId, setAddingUserId] = useState<number | null>(null);
   const [feedback, setFeedback] = useState<string | null>(null);
+  const [localOwnerIds, setLocalOwnerIds] = useState<number[]>([]);
 
   const trimmedQuery = useMemo(() => query.trim(), [query]);
 
@@ -34,7 +35,8 @@ export default function SharePodModal({ show, podId, onClose, currentOwnerIds = 
     setSearchError(null);
     setAddingUserId(null);
     setFeedback(null);
-  }, [show, podId]);
+    setLocalOwnerIds(currentOwnerIds);
+  }, [show, podId, currentOwnerIds]);
 
   useEffect(() => {
     if (!show) return;
@@ -91,8 +93,7 @@ export default function SharePodModal({ show, podId, onClose, currentOwnerIds = 
     setAddingUserId(candidate.id);
     try {
       await addPodOwner(podId, { userId: candidate.id });
-      setResults((prev) => prev.filter((user) => user.id !== candidate.id));
-      setFeedback(`Added ${candidate.username} as an owner.`);
+      setLocalOwnerIds((prev) => [...prev, candidate.id]);
     } catch (e: unknown) {
       if (e instanceof ApiError && e.status === 409) {
         setFeedback(`${candidate.username} is already an owner.`);
@@ -151,7 +152,7 @@ export default function SharePodModal({ show, podId, onClose, currentOwnerIds = 
           ) : (
             <ul className="share-modal-list">
               {results.map((candidate) => {
-                const isAlreadyOwner = currentOwnerIds.includes(candidate.id);
+                const isAlreadyOwner = localOwnerIds.includes(candidate.id);
                 return (
                   <li key={candidate.id} className="share-modal-item">
                     <div className="share-modal-user">
