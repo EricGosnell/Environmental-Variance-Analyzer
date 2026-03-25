@@ -36,6 +36,7 @@ This document outlines the API routes for the project.
   - [Get Pod Data: `/pods/{id}/data`](#get-pod-data)
   - [Upload Pod Data: `/pods/upload-pod-data`](#upload-pod-data)
   - [Add Pod Owner: `/pods/{id}/owners`](#add-pod-owner)
+  - [Get Pod Owners: `/pods/{id}/owners`](#get-pod-owners)
   - [Delete Pod Data: `/pods/delete-pod-data`](#delete-pod-data)
 ## Authentication
 
@@ -1188,6 +1189,62 @@ Response (409 Conflict):
 ```
 
 This endpoint adds a user as a co-owner of a pod. The requesting user must already own the pod (or be an admin). The target user is looked up by `userId` — use `GET /users/search` to find users by username.
+
+### Get Pod Owners
+
+```
+GET /pods/{id}/owners
+```
+
+Authentication:
+- Bearer token required. The requesting user must own the pod or be an admin.
+
+Request Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | integer | Yes | Pod ID (URL parameter, positive integer) |
+
+Example Request:
+```
+GET /pods/123/owners
+```
+
+Response (200 OK):
+```json
+{
+  "owners": [
+    { "id": 1, "username": "alice" },
+    { "id": 42, "username": "bob" }
+  ]
+}
+```
+
+Response (400 Bad Request):
+```json
+{
+  "error": "Validation failed",
+  "details": [
+    { "field": "id", "message": "Pod id must be a positive integer" }
+  ]
+}
+```
+
+Response (403 Forbidden):
+```json
+{
+  "error": "Forbidden"
+}
+```
+
+Response (404 Not Found):
+```json
+{
+  "error": "Pod not found"
+}
+```
+
+This endpoint returns all owners of a pod. The requesting user must be an owner of the pod or an admin. Owners are returned sorted alphabetically by username.
 
 ### Delete Pod Data
 
