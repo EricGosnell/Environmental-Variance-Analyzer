@@ -6,8 +6,8 @@ import "../styles/Pod.css";
 import { getPodData, getPodOwners } from "../utils/api";
 import type { PodDataEntry, PodOwnerCandidate } from "../utils/apiTypes";
 import SharePodModal from "../components/SharePodModal";
-import SensorTrendChart from "../components/SensorTrendChart";
-import DailySensorChart from "../components/DailySensorChart";
+// import SensorTrendChart from "../components/SensorTrendChart";
+// import DailySensorChart from "../components/DailySensorChart";
 
 function titleCaseSensor(value: string): string {
   const raw = String(value ?? "").trim();
