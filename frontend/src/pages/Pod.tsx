@@ -54,10 +54,10 @@ export default function Pod() {
   const [podMeta, setPodMeta] = useState<{
     id: string;
     nickname: string;
-    latitude: number;
-    longitude: number;
+    latitude: number | null;
+    longitude: number | null;
     visibility: "public" | "private";
-    lastUpdated: string;
+    lastUpdated: string | null;
   } | null>(null);
   const [viewer, setViewer] = useState<{
     isAuthenticated: boolean;
