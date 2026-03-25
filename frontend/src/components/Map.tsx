@@ -5,6 +5,10 @@ import "../styles/Map.css";
 import Controls from "./map/Controls";
 import PodMarkers from "./map/PodMarkers";
 
+type MapViewProps = {
+    isAuthenticated?: boolean | null;
+};
+
 const MAP_VIEW_STORAGE_KEY = "eva.mapView";
 const BASE_LAYER_STORAGE_KEY = "eva.baseLayer";
 const BASE_LAYER_OPEN_STREET_MAP = "OpenStreetMap";
@@ -87,7 +91,7 @@ function PersistMapView() {
     return null;
 }
 
-export default function MapView() {
+export default function MapView({ isAuthenticated }: MapViewProps) {
     const savedView = readSavedMapView();
     const savedBaseLayer = readSavedBaseLayer();
     const initialCenter: [number, number] = savedView ? [savedView.lat, savedView.lng] : DEFAULT_CENTER;
@@ -122,7 +126,7 @@ export default function MapView() {
         </LayersControlAny>
 
         <PodMarkers />
-        <Controls />
+        <Controls isAuthenticated={isAuthenticated} />
         <PersistMapView />
 
 

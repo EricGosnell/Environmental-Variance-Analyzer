@@ -175,3 +175,7 @@ export type AddPodOwnerResponse = MessageResponse & {
   podId: string;
   userId: string;
 };
+
+export type GetPodOwnersResponse = {
+  owners: PodOwnerCandidate[];
+};

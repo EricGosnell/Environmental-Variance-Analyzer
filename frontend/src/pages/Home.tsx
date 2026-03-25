@@ -104,7 +104,7 @@ export default function Home() {
                 ) : null}
             </div>
             <div className="map-container">
-                <MapView />
+                <MapView isAuthenticated={isAuthenticated} />
             </div>
         </div>
     )

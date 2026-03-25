@@ -23,6 +23,7 @@ import type {
   AuthResetPasswordRequest,
   DeletePodDataRequest,
   DeletePodDataResponse,
+  GetPodOwnersResponse,
   MessageResponse,
   PodDataResponse,
   GetPodLocationsRequest,
@@ -614,6 +615,18 @@ export async function addPodOwner(
     method: "POST",
     path: `/pods/${encodeURIComponent(podId)}/owners`,
     body: payload,
+    auth: true,
+    signal,
+  });
+}
+
+export async function getPodOwners(
+  podId: string,
+  signal?: AbortSignal,
+): Promise<GetPodOwnersResponse> {
+  return await request<GetPodOwnersResponse>({
+    method: "GET",
+    path: `/pods/${encodeURIComponent(podId)}/owners`,
     auth: true,
     signal,
   });

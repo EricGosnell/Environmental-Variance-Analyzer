@@ -416,6 +416,67 @@ module.exports = (db) => {
     );
 
     // -------------------------
+    // GET /pods/:id/owners
+    // -------------------------
+    // Get all owners of a pod (owner or admin required)
+    router.get("/:id/owners",
+        authenticateToken,
+        [param("id").isInt({ gt: 0 }).withMessage("Pod id must be a positive integer")],
+        async (req, res) => {
+            try {
+                const errors = validationResult(req);
+                if (!errors.isEmpty()) {
+                    return res.status(400).json({
+                        error: "Validation failed",
+                        details: errors.array().map((err) => ({
+                            field: err.param,
+                            message: err.msg,
+                        })),
+                    });
+                }
+
+                const podId = Number(req.params.id);
+                const userId = req.user.id;
+
+                const pod = await getPodById(db, podId);
+                if (!pod) return res.status(404).json({ error: "Pod not found" });
+
+                const isAdmin = await getIsAdmin(userId);
+                const isOwner = await userOwnsPod(db, userId, podId);
+
+                if (!isOwner && !isAdmin) {
+                    return res.status(403).json({ error: "Forbidden" });
+                }
+
+                const owners = await db.all(
+                    `
+                    SELECT u.user_id, u.username
+                    FROM users u
+                    JOIN user_pod up ON u.user_id = up.user_id
+                    WHERE up.pod_id = ?
+                    ORDER BY LOWER(u.username) ASC
+                    `,
+                    [podId]
+                );
+
+                return res.status(200).json({
+                    owners: owners.map((owner) => ({
+                        id: owner.user_id,
+                        username: owner.username,
+                    })),
+                });
+            } catch (error) {
+                return res.status(500).json({
+                    error: "Internal server error",
+                    where: "/pods/:id/owners",
+                    message: error?.message,
+                    code: error?.code,
+                });
+            }
+        }
+    );
+
+    // -------------------------
     // POST /pods/upload-pod-data
     // -------------------------
     router.post("/upload-pod-data",

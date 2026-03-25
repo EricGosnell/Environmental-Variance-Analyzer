@@ -9,13 +9,14 @@ type SharePodModalProps = {
   show: boolean;
   podId: string;
   onClose: () => void;
+  currentOwnerIds?: number[];
 };
 
 function getCandidateInitial(candidate: PodOwnerCandidate): string {
   return (candidate.username || "?").charAt(0).toUpperCase();
 }
 
-export default function SharePodModal({ show, podId, onClose }: SharePodModalProps) {
+export default function SharePodModal({ show, podId, onClose, currentOwnerIds = [] }: SharePodModalProps) {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<PodOwnerCandidate[]>([]);
   const [isSearching, setIsSearching] = useState(false);
@@ -149,26 +150,29 @@ export default function SharePodModal({ show, podId, onClose }: SharePodModalPro
             <div className="share-modal-empty">No matching users found.</div>
           ) : (
             <ul className="share-modal-list">
-              {results.map((candidate) => (
-                <li key={candidate.id} className="share-modal-item">
-                  <div className="share-modal-user">
-                    <span className="share-modal-avatar" aria-hidden="true">
-                      {getCandidateInitial(candidate)}
-                    </span>
-                    <div className="share-modal-user-text">
-                      <span className="share-modal-username">{candidate.username}</span>
+              {results.map((candidate) => {
+                const isAlreadyOwner = currentOwnerIds.includes(candidate.id);
+                return (
+                  <li key={candidate.id} className="share-modal-item">
+                    <div className="share-modal-user">
+                      <span className="share-modal-avatar" aria-hidden="true">
+                        {getCandidateInitial(candidate)}
+                      </span>
+                      <div className="share-modal-user-text">
+                        <span className="share-modal-username">{candidate.username}</span>
+                      </div>
                     </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="share-modal-add-btn"
-                    onClick={() => handleAddOwner(candidate)}
-                    disabled={addingUserId === candidate.id}
-                  >
-                    {addingUserId === candidate.id ? "Adding..." : "Add"}
-                  </button>
-                </li>
-              ))}
+                    <button
+                      type="button"
+                      className="share-modal-add-btn"
+                      onClick={() => handleAddOwner(candidate)}
+                      disabled={isAlreadyOwner || addingUserId === candidate.id}
+                    >
+                      {isAlreadyOwner ? "Already an Owner" : addingUserId === candidate.id ? "Adding..." : "Add"}
+                    </button>
+                  </li>
+                );
+              })}
             </ul>
           )}
         </div>

@@ -54,7 +54,7 @@ function Geocoder() {
   return null;
 }
 
-function LegendControl() {
+function LegendControl({ isAuthenticated }: { isAuthenticated?: boolean | null }) {
   const map = useMap() as any;
 
   useEffect(() => {
@@ -92,11 +92,13 @@ function LegendControl() {
       const label = (L as any).DomUtil.create("span", "", row);
       label.textContent = "EVA Pod";
 
-      ownedSwatch = (L as any).DomUtil.create("span", "eva-legend-swatch eva-legend-swatch-owned");
-      const ownedRow = (L as any).DomUtil.create("div", "eva-legend-row", div);
-      ownedRow.appendChild(ownedSwatch);
-      const ownedLabel = (L as any).DomUtil.create("span", "", ownedRow);
-      ownedLabel.textContent = "Your Pod";
+      if (isAuthenticated) {
+        ownedSwatch = (L as any).DomUtil.create("span", "eva-legend-swatch eva-legend-swatch-owned");
+        const ownedRow = (L as any).DomUtil.create("div", "eva-legend-row", div);
+        ownedRow.appendChild(ownedSwatch);
+        const ownedLabel = (L as any).DomUtil.create("span", "", ownedRow);
+        ownedLabel.textContent = "Your Pod";
+      }
 
       (L as any).DomEvent.disableClickPropagation(div);
       (L as any).DomEvent.disableScrollPropagation(div);
@@ -105,7 +107,6 @@ function LegendControl() {
 
       return div;
     };
-
     control.addTo(map);
     map.on("zoomend", updateSwatch);
 
@@ -117,7 +118,7 @@ function LegendControl() {
         // no-op
       }
     };
-  }, [map]);
+  }, [map, isAuthenticated]);
 
   return null;
 }
@@ -329,12 +330,12 @@ function UserLocationControl() {
   return null;
 }
 
-export default function Controls() {
+export default function Controls({ isAuthenticated }: { isAuthenticated?: boolean | null }) {
   // Preserve the existing add-to-map ordering:
   // Legend (top-right), then Geocoder (top-left), then Search this area (top-left), then User Location (top-left).
   return (
     <>
-      <LegendControl />
+      <LegendControl isAuthenticated={isAuthenticated} />
       <Geocoder />
       <SearchAreaControl />
       <UserLocationControl />
