@@ -23,6 +23,11 @@ function generateTraceId(prefix = "email-change"): string {
 	return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 }
 
+type VerificationModalState = {
+	mode: "email" | "password";
+	targetEmail: string;
+};
+
 const Profile: React.FC = () => {
 	// Profile controls state (same order/format as Profile1)
 	const [user, setUser] = useState<User | null>(null);
@@ -34,9 +39,7 @@ const Profile: React.FC = () => {
 		verificationCode: ""
 	});
 	const [phoneEditMode, setPhoneEditMode] = useState(false);
-	const [emailChangeRequested, setEmailChangeRequested] = useState(false);
 	const [message, setMessage] = useState("");
-	const [showPasswordCodeForm, setShowPasswordCodeForm] = useState(false);
 	const [showPasswordForm, setShowPasswordForm] = useState(false);
 	const [passwordCode, setPasswordCode] = useState("");
 	const [newPassword, setNewPassword] = useState("");
@@ -44,6 +47,10 @@ const Profile: React.FC = () => {
 	const [passwordResetTraceId, setPasswordResetTraceId] = useState("");
 	const [passwordRequestInFlight, setPasswordRequestInFlight] = useState(false);
 	const [passwordUpdateInFlight, setPasswordUpdateInFlight] = useState(false);
+	const [verificationModal, setVerificationModal] = useState<VerificationModalState | null>(null);
+	const [verificationCodeInput, setVerificationCodeInput] = useState("");
+	const [verificationModalError, setVerificationModalError] = useState("");
+	const [verificationSubmitInFlight, setVerificationSubmitInFlight] = useState(false);
 
 	// ManagePods state
 	// Remove unused pods state, use user.pods directly
@@ -85,25 +92,34 @@ const Profile: React.FC = () => {
 			setForm({ ...form, [e.target.name]: e.target.value });
 		};
 
-		const handlePasswordCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-			setPasswordCode(e.target.value);
-		};
-
 		const handleNewPasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 			if (e.target.name === "newPassword") setNewPassword(e.target.value);
 			else setConfirmPassword(e.target.value);
 		};
 
+		const closeVerificationModal = () => {
+			setVerificationModal(null);
+			setVerificationCodeInput("");
+			setVerificationModalError("");
+			setVerificationSubmitInFlight(false);
+		};
+
+		const openVerificationModal = (mode: VerificationModalState["mode"], targetEmail: string) => {
+			setVerificationModal({ mode, targetEmail });
+			setVerificationCodeInput("");
+			setVerificationModalError("");
+		};
+
 		const resetPasswordFlow = () => {
-			setShowPasswordCodeForm(false);
 			setShowPasswordForm(false);
 			setPasswordCode("");
 			setNewPassword("");
 			setConfirmPassword("");
 			setPasswordResetTraceId("");
+			closeVerificationModal();
 		};
 
-		const handlePasswordResetRequest = async () => {
+		const requestPasswordResetCode = async () => {
 			if (!user?.email) {
 				setMessage("No email is available for this account.");
 				return;
@@ -134,8 +150,8 @@ const Profile: React.FC = () => {
 					targetEmail: maskEmailForLog(user.email),
 					responseMessage: response?.message,
 				});
-				setShowPasswordCodeForm(true);
-				setMessage(response.message || "If the email exists, a password reset code was sent.");
+				openVerificationModal("password", user.email);
+				setMessage(response.message || "A password reset code was sent.");
 			} catch (err: any) {
 				console.error("[Profile][PasswordReset] Reset code request failed", {
 					traceId,
@@ -148,20 +164,8 @@ const Profile: React.FC = () => {
 			}
 		};
 
-		const handlePasswordCodeSubmit = (e: React.FormEvent) => {
-			e.preventDefault();
-			console.log("[Profile][PasswordReset] Step 4: Code submit", {
-				traceId: passwordResetTraceId,
-				hasCode: Boolean(passwordCode.trim()),
-			});
-			if (!/^\d{6}$/.test(passwordCode.trim())) {
-				setMessage("Enter the 6-digit code sent to your email.");
-				return;
-			}
-
-			setMessage("");
-			setShowPasswordCodeForm(false);
-			setShowPasswordForm(true);
+		const handlePasswordResetRequest = async () => {
+			await requestPasswordResetCode();
 		};
 
 		const handlePasswordSubmit = async (e: React.FormEvent) => {
@@ -175,7 +179,6 @@ const Profile: React.FC = () => {
 			if (!/^\d{6}$/.test(passwordCode.trim())) {
 				setMessage("Your verification code is invalid. Request a new code and try again.");
 				setShowPasswordForm(false);
-				setShowPasswordCodeForm(true);
 				return;
 			}
 
@@ -235,8 +238,7 @@ const Profile: React.FC = () => {
 			}
 		};
 
-		const handleEmailRequest = async (e: React.FormEvent) => {
-			e.preventDefault();
+		const requestEmailChangeCode = async () => {
 			const traceId = generateTraceId();
 			console.log("[Profile][EmailChange] Step 1: Request change submit", {
 				traceId,
@@ -254,7 +256,7 @@ const Profile: React.FC = () => {
 					targetEmail: maskEmailForLog(form.email),
 					responseMessage: response?.message,
 				});
-				setEmailChangeRequested(true);
+				openVerificationModal("email", form.email);
 				setMessage(response?.message || "Verification code sent to new email.");
 			} catch (err: any) {
 				console.error("[Profile][EmailChange] Verification code request failed", {
@@ -266,31 +268,78 @@ const Profile: React.FC = () => {
 			}
 		};
 
-		const handleEmailVerify = async (e: React.FormEvent) => {
+		const handleEmailRequest = async (e: React.FormEvent) => {
 			e.preventDefault();
-			console.log("[Profile][EmailChange] Step 4: Verify code submit", {
-				targetEmail: maskEmailForLog(form.email),
-				hasVerificationCode: Boolean(form.verificationCode?.trim()),
-			});
-			setMessage("");
-			try {
-				console.log("[Profile][EmailChange] Step 5: Calling verify/update email API", {
-					targetEmail: maskEmailForLog(form.email),
-				});
-				await verifyAndUpdateEmail({ newEmail: form.email, verificationCode: form.verificationCode });
-				console.log("[Profile][EmailChange] Step 6: Email update succeeded", {
-					targetEmail: maskEmailForLog(form.email),
-				});
-				setMessage("Email updated!");
-				setUser(u => u ? { ...u, email: form.email } : u);
-				setEmailChangeRequested(false);
-			} catch (err: any) {
-				console.error("[Profile][EmailChange] Email verify/update failed", {
-					targetEmail: maskEmailForLog(form.email),
-					error: err,
-				});
-				setMessage(err?.message || "Failed to verify email.");
+			await requestEmailChangeCode();
+		};
+
+		const handleVerificationCodeInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+			setVerificationCodeInput(e.target.value);
+			if (verificationModalError) setVerificationModalError("");
+		};
+
+		const handleVerificationModalSubmit = async (e: React.FormEvent) => {
+			e.preventDefault();
+			if (!verificationModal) return;
+
+			const trimmedCode = verificationCodeInput.trim();
+			if (!/^\d{6}$/.test(trimmedCode)) {
+				setVerificationModalError("Enter the 6-digit code sent to your email.");
+				return;
 			}
+
+			setVerificationSubmitInFlight(true);
+			setVerificationModalError("");
+			setMessage("");
+
+			try {
+				if (verificationModal.mode === "email") {
+					console.log("[Profile][EmailChange] Step 4: Verifying code from modal", {
+						targetEmail: maskEmailForLog(form.email),
+						hasVerificationCode: true,
+					});
+					await verifyAndUpdateEmail({ newEmail: form.email, verificationCode: trimmedCode });
+					console.log("[Profile][EmailChange] Step 5: Email update succeeded", {
+						targetEmail: maskEmailForLog(form.email),
+					});
+					setForm(currentForm => ({ ...currentForm, verificationCode: trimmedCode }));
+					setUser(u => u ? { ...u, email: form.email } : u);
+					closeVerificationModal();
+					setMessage("Email updated!");
+					return;
+				}
+
+				console.log("[Profile][PasswordReset] Step 4: Code submit", {
+					traceId: passwordResetTraceId,
+					hasCode: true,
+				});
+				setPasswordCode(trimmedCode);
+				closeVerificationModal();
+				setShowPasswordForm(true);
+				setMessage("Verification code accepted. Enter your new password below.");
+			} catch (err: any) {
+				if (verificationModal.mode === "email") {
+					console.error("[Profile][EmailChange] Email verify/update failed", {
+						targetEmail: maskEmailForLog(form.email),
+						error: err,
+					});
+					setVerificationModalError(err?.message || "Failed to verify email.");
+				} else {
+					setVerificationModalError(err?.message || "Failed to accept verification code.");
+				}
+			} finally {
+				setVerificationSubmitInFlight(false);
+			}
+		};
+
+		const handleVerificationModalResend = async () => {
+			if (!verificationModal) return;
+			if (verificationModal.mode === "email") {
+				await requestEmailChangeCode();
+				return;
+			}
+
+			await requestPasswordResetCode();
 		};
 
 		const handlePhoneFocus = () => {
@@ -484,9 +533,18 @@ const Profile: React.FC = () => {
 	];
 
 	return (
-		<div style={{ display: "flex", minHeight: "100vh", background: "#232a27" }}>
+		<div
+			style={{
+				display: "flex",
+				minHeight: "100vh",
+				background: "#232a27",
+				padding: 24,
+				gap: 24,
+				boxSizing: "border-box"
+			}}
+		>
 			{/* Sidebar Tabs */}
-			<div style={{ minWidth: 220, background: "#204835", padding: "32px 0", borderRadius: 16, margin: 24 }}>
+			<div style={{ width: 220, background: "#204835", padding: "32px 0", borderRadius: 16, flexShrink: 0 }}>
 				<div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
 					{tabs.map(tab => (
 						<button
@@ -512,9 +570,9 @@ const Profile: React.FC = () => {
 			</div>
 
 			{/* Main Content and Right Container */}
-			<div style={{ display: "flex", flex: 1, margin: "24px 0 24px 0", maxWidth: 1400, width: "150%" }}>
+			<div style={{ display: "flex", flex: 1, minWidth: 0, gap: 24 }}>
 				{/* Main Content - left justified */}
-				<div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "flex-start", minWidth: 900, maxWidth: 1100 }}>
+				<div style={{ flex: 1, display: "flex", flexDirection: "column", alignItems: "stretch", minWidth: 0 }}>
 					{/* ...existing code... */}
 					{/* User Info Container */}
 					<div
@@ -527,7 +585,6 @@ const Profile: React.FC = () => {
 							borderRadius: 16,
 							padding: "16px 20px",
 							width: "100%",
-							maxWidth: 600,
 							color: "#fff"
 						}}
 					>
@@ -546,12 +603,12 @@ const Profile: React.FC = () => {
 					</div>
 
 					{/* Main Tab Content */}
-					<div style={{ width: "100%", maxWidth: 600 }}>
+					<div style={{ width: "100%", minWidth: 0 }}>
 						{/* ...existing code... */}
 						{/* ...existing code... */}
 						{/* Manage Pods: show pod information */}
 						{activeTab === "managePods" && (
-							<div className="manage-pods-container" style={{ maxWidth: 600, background: "#204835", borderRadius: 16, boxShadow: "0 2px 12px rgba(0,0,0,0.08)", padding: "24px 16px", color: "#fff", marginLeft: 0 }}>
+							<div className="manage-pods-container" style={{ width: "100%", background: "#204835", borderRadius: 16, boxShadow: "0 2px 12px rgba(0,0,0,0.08)", padding: "24px 16px", color: "#fff", marginLeft: 0, boxSizing: "border-box" }}>
 								<h3 style={{ marginBottom: 24 }}>Your Pods</h3>
 								<button className="add-pod-btn" style={{ marginBottom: 18 }} onClick={() => setShowAddModal(true)}>Add New Pod</button>
 								<table className="pods-table" style={{ width: "100%", borderCollapse: "collapse" }}>
@@ -716,62 +773,45 @@ const Profile: React.FC = () => {
 							</div>
 						)}
 						{activeTab === "Connections" && (
-							<div style={{ background: "#204835", borderRadius: 16, padding: "16px 20px", color: "#fff" }}>
+							<div style={{ width: "100%", background: "#204835", borderRadius: 16, padding: "16px 20px", color: "#fff", boxSizing: "border-box" }}>
 								<h3>Tab for inviting collaborators or organizations/receiving invitations</h3>
 							</div>
 						)}
 						{activeTab === "settings" && (
-							<div style={{ background: "#204835", borderRadius: 16, padding: "32px 40px", color: "#fff", maxWidth: 900, minWidth: 600, marginLeft: 0 }}>
+							<div style={{ width: "100%", background: "#204835", borderRadius: 16, padding: "32px 40px", color: "#fff", minWidth: 0, marginLeft: 0, boxSizing: "border-box" }}>
 								<h3 style={{ marginBottom: 24 }}>Account Settings</h3>
 								{message && <div className="profile-message">{message}</div>}
-								<div className="profile-controls-container" style={{ maxWidth: 420, marginBottom: 16 }}>
-									<form className="profile-form" onSubmit={handleUsernameUpdate} style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 24 }}>
-										<div style={{ display: "flex", alignItems: "center", flex: 1 }}>
-											<label style={{ marginRight: 8, minWidth: 120 }}>Change Username:</label>
-											<input
-												type="text"
-												name="username"
-												value={form.username}
-												onChange={handleChange}
-												className=""
-												style={{ width: 220, minWidth: 180, marginRight: 0, marginTop: 6, padding: 8, border: '1px solid #30A46C', borderRadius: 16, fontSize: '1rem', background: '#204835', color: '#fff' }}
-											/> 
-										</div>
-										<button className="btn" type="submit" style={{ width: 180, minWidth: 160, marginLeft: 24, marginRight: 24 }}>Update Username</button>
+								<div className="profile-controls-container" style={{ width: "100%", maxWidth: 760, marginBottom: 16 }}>
+									<form className="profile-form" onSubmit={handleUsernameUpdate} style={{ marginBottom: 12, display: "grid", gridTemplateColumns: "220px minmax(0, 1fr) minmax(220px, 1fr)", columnGap: 24, alignItems: "center", width: "100%", background: "var(--primary-green)", borderRadius: 16, padding: "14px 16px", boxSizing: "border-box" }}>
+										<label htmlFor="profile-username" style={{ whiteSpace: "nowrap" }}>Change Username:</label>
+										<input
+											id="profile-username"
+											type="text"
+											name="username"
+											value={form.username}
+											onChange={handleChange}
+											className=""
+											style={{ width: "100%", marginTop: 0, padding: "12px 14px", border: '1px solid #30A46C', borderRadius: 16, fontSize: '1rem', background: '#204835', color: '#fff', boxSizing: "border-box" }}
+										/>
+										<button className="btn" type="submit" style={{ width: "100%", minWidth: 0, marginLeft: 0, marginRight: 0, padding: "12px 24px" }}>Update Username</button>
 									</form>
-									<form className="profile-form" onSubmit={handleEmailRequest} style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 24 }}>
-										<div style={{ display: "flex", alignItems: "center", flex: 1 }}>
-											<label style={{ marginRight: 8, minWidth: 120 }}>Change Email:</label>
-											<input
-												type="email"
-												name="email"
-												value={form.email}
-												onChange={handleChange}
-												className=""
-												style={{ width: 220, minWidth: 180, marginRight: 0, marginTop: 6, padding: 8, border: '1px solid #30A46C', borderRadius: 16, fontSize: '1rem', background: '#204835', color: '#fff' }}
-											/> 
-										</div>
-										<button className="btn" type="submit" style={{ width: 180, minWidth: 160, marginLeft: 24, marginRight: 24 }}>Request Email Change</button>
+									<form className="profile-form" onSubmit={handleEmailRequest} style={{ marginBottom: 12, display: "grid", gridTemplateColumns: "220px minmax(0, 1fr) minmax(220px, 1fr)", columnGap: 24, alignItems: "center", width: "100%", background: "var(--primary-green)", borderRadius: 16, padding: "14px 16px", boxSizing: "border-box" }}>
+										<label htmlFor="profile-email" style={{ whiteSpace: "nowrap" }}>Change Email:</label>
+										<input
+											id="profile-email"
+											type="email"
+											name="email"
+											value={form.email}
+											onChange={handleChange}
+											className=""
+											style={{ width: "100%", marginTop: 0, padding: "12px 14px", border: '1px solid #30A46C', borderRadius: 16, fontSize: '1rem', background: '#204835', color: '#fff', boxSizing: "border-box" }}
+										/>
+										<button className="btn" type="submit" style={{ width: "100%", minWidth: 0, marginLeft: 0, marginRight: 0, padding: "12px 24px" }}>Request Email Change</button>
 									</form>
-									{emailChangeRequested && (
-										<form className="profile-form" onSubmit={handleEmailVerify} style={{ marginBottom: 8 }}>
-											<label>Verification Code:
-												<input
-													type="text"
-													name="verificationCode"
-													value={form.verificationCode}
-													onChange={handleChange}
-													className=""
-													style={{ marginTop: 6, padding: 8, border: '1px solid #30A46C', borderRadius: 16, fontSize: '1rem', background: '#204835', color: '#fff' }}
-												/> 
-											</label>
-											<button className="btn" type="submit">Verify & Update Email</button>
-										</form>
-									)}
-									<form className="profile-form" onSubmit={handlePhoneUpdate} style={{ marginBottom: 8, display: "flex", alignItems: "center", gap: 24 }}>
-										<div style={{ display: "flex", alignItems: "center", flex: 1 }}>
-											<label style={{ marginRight: 8, minWidth: 120 }}>Change Phone Number:</label>
-											<input
+									<form className="profile-form" onSubmit={handlePhoneUpdate} style={{ marginBottom: 12, display: "grid", gridTemplateColumns: "220px minmax(0, 1fr) minmax(220px, 1fr)", columnGap: 24, alignItems: "center", width: "100%", background: "var(--primary-green)", borderRadius: 16, padding: "14px 16px", boxSizing: "border-box" }}>
+										<label htmlFor="profile-phone" style={{ whiteSpace: "nowrap" }}>Change Phone Number:</label>
+										<input
+											id="profile-phone"
 												type="text"
 												name="phone_number"
 												value={phoneEditMode ? form.phone_number : (() => {
@@ -789,45 +829,17 @@ const Profile: React.FC = () => {
 												onFocus={handlePhoneFocus}
 												disabled={!phoneEditMode ? false : undefined}
 												className=""
-												style={{ width: 220, minWidth: 180, marginRight: 0, marginTop: 6, padding: 8, border: '1px solid #30A46C', borderRadius: 16, fontSize: '1rem', background: '#204835', color: '#fff' }}
+												style={{ width: "100%", marginRight: 0, marginTop: 0, padding: "12px 14px", border: '1px solid #30A46C', borderRadius: 16, fontSize: '1rem', background: '#204835', color: '#fff', boxSizing: "border-box" }}
 											/> 
-										</div>
-										<button className="btn" type="submit" style={{ width: 180, minWidth: 160, marginLeft: 24, marginRight: 24 }}>Update Phone Number</button>
+										<button className="btn" type="submit" style={{ width: "100%", minWidth: 0, marginLeft: 0, marginRight: 0, padding: "12px 24px" }}>Update Phone Number</button>
 									</form>
 								</div>
 
 								{/* Change Password Container */}
-								<div className="profile-controls-container" style={{ maxWidth: 420, marginBottom: 16 }}>
-									<button className="btn" type="button" style={{ marginBottom: 8 }} onClick={handlePasswordResetRequest} disabled={passwordRequestInFlight || passwordUpdateInFlight}>
+								<div className="profile-controls-container" style={{ width: "100%", maxWidth: 760, marginBottom: 16 }}>
+									<button className="btn" type="button" style={{ marginBottom: 12, width: 280, minWidth: 240, padding: "12px 24px" }} onClick={handlePasswordResetRequest} disabled={passwordRequestInFlight || passwordUpdateInFlight}>
 										{passwordRequestInFlight ? "Sending Code..." : "Change Password"}
 									</button>
-									{showPasswordCodeForm && (
-										<form className="profile-form" onSubmit={handlePasswordCodeSubmit} style={{ marginBottom: 8 }}>
-											<p>A 6-digit password reset code was sent to {user?.email}.</p>
-											<label>Enter 6-digit code sent to your email:
-												<input
-													type="text"
-													name="passwordCode"
-													value={passwordCode}
-													onChange={handlePasswordCodeChange}
-													maxLength={6}
-													pattern="\d{6}"
-													autoFocus
-													className=""
-													style={{ marginTop: 6, padding: 8, border: '1px solid #30A46C', borderRadius: 16, fontSize: '1rem', background: '#204835', color: '#fff' }}
-												/> 
-											</label>
-											<div style={{ display: "flex", gap: 12, marginTop: 12 }}>
-												<button className="btn" type="submit">Continue</button>
-												<button className="btn" type="button" onClick={handlePasswordResetRequest} disabled={passwordRequestInFlight || passwordUpdateInFlight}>
-													{passwordRequestInFlight ? "Sending Code..." : "Resend Code"}
-												</button>
-												<button className="btn" type="button" onClick={resetPasswordFlow} disabled={passwordRequestInFlight || passwordUpdateInFlight}>
-													Cancel
-												</button>
-											</div>
-										</form>
-									)}
 									{showPasswordForm && (
 										<form className="profile-form" onSubmit={handlePasswordSubmit} style={{ marginBottom: 8 }}>
 											<p>Enter your new password to complete the reset.</p>
@@ -853,17 +865,14 @@ const Profile: React.FC = () => {
 												/> 
 											</label>
 											<p style={{ color: "#ccc", fontSize: "0.95rem", marginTop: 4 }}>{PASSWORD_REQUIREMENTS_MESSAGE}</p>
-											<div style={{ display: "flex", gap: 12, marginTop: 12 }}>
-												<button className="btn" type="submit" disabled={passwordUpdateInFlight || passwordRequestInFlight}>
+											<div style={{ display: "flex", gap: 20, marginTop: 16 }}>
+												<button className="btn" type="submit" style={{ minWidth: 200, padding: "12px 24px" }} disabled={passwordUpdateInFlight || passwordRequestInFlight}>
 													{passwordUpdateInFlight ? "Updating Password..." : "Update Password"}
 												</button>
-												<button className="btn" type="button" onClick={() => {
-													setShowPasswordForm(false);
-													setShowPasswordCodeForm(true);
-												}} disabled={passwordUpdateInFlight || passwordRequestInFlight}>
-													Back
+												<button className="btn" type="button" style={{ minWidth: 160, padding: "12px 24px" }} onClick={handlePasswordResetRequest} disabled={passwordUpdateInFlight || passwordRequestInFlight}>
+													{passwordRequestInFlight ? "Sending Code..." : "Use New Code"}
 												</button>
-												<button className="btn" type="button" onClick={resetPasswordFlow} disabled={passwordUpdateInFlight || passwordRequestInFlight}>
+												<button className="btn" type="button" style={{ minWidth: 160, padding: "12px 24px" }} onClick={resetPasswordFlow} disabled={passwordUpdateInFlight || passwordRequestInFlight}>
 													Cancel
 												</button>
 											</div>
@@ -872,11 +881,48 @@ const Profile: React.FC = () => {
 								</div>
 							</div>
 						)}
+						{verificationModal && (
+							<div className="modal">
+								<form className="pod-form profile-verification-modal" onSubmit={handleVerificationModalSubmit}>
+									<h3>{verificationModal.mode === "email" ? "Verify Email Change" : "Verify Password Reset"}</h3>
+									<p className="profile-verification-copy">
+										Enter the 6-digit code sent to
+										<span className="profile-verification-address"> {verificationModal.targetEmail}</span>.
+									</p>
+									<label htmlFor="profile-verification-code">
+										Verification Code
+										<input
+											id="profile-verification-code"
+											type="text"
+											name="verificationCode"
+											value={verificationCodeInput}
+											onChange={handleVerificationCodeInputChange}
+											maxLength={6}
+											pattern="\d{6}"
+											autoFocus
+											inputMode="numeric"
+										/>
+									</label>
+									{verificationModalError && <div className="error profile-verification-error">{verificationModalError}</div>}
+									<div className="form-actions profile-verification-actions">
+										<button type="submit" className="primary-btn" disabled={verificationSubmitInFlight || passwordRequestInFlight}>
+											{verificationSubmitInFlight ? "Verifying..." : "Verify Code"}
+										</button>
+										<button type="button" onClick={handleVerificationModalResend} disabled={passwordRequestInFlight || verificationSubmitInFlight}>
+											{passwordRequestInFlight ? "Sending Code..." : "Send New Code"}
+										</button>
+										<button type="button" onClick={closeVerificationModal} disabled={verificationSubmitInFlight}>
+											Cancel
+										</button>
+									</div>
+								</form>
+							</div>
+						)}
 					</div>
 				</div>
 
 				{/* New Right Container */}
-				<div style={{ minWidth: 260, maxWidth: 320, marginLeft: 32, marginRight: 32,  background: "#204835", borderRadius: 16, padding: "32px 24px", color: "#fff", display: "flex", flexDirection: "column", alignItems: "flex-start", height: "100vh" }}>
+				<div style={{ width: 280, background: "#204835", borderRadius: 16, padding: "32px 24px", color: "#fff", display: "flex", flexDirection: "column", alignItems: "flex-start", flexShrink: 0, boxSizing: "border-box" }}>
 					<h3 style={{ marginBottom: 16 }}>Possible room for Organizations/collaborators</h3>
 					<p style={{ color: "#ccc", fontSize: "1rem" }}>Space that could be used for organizations, friends, or other additonal features in the future.</p>
 				</div>

@@ -186,3 +186,28 @@
   background: #30A46C;
   color: #fff;
 }
+
+.profile-verification-modal {
+  min-width: 360px;
+  max-width: 460px;
+}
+
+.profile-verification-copy {
+  margin: 0;
+  color: #d7ece1;
+  line-height: 1.5;
+}
+
+.profile-verification-address {
+  color: #fff;
+  font-weight: 700;
+  word-break: break-word;
+}
+
+.profile-verification-error {
+  margin-bottom: 0;
+}
+
+.profile-verification-actions {
+  margin-top: 4px;
+}
