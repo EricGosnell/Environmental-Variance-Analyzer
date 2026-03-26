@@ -205,13 +205,14 @@ const Profile: React.FC = () => {
 					traceId,
 					targetEmail: maskEmailForLog(form.email),
 				});
-				await requestEmailChange({ newEmail: form.email, traceId });
+				const response = await requestEmailChange({ newEmail: form.email, traceId });
 				console.log("[Profile][EmailChange] Step 3: Verification code request succeeded", {
 					traceId,
 					targetEmail: maskEmailForLog(form.email),
+					responseMessage: response?.message,
 				});
 				setEmailChangeRequested(true);
-				setMessage("Verification code sent to new email.");
+				setMessage(response?.message || "Verification code sent to new email.");
 			} catch (err: any) {
 				console.error("[Profile][EmailChange] Verification code request failed", {
 					traceId,

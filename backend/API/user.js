@@ -248,7 +248,20 @@ module.exports = (db) => {
     ], async (req, res) => {
         try {
             const errors = validationResult(req);
+            const traceId = req.body?.traceId || `email-change-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+
+            console.log("[user.js][/me/email/request-change] Request received", {
+                traceId,
+                userId: req.user?.id,
+                hasNewEmail: Boolean(req.body?.newEmail),
+            });
+
             if (!errors.isEmpty()) {
+                console.warn("[user.js][/me/email/request-change] Validation failed", {
+                    traceId,
+                    userId: req.user?.id,
+                    errors: errors.array(),
+                });
                 return res.status(400).json({ error: "Invalid email format" });
             }
 
@@ -262,6 +275,10 @@ module.exports = (db) => {
             );
 
             if (existingEmail) {
+                console.warn("[user.js][/me/email/request-change] Email already in use", {
+                    traceId,
+                    userId,
+                });
                 return res.status(409).json({ error: "Email already in use" });
             }
 
@@ -272,6 +289,11 @@ module.exports = (db) => {
             // Store pending email change with verification code for 15 minutes
             const expiresAt = Math.floor(Date.now() / 1000) + (15 * 60);
 
+            console.log("[user.js][/me/email/request-change] Persisting pending email change", {
+                traceId,
+                userId,
+            });
+
             await db.run(
                 `
                 INSERT INTO pending_email_changes (user_id, new_email, code_hash, expires_at)
@@ -281,7 +303,7 @@ module.exports = (db) => {
                 [userId, newEmail, verificationCodeHash, expiresAt, newEmail, verificationCodeHash, expiresAt]
             );
 
-            await sendEmail({
+            const emailResult = await sendEmail({
                 to: newEmail,
                 subject: "Verify your new email",
                 html: `
@@ -291,8 +313,26 @@ module.exports = (db) => {
                 `
             });
 
+            console.log("[user.js][/me/email/request-change] Verification code sent", {
+                traceId,
+                userId,
+                delivery: emailResult,
+            });
+
+            if (emailResult?.skipped) {
+                return res.status(200).json({
+                    message: "Verification code generated, but email delivery is disabled on this server.",
+                    emailDelivery: emailResult,
+                });
+            }
+
             return res.status(200).json({ message: "Verification code sent to new email" });
         } catch (error) {
+            console.error("[user.js][/me/email/request-change] Request failed", {
+                traceId: req.body?.traceId,
+                userId: req.user?.id,
+                error,
+            });
             return res.status(500).json({
                 error: "Internal server error",
                 message: error?.message,
