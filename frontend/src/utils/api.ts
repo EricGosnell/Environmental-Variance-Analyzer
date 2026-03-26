@@ -444,13 +444,40 @@ export async function requestEmailChange(
   payload: RequestEmailChangeRequest,
   signal?: AbortSignal,
 ): Promise<MessageResponse> {
-  return await request<MessageResponse>({
-    method: "POST",
+  const maskedEmail =
+    typeof payload.newEmail === "string"
+      ? payload.newEmail.replace(/(^.).*(@.*$)/, "$1***$2")
+      : "***";
+
+  console.log("[api.ts][requestEmailChange] Outgoing request", {
+    traceId: payload.traceId,
     path: "/users/me/email/request-change",
-    body: payload,
-    auth: true,
-    signal,
+    targetEmail: maskedEmail,
   });
+
+  try {
+    const response = await request<MessageResponse>({
+      method: "POST",
+      path: "/users/me/email/request-change",
+      body: payload,
+      auth: true,
+      signal,
+    });
+
+    console.log("[api.ts][requestEmailChange] Request succeeded", {
+      traceId: payload.traceId,
+      path: "/users/me/email/request-change",
+    });
+
+    return response;
+  } catch (error) {
+    console.error("[api.ts][requestEmailChange] Request failed", {
+      traceId: payload.traceId,
+      path: "/users/me/email/request-change",
+      error,
+    });
+    throw error;
+  }
 }
 export async function verifyAndUpdateEmail(
   payload: VerifyAndUpdateEmailRequest,

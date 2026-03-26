@@ -96,7 +96,7 @@ export type AuthResetPasswordRequest = { email: string; newPassword: string; tok
 
 export type UpdateUsernameRequest = { username: string };
 
-export type RequestEmailChangeRequest = { newEmail: string };
+export type RequestEmailChangeRequest = { newEmail: string; traceId?: string };
 
 export type VerifyAndUpdateEmailRequest = { newEmail: string; verificationCode: string };
 export type VerifyAndUpdateEmailResponse = { message: string; user: Pick<User, "email"> };
