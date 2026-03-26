@@ -1,0 +1,188 @@
+/* Profile.css - Styling for Profile page, matching ManagePods and other pages */
+
+.profile-header {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-bottom: 16px;
+  background: var(--secondary-green, #204835);
+  border-radius: 16px;
+  padding: 16px 20px;
+  width: 100%;
+  max-width: 600px;
+  color: #fff;
+}
+
+.profile-header h2 {
+  font-size: 2rem;
+  margin-bottom: 4px;
+  text-align: left;
+  color: #fff;
+}
+
+.profile-header .org {
+  font-size: 1.1rem;
+  color: #fff;
+  margin-bottom: 2px;
+  text-align: left;
+}
+
+/* Sidebar Tabs */
+.profile-sidebar {
+  min-width: 220px;
+  background: #204835;
+  padding: 32px 0;
+  border-radius: 16px;
+  margin: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-sidebar .btn {
+  background: #204835;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 12px 0;
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin: 4px 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.profile-sidebar .btn.active,
+.profile-sidebar .btn:focus {
+  background: #30A46C;
+  color: #fff;
+}
+
+.profile-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  min-width: 900px;
+  max-width: 1100px;
+}
+
+/* Main tab content container */
+.profile-content {
+  width: 100%;
+  max-width: 600px;
+}
+
+/* Error/message styling */
+.profile-message {
+  background: #e74c3c;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 6px;
+  margin-bottom: 18px;
+  font-size: 1rem;
+}
+
+/* Settings form */
+.profile-settings-form {
+  background: #204835;
+  border-radius: 16px;
+  padding: 32px 40px;
+  color: #fff;
+  max-width: 900px;
+  min-width: 600px;
+  margin-left: 0;
+}
+
+.profile-settings-form label {
+  display: flex;
+  flex-direction: column;
+  font-size: 1rem;
+  color: #fff;
+  margin-bottom: 12px;
+}
+
+.profile-settings-form input,
+.profile-settings-form select {
+  margin-top: 6px;
+  padding: 8px;
+  border: 1px solid #30A46C;
+  border-radius: 16px;
+  font-size: 1rem;
+  background: #204835;
+  color: #fff;
+}
+
+.profile-settings-form .form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+  margin-top: 18px;
+}
+
+.profile-settings-form button {
+  padding: 8px 18px;
+  border-radius: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  border: 2px solid #30A46C;
+  background: #204835;
+  color: #fff;
+}
+
+.profile-settings-form .primary-btn {
+  background: #30A46C;
+  color: #fff;
+  border: 2px solid #30A46C;
+}
+
+.profile-settings-form .primary-btn:hover {
+  background: #238a57;
+  color: #fff;
+}
+
+.profile-settings-form button[type="button"]:not(.primary-btn) {
+  background: #204835;
+  color: #fff;
+  border: 2px solid #30A46C;
+}
+
+.profile-settings-form button:hover:not(.primary-btn) {
+  background: #30A46C;
+  color: #fff;
+}
+
+/* Right container (future orgs/collaborators) */
+.profile-right-container {
+  min-width: 260px;
+  max-width: 320px;
+  margin-left: 32px;
+  margin-right: 32px;
+  background: #204835;
+  border-radius: 16px;
+  padding: 32px 24px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  height: 100vh;
+}
+
+/* General utility */
+.btn {
+  background: #204835;
+  color: #fff;
+  border: 2px solid #30A46C;
+  border-radius: 16px;
+  padding: 10px 22px;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn:hover {
+  background: #30A46C;
+  color: #fff;
+}
