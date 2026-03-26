@@ -41,6 +41,7 @@ const Profile: React.FC = () => {
 	const [passwordCode, setPasswordCode] = useState("");
 	const [newPassword, setNewPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
+	const [passwordResetTraceId, setPasswordResetTraceId] = useState("");
 	const [passwordRequestInFlight, setPasswordRequestInFlight] = useState(false);
 	const [passwordUpdateInFlight, setPasswordUpdateInFlight] = useState(false);
 
@@ -99,6 +100,7 @@ const Profile: React.FC = () => {
 			setPasswordCode("");
 			setNewPassword("");
 			setConfirmPassword("");
+			setPasswordResetTraceId("");
 		};
 
 		const handlePasswordResetRequest = async () => {
@@ -106,6 +108,13 @@ const Profile: React.FC = () => {
 				setMessage("No email is available for this account.");
 				return;
 			}
+
+			const traceId = passwordResetTraceId || generateTraceId("password-reset");
+			setPasswordResetTraceId(traceId);
+			console.log("[Profile][PasswordReset] Step 1: Request reset submit", {
+				traceId,
+				targetEmail: maskEmailForLog(user.email),
+			});
 
 			setMessage("");
 			setPasswordRequestInFlight(true);
@@ -115,10 +124,24 @@ const Profile: React.FC = () => {
 			setConfirmPassword("");
 
 			try {
-				const response = await authForgotPassword({ email: user.email });
+				console.log("[Profile][PasswordReset] Step 2: Sending reset code", {
+					traceId,
+					targetEmail: maskEmailForLog(user.email),
+				});
+				const response = await authForgotPassword({ email: user.email, traceId });
+				console.log("[Profile][PasswordReset] Step 3: Reset code request succeeded", {
+					traceId,
+					targetEmail: maskEmailForLog(user.email),
+					responseMessage: response?.message,
+				});
 				setShowPasswordCodeForm(true);
 				setMessage(response.message || "If the email exists, a password reset code was sent.");
 			} catch (err: any) {
+				console.error("[Profile][PasswordReset] Reset code request failed", {
+					traceId,
+					targetEmail: maskEmailForLog(user.email),
+					error: err,
+				});
 				setMessage(err?.message || "Failed to send password reset code.");
 			} finally {
 				setPasswordRequestInFlight(false);
@@ -127,6 +150,10 @@ const Profile: React.FC = () => {
 
 		const handlePasswordCodeSubmit = (e: React.FormEvent) => {
 			e.preventDefault();
+			console.log("[Profile][PasswordReset] Step 4: Code submit", {
+				traceId: passwordResetTraceId,
+				hasCode: Boolean(passwordCode.trim()),
+			});
 			if (!/^\d{6}$/.test(passwordCode.trim())) {
 				setMessage("Enter the 6-digit code sent to your email.");
 				return;
@@ -164,16 +191,32 @@ const Profile: React.FC = () => {
 
 			setMessage("");
 			setPasswordUpdateInFlight(true);
+			console.log("[Profile][PasswordReset] Step 5: Submit new password", {
+				traceId: passwordResetTraceId,
+				targetEmail: maskEmailForLog(user.email),
+				hasCode: Boolean(passwordCode.trim()),
+			});
 
 			try {
 				const response = await authResetPassword({
 					email: user.email,
 					newPassword,
 					token: passwordCode.trim(),
+					traceId: passwordResetTraceId,
+				});
+				console.log("[Profile][PasswordReset] Step 6: Password reset succeeded", {
+					traceId: passwordResetTraceId,
+					targetEmail: maskEmailForLog(user.email),
+					responseMessage: response?.message,
 				});
 				resetPasswordFlow();
 				setMessage(response.message || "Password updated successfully.");
 			} catch (err: any) {
+				console.error("[Profile][PasswordReset] Password reset failed", {
+					traceId: passwordResetTraceId,
+					targetEmail: maskEmailForLog(user.email),
+					error: err,
+				});
 				setMessage(err?.message || "Failed to update password.");
 			} finally {
 				setPasswordUpdateInFlight(false);
