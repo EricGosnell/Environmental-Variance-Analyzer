@@ -2,7 +2,7 @@
 
 This document outlines the API routes for the project.
 
- # Table of Contents
+# Table of Contents
 
 - [Authentication](#authentication)
   - [Login: `/auth/login`](#login-authlogin)
@@ -38,6 +38,7 @@ This document outlines the API routes for the project.
   - [Add Pod Owner: `/pods/{id}/owners`](#add-pod-owner)
   - [Get Pod Owners: `/pods/{id}/owners`](#get-pod-owners)
   - [Delete Pod Data: `/pods/delete-pod-data`](#delete-pod-data)
+
 ## Authentication
 
 All API routes should require authentication. Routes that do not require authentication are marked with `[public]`.
@@ -50,26 +51,29 @@ POST /auth/login
 
 Request Parameters:
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| email | string | Yes | User email address |
-| password | string | Yes | User password |
+| Parameter | Type   | Required | Description        |
+| --------- | ------ | -------- | ------------------ |
+| email     | string | Yes      | User email address |
+| password  | string | Yes      | User password      |
 
 Request Body:
+
 ```json
 {
-    "email": "user@example.com", // Required
-    "password": "password" // Required
+  "email": "user@example.com", // Required
+  "password": "password" // Required
 }
 ```
 
 Response (200 OK):
+
 ```json
 {
   "user": {
     "id": "123",
     "email": "user@example.com",
-    "username": "user"
+    "username": "user",
+    "phone_number": "123456789"
   },
   "accessToken": "access_token",
   "refreshToken": "refresh_token"
@@ -77,6 +81,7 @@ Response (200 OK):
 ```
 
 Response (400 Bad Request):
+
 ```json
 {
   "error": "Invalid email or password format"
@@ -84,9 +89,26 @@ Response (400 Bad Request):
 ```
 
 Response (401 Unauthorized):
+
 ```json
 {
   "error": "Invalid credentials"
+}
+```
+
+Response (403 Forbidden):
+
+```json
+{
+  "error": "Email not verified"
+}
+```
+
+Response (423 Locked):
+
+```json
+{
+  "error": "Account locked by admin"
 }
 ```
 
@@ -100,11 +122,12 @@ POST /auth/refresh
 
 Request Parameters:
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| refreshToken | string | Yes | Refresh token |
+| Parameter    | Type   | Required | Description   |
+| ------------ | ------ | -------- | ------------- |
+| refreshToken | string | Yes      | Refresh token |
 
 Request Body:
+
 ```json
 {
   "refreshToken": "refresh_token" // Required
@@ -112,6 +135,7 @@ Request Body:
 ```
 
 Response (200 OK):
+
 ```json
 {
   "accessToken": "access_token",
@@ -120,6 +144,7 @@ Response (200 OK):
 ```
 
 Response (400 Bad Request):
+
 ```json
 {
   "error": "Refresh token is required"
@@ -127,13 +152,14 @@ Response (400 Bad Request):
 ```
 
 Response (401 Unauthorized):
+
 ```json
 {
   "error": "Invalid or expired refresh token"
 }
 ```
 
-This endpoint issues a new access token using the refresh token. 
+This endpoint issues a new access token using the refresh token.
 
 ### Register
 
@@ -143,14 +169,15 @@ POST /auth/register
 
 Request Parameters:
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| email | string | Yes | User email address |
-| password | string | Yes | User password |
-| username | string | Yes | Username |
-| phone_number | string | No | User phone number |
+| Parameter    | Type   | Required | Description        |
+| ------------ | ------ | -------- | ------------------ |
+| email        | string | Yes      | User email address |
+| password     | string | Yes      | User password      |
+| username     | string | Yes      | Username           |
+| phone_number | string | No       | User phone number  |
 
 Request Body:
+
 ```json
 {
   "email": "user@example.com", // Required
@@ -161,6 +188,7 @@ Request Body:
 ```
 
 Response (201 Created):
+
 ```json
 {
   "user": {
@@ -173,6 +201,7 @@ Response (201 Created):
 ```
 
 Response (400 Bad Request):
+
 ```json
 {
   "error": "Validation failed"
@@ -180,6 +209,7 @@ Response (400 Bad Request):
 ```
 
 Response (409 Conflict):
+
 ```json
 {
   "error": "Email or username already exists"
@@ -196,6 +226,7 @@ POST /auth/send-verification
 ```
 
 Request Body:
+
 ```json
 {
   "email": "user@example.com" // Required
@@ -203,6 +234,7 @@ Request Body:
 ```
 
 Response (200 OK):
+
 ```json
 {
   "message": "If the email exists, a verification code was sent."
@@ -210,17 +242,19 @@ Response (200 OK):
 ```
 
 Response (400 Bad Request):
+
 ```json
 {
   "errors": [
     {
-      "msg": "Valid email required"
+      "msg": "Validation failed"
     }
   ]
 }
 ```
 
 Notes:
+
 - This endpoint always returns a generic success message to avoid account enumeration.
 - Resend throttling is enforced internally.
 - Verification state is persisted only after the email provider accepts the send request.
@@ -232,6 +266,7 @@ POST /auth/verify-email
 ```
 
 Request Body:
+
 ```json
 {
   "email": "user@example.com", // Required
@@ -240,6 +275,7 @@ Request Body:
 ```
 
 Response (200 OK):
+
 ```json
 {
   "message": "Email verified"
@@ -247,6 +283,7 @@ Response (200 OK):
 ```
 
 Response (400 Bad Request):
+
 ```json
 {
   "error": "No verification code found"
@@ -254,6 +291,7 @@ Response (400 Bad Request):
 ```
 
 Response (400 Bad Request):
+
 ```json
 {
   "error": "Invalid code"
@@ -261,6 +299,7 @@ Response (400 Bad Request):
 ```
 
 Response (400 Bad Request):
+
 ```json
 {
   "error": "Code expired"
@@ -268,6 +307,7 @@ Response (400 Bad Request):
 ```
 
 Response (429 Too Many Requests):
+
 ```json
 {
   "error": "Too many attempts"
@@ -282,11 +322,12 @@ POST /auth/logout
 
 Request Parameters:
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| refreshToken | string | Yes | Refresh token to invalidate |
+| Parameter    | Type   | Required | Description                 |
+| ------------ | ------ | -------- | --------------------------- |
+| refreshToken | string | Yes      | Refresh token to invalidate |
 
 Request Body:
+
 ```json
 {
   "refreshToken": "refresh_token" // Required
@@ -294,6 +335,7 @@ Request Body:
 ```
 
 Response (200 OK):
+
 ```json
 {
   "message": "Logged out successfully"
@@ -301,6 +343,7 @@ Response (200 OK):
 ```
 
 Response (400 Bad Request):
+
 ```json
 {
   "error": "Refresh token is required"
@@ -308,6 +351,7 @@ Response (400 Bad Request):
 ```
 
 Response (401 Unauthorized):
+
 ```json
 {
   "error": "Invalid refresh token"
@@ -324,11 +368,12 @@ POST /auth/forgot-password
 
 Request Parameters:
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| email | string | Yes | User email address |
+| Parameter | Type   | Required | Description        |
+| --------- | ------ | -------- | ------------------ |
+| email     | string | Yes      | User email address |
 
 Request Body:
+
 ```json
 {
   "email": "user@example.com" // Required
@@ -336,6 +381,7 @@ Request Body:
 ```
 
 Response (200 OK):
+
 ```json
 {
   "message": "Password reset email sent"
@@ -343,6 +389,7 @@ Response (200 OK):
 ```
 
 Response (400 Bad Request):
+
 ```json
 {
   "error": "Invalid email format"
@@ -350,6 +397,7 @@ Response (400 Bad Request):
 ```
 
 Response (404 Not Found):
+
 ```json
 {
   "error": "Email not found"
@@ -366,13 +414,14 @@ POST /auth/reset-password
 
 Request Parameters:
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| email | string | Yes | User email address |
-| newPassword | string | Yes | New password |
-| token | string | Yes | Password reset token |
+| Parameter   | Type   | Required | Description          |
+| ----------- | ------ | -------- | -------------------- |
+| email       | string | Yes      | User email address   |
+| newPassword | string | Yes      | New password         |
+| token       | string | Yes      | Password reset token |
 
 Request Body:
+
 ```json
 {
   "email": "user@example.com", // Required
@@ -382,6 +431,7 @@ Request Body:
 ```
 
 Response (200 OK):
+
 ```json
 {
   "message": "Password reset successfully"
@@ -389,6 +439,7 @@ Response (200 OK):
 ```
 
 Response (400 Bad Request):
+
 ```json
 {
   "error": "Invalid or expired reset token"
@@ -396,6 +447,7 @@ Response (400 Bad Request):
 ```
 
 Response (404 Not Found):
+
 ```json
 {
   "error": "Email not found"
@@ -411,6 +463,7 @@ GET /users/me
 ```
 
 Response (200 OK):
+
 ```json
 {
   "user": {
@@ -431,6 +484,14 @@ Response (200 OK):
 }
 ```
 
+Response (404 Not Found):
+
+```json
+{
+  "error": "User Not Found"
+}
+```
+
 This endpoint returns the current user's information including their registered pods.
 
 ### Search Users by Username
@@ -440,21 +501,24 @@ GET /users/search
 ```
 
 Authentication:
+
 - Bearer token required.
 
 Request Query Parameters:
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| username | string | Yes | Username search term (2-16 chars, letters/numbers/underscore/hyphen) |
-| limit | integer | No | Max number of results to return (1-50, default 20) |
+| Parameter | Type    | Required | Description                                                          |
+| --------- | ------- | -------- | -------------------------------------------------------------------- |
+| username  | string  | Yes      | Username search term (2-16 chars, letters/numbers/underscore/hyphen) |
+| limit     | integer | No       | Max number of results to return (1-50, default 20)                   |
 
 Example Request:
+
 ```
 GET /users/search?username=ann&limit=10
 ```
 
 Response (200 OK):
+
 ```json
 {
   "users": [
@@ -465,6 +529,7 @@ Response (200 OK):
 ```
 
 Response (400 Bad Request):
+
 ```json
 {
   "error": "Invalid search parameters"
@@ -472,6 +537,7 @@ Response (400 Bad Request):
 ```
 
 Response (401 Unauthorized):
+
 ```json
 {
   "error": "No token provided"
@@ -487,6 +553,7 @@ GET /users/{id}
 ```
 
 Response (200 OK):
+
 ```json
 {
   "user": {
@@ -496,12 +563,21 @@ Response (200 OK):
     "devices": ["device_id_1", "device_id_2"], // Optional: Array of device IDs (only if user is the owner or admin)
     "posts": ["post_id_1", "post_id_2"], // Optional: Array of post IDs (only public posts if user is not the owner or admin)
     "email": "user@example.com", // Optional: User email address (only if user is the owner or admin)
-    "phone_number": "1234567890", // Optional: User phone number (only if user is the owner or admin)
+    "phone_number": "1234567890" // Optional: User phone number (only if user is the owner or admin)
   }
 }
 ```
 
+Response (400 Bad Request):
+
+```json
+{
+  "error": "Invalid user ID"
+}
+```
+
 Response (404 Not Found):
+
 ```json
 {
   "error": "User not found"
@@ -518,18 +594,20 @@ PUT /users/me/username
 
 Request Parameters:
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| username | string | Yes | New username |
+| Parameter | Type   | Required | Description  |
+| --------- | ------ | -------- | ------------ |
+| username  | string | Yes      | New username |
 
 Request Body:
+
 ```json
 {
-  "username": "new_username" // Required
+  "username": "new_username" // Required, between 4 and 16 characters
 }
 ```
 
 Response (200 OK):
+
 ```json
 {
   "message": "Username updated successfully"
@@ -537,6 +615,7 @@ Response (200 OK):
 ```
 
 Response (400 Bad Request):
+
 ```json
 {
   "error": "Invalid username format"
@@ -544,6 +623,7 @@ Response (400 Bad Request):
 ```
 
 Response (409 Conflict):
+
 ```json
 {
   "error": "Username already taken"
@@ -564,18 +644,20 @@ POST /users/me/email/request-change
 
 Request Parameters:
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| newEmail | string | Yes | New email address |
+| Parameter | Type   | Required | Description       |
+| --------- | ------ | -------- | ----------------- |
+| newEmail  | string | Yes      | New email address |
 
 Request Body:
+
 ```json
 {
-  "newEmail": "newemail@example.com" // Required
+  "newEmail": "newemail@example.com" // Required, 255 max length
 }
 ```
 
 Response (200 OK):
+
 ```json
 {
   "message": "Verification code sent to new email"
@@ -583,6 +665,7 @@ Response (200 OK):
 ```
 
 Response (400 Bad Request):
+
 ```json
 {
   "error": "Invalid email format"
@@ -590,6 +673,7 @@ Response (400 Bad Request):
 ```
 
 Response (409 Conflict):
+
 ```json
 {
   "error": "Email already in use"
@@ -606,12 +690,13 @@ PUT /users/me/email
 
 Request Parameters:
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| newEmail | string | Yes | New email address |
-| verificationCode | string | Yes | Verification code sent to the new email |
+| Parameter        | Type   | Required | Description                             |
+| ---------------- | ------ | -------- | --------------------------------------- |
+| newEmail         | string | Yes      | New email address                       |
+| verificationCode | string | Yes      | Verification code sent to the new email |
 
 Request Body:
+
 ```json
 {
   "newEmail": "newemail@example.com", // Required
@@ -620,6 +705,7 @@ Request Body:
 ```
 
 Response (200 OK):
+
 ```json
 {
   "message": "Email updated successfully",
@@ -630,13 +716,23 @@ Response (200 OK):
 ```
 
 Response (400 Bad Request):
+
 ```json
 {
   "error": "Invalid or expired verification code"
 }
 ```
 
+Response (400 Bad Request):
+
+```json
+{
+  "error": "Email does not match pending change request"
+}
+```
+
 Response (404 Not Found):
+
 ```json
 {
   "error": "No pending email change request found"
@@ -653,11 +749,12 @@ PUT /users/me/phone-number
 
 Request Parameters:
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| phone_number | string | Yes | New phone number |
+| Parameter    | Type   | Required | Description      |
+| ------------ | ------ | -------- | ---------------- |
+| phone_number | string | Yes      | New phone number |
 
 Request Body:
+
 ```json
 {
   "phone_number": "1234567890" // Required
@@ -665,6 +762,7 @@ Request Body:
 ```
 
 Response (200 OK):
+
 ```json
 {
   "message": "Phone number updated successfully"
@@ -672,6 +770,7 @@ Response (200 OK):
 ```
 
 Response (400 Bad Request):
+
 ```json
 {
   "error": "Invalid phone number format"
@@ -688,12 +787,13 @@ PUT /users/me/password
 
 Request Parameters:
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| oldPassword | string | Yes | Current password |
-| newPassword | string | Yes | New password |
+| Parameter   | Type   | Required | Description      |
+| ----------- | ------ | -------- | ---------------- |
+| oldPassword | string | Yes      | Current password |
+| newPassword | string | Yes      | New password     |
 
 Request Body:
+
 ```json
 {
   "oldPassword": "old_password", // Required
@@ -702,6 +802,7 @@ Request Body:
 ```
 
 Response (200 OK):
+
 ```json
 {
   "message": "Password updated successfully"
@@ -709,9 +810,18 @@ Response (200 OK):
 ```
 
 Response (400 Bad Request):
+
 ```json
 {
   "error": "Invalid old password"
+}
+```
+
+Response (404 Not Found):
+
+```json
+{
+  "error": "User not found"
 }
 ```
 
@@ -725,15 +835,16 @@ POST /users/me/register-pod
 
 Request Parameters:
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| podId | string | Yes | The pod ID |
-| nickname | string | Yes | Nickname for the pod |
-| visibility | string | Yes | Pod visibility: "public" or "private" |
-| latitude | number | No | Optional latitude coordinate |
-| longitude | number | No | Optional longitude coordinate |
+| Parameter  | Type   | Required | Description                           |
+| ---------- | ------ | -------- | ------------------------------------- |
+| podId      | string | Yes      | The pod ID                            |
+| nickname   | string | Yes      | Nickname for the pod                  |
+| visibility | string | Yes      | Pod visibility: "public" or "private" |
+| latitude   | number | No       | Optional latitude coordinate          |
+| longitude  | number | No       | Optional longitude coordinate         |
 
 Request Body:
+
 ```json
 {
   "podId": "123", // Required
@@ -745,13 +856,39 @@ Request Body:
 ```
 
 Response (200 OK):
+
 ```json
 {
   "message": "Pod registered successfully"
 }
 ```
 
+Response (400 Bad Request):
+
+```json
+{
+  "error": "One or more required parameters are invalid or missing"
+}
+```
+
+Response (400 Bad Request):
+
+```json
+{
+  "error": "Latitude must have at least three decimal places"
+}
+```
+
+Response (400 Bad Request):
+
+```json
+{
+  "error": "Longitude must have at least three decimal places"
+}
+```
+
 Response (409 Conflict):
+
 ```json
 {
   "message": "Pod already registered"
@@ -770,15 +907,16 @@ PUT /users/me/update-pod
 
 Request Parameters:
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| podId | string | Yes | The pod ID |
-| nickname | string | No | Optional nickname for the pod |
-| visibility | string | No | Pod visibility: "public" or "private" |
-| latitude | number | No | Optional latitude coordinate |
-| longitude | number | No | Optional longitude coordinate |
+| Parameter  | Type   | Required | Description                           |
+| ---------- | ------ | -------- | ------------------------------------- |
+| podId      | string | Yes      | The pod ID                            |
+| nickname   | string | No       | Optional nickname for the pod         |
+| visibility | string | No       | Pod visibility: "public" or "private" |
+| latitude   | number | No       | Optional latitude coordinate          |
+| longitude  | number | No       | Optional longitude coordinate         |
 
 Request Body:
+
 ```json
 {
   "podId": "123", // Required
@@ -806,9 +944,26 @@ Response (404 Not Found):
 ```
 
 Response (400 Bad Request):
+
 ```json
 {
   "error": "One or more required parameters are invalid or missing"
+}
+```
+
+Response (400 Bad Request):
+
+```json
+{
+  "error": "Latitude must have at least three decimal places"
+}
+```
+
+Response (400 Bad Request):
+
+```json
+{
+  "error": "Longitude must have at least three decimal places"
 }
 ```
 
@@ -829,6 +984,7 @@ Response (200 OK):
 ```
 
 Response (404 Not Found):
+
 ```json
 {
   "error": "Pod not registered or found"
@@ -846,6 +1002,7 @@ GET /admin/users
 ```
 
 Response (200 OK):
+
 ```json
 {
   "users": [
@@ -869,11 +1026,12 @@ GET /admin/users/invitation-token
 ```
 
 Response (200 OK):
+
 ```json
 {
   "invitationToken": "ABCD-EFGH",
   "invitationURL": "https://example.com/register?token=ABCD-EFGH",
-  "expiresAt": "2021-01-01T00:00:00.000Z" 
+  "expiresAt": "2021-01-01T00:00:00.000Z"
 }
 ```
 
@@ -887,11 +1045,12 @@ DELETE /admin/users/invitation-token
 
 Request Parameters:
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| invitationToken | string | Yes | Invitation token to revoke |
+| Parameter       | Type   | Required | Description                |
+| --------------- | ------ | -------- | -------------------------- |
+| invitationToken | string | Yes      | Invitation token to revoke |
 
 Request Body:
+
 ```json
 {
   "invitationToken": "ABCD-EFGH" // Required
@@ -899,6 +1058,7 @@ Request Body:
 ```
 
 Response (200 OK):
+
 ```json
 {
   "message": "Invitation token revoked successfully"
@@ -906,6 +1066,7 @@ Response (200 OK):
 ```
 
 Response (404 Not Found):
+
 ```json
 {
   "error": "Invitation token not found"
@@ -922,12 +1083,13 @@ PUT /admin/users/{id}/deactivate
 
 Request Parameters:
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| deactivate | boolean | Yes | Whether to deactivate the user |
-| removeData | boolean | Yes | Whether to remove user data |
+| Parameter  | Type    | Required | Description                    |
+| ---------- | ------- | -------- | ------------------------------ |
+| deactivate | boolean | Yes      | Whether to deactivate the user |
+| removeData | boolean | Yes      | Whether to remove user data    |
 
 Request Body:
+
 ```json
 {
   "deactivate": true, // Required
@@ -936,6 +1098,7 @@ Request Body:
 ```
 
 Response (200 OK):
+
 ```json
 {
   "message": "User deactivated successfully"
@@ -943,6 +1106,7 @@ Response (200 OK):
 ```
 
 Response (404 Not Found):
+
 ```json
 {
   "error": "User not found"
@@ -961,26 +1125,28 @@ GET /pods/locations
 
 Request Parameters:
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| latitude | number | Yes | Latitude coordinate for search center |
-| longitude | number | Yes | Longitude coordinate for search center |
-| radius | number | Yes | Search radius in meters |
-| fromDate | string | No | Start date in ISO 8601 format |
-| toDate | string | No | End date in ISO 8601 format |
+| Parameter | Type   | Required | Description                            |
+| --------- | ------ | -------- | -------------------------------------- |
+| latitude  | number | Yes      | Latitude coordinate for search center  |
+| longitude | number | Yes      | Longitude coordinate for search center |
+| radius    | number | Yes      | Search radius in meters                |
+| fromDate  | string | No       | Start date in ISO 8601 format          |
+| toDate    | string | No       | End date in ISO 8601 format            |
 
 Request Body:
+
 ```json
 {
   "latitude": 123.456, // Required
   "longitude": 123.456, // Required
   "radius": 1000, // Required
-  "fromDate": "2021-01-01T00:00:00.000Z", 
-  "toDate": "2021-01-01T00:00:00.000Z" 
+  "fromDate": "2021-01-01T00:00:00.000Z",
+  "toDate": "2021-01-01T00:00:00.000Z"
 }
 ```
 
 Response (200 OK):
+
 ```json
 {
   "pods": [
@@ -998,6 +1164,7 @@ Response (200 OK):
 ```
 
 Response (400 Bad Request):
+
 ```json
 {
   "error": "One or more required parameters are invalid or missing"
@@ -1013,15 +1180,17 @@ GET /pods/{id}/data
 ```
 
 Authentication:
+
 - Optional. Public pods are accessible anonymously. Private pods require the requesting user to be the owner or an admin.
 
 Response (200 OK):
+
 ```json
 {
   "id": "123",
   "nickname": "nickname",
   "latitude": 40.014,
-  "longitude": -105.270,
+  "longitude": -105.27,
   "visibility": "public",
   "lastUpdated": "2021-01-01T00:00:00.000Z",
   "data": [
@@ -1034,7 +1203,7 @@ Response (200 OK):
         "reading_units": "C",
         "location": {
           "latitude": 40.014,
-          "longitude": -105.270
+          "longitude": -105.27
         }
       },
       "visibility": "public"
@@ -1050,6 +1219,7 @@ Response (200 OK):
 ```
 
 Response (403 Forbidden):
+
 ```json
 {
   "error": "Forbidden"
@@ -1057,6 +1227,7 @@ Response (403 Forbidden):
 ```
 
 Response (404 Not Found):
+
 ```json
 {
   "error": "Pod not found"
@@ -1073,13 +1244,14 @@ POST /pods/upload-pod-data
 
 Request Parameters:
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| podId | string | Yes | The pod ID |
-| data | file | Yes | CSV file containing the pod data |
-| notes | string | No | Optional notes for the pod data upload |
+| Parameter | Type   | Required | Description                            |
+| --------- | ------ | -------- | -------------------------------------- |
+| podId     | string | Yes      | The pod ID                             |
+| data      | file   | Yes      | CSV file containing the pod data       |
+| notes     | string | No       | Optional notes for the pod data upload |
 
 Request Body:
+
 ```json
 {
   "podId": "123", // Required: The pod ID
@@ -1089,6 +1261,7 @@ Request Body:
 ```
 
 Response (200 OK):
+
 ```json
 {
   "podDataId": "123",
@@ -1097,6 +1270,7 @@ Response (200 OK):
 ```
 
 Response (400 Bad Request):
+
 ```json
 {
   "error": "Invalid pod data"
@@ -1104,6 +1278,7 @@ Response (400 Bad Request):
 ```
 
 Response (404 Not Found):
+
 ```json
 {
   "error": "Pod not registered"
@@ -1111,6 +1286,7 @@ Response (404 Not Found):
 ```
 
 Response (403 Forbidden):
+
 ```json
 {
   "error": "Pod location not set"
@@ -1126,16 +1302,18 @@ POST /pods/{id}/owners
 ```
 
 Authentication:
+
 - Bearer token required. The requesting user must own the pod or be an admin.
 
 Request Parameters:
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| id | integer | Yes | Pod ID (URL parameter, positive integer) |
-| userId | integer | Yes | ID of the user to add as an owner (positive integer) |
+| Parameter | Type    | Required | Description                                          |
+| --------- | ------- | -------- | ---------------------------------------------------- |
+| id        | integer | Yes      | Pod ID (URL parameter, positive integer)             |
+| userId    | integer | Yes      | ID of the user to add as an owner (positive integer) |
 
 Request Body:
+
 ```json
 {
   "userId": 42
@@ -1143,6 +1321,7 @@ Request Body:
 ```
 
 Response (201 Created):
+
 ```json
 {
   "message": "Pod owner added successfully",
@@ -1152,6 +1331,7 @@ Response (201 Created):
 ```
 
 Response (400 Bad Request):
+
 ```json
 {
   "error": "Validation failed",
@@ -1162,6 +1342,7 @@ Response (400 Bad Request):
 ```
 
 Response (403 Forbidden):
+
 ```json
 {
   "error": "Forbidden"
@@ -1169,6 +1350,7 @@ Response (403 Forbidden):
 ```
 
 Response (404 Not Found):
+
 ```json
 {
   "error": "Pod not found"
@@ -1182,6 +1364,7 @@ Response (404 Not Found):
 ```
 
 Response (409 Conflict):
+
 ```json
 {
   "error": "User is already an owner of this pod"
@@ -1197,20 +1380,23 @@ GET /pods/{id}/owners
 ```
 
 Authentication:
+
 - Bearer token required. The requesting user must own the pod or be an admin.
 
 Request Parameters:
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| id | integer | Yes | Pod ID (URL parameter, positive integer) |
+| Parameter | Type    | Required | Description                              |
+| --------- | ------- | -------- | ---------------------------------------- |
+| id        | integer | Yes      | Pod ID (URL parameter, positive integer) |
 
 Example Request:
+
 ```
 GET /pods/123/owners
 ```
 
 Response (200 OK):
+
 ```json
 {
   "owners": [
@@ -1221,16 +1407,16 @@ Response (200 OK):
 ```
 
 Response (400 Bad Request):
+
 ```json
 {
   "error": "Validation failed",
-  "details": [
-    { "field": "id", "message": "Pod id must be a positive integer" }
-  ]
+  "details": [{ "field": "id", "message": "Pod id must be a positive integer" }]
 }
 ```
 
 Response (403 Forbidden):
+
 ```json
 {
   "error": "Forbidden"
@@ -1238,6 +1424,7 @@ Response (403 Forbidden):
 ```
 
 Response (404 Not Found):
+
 ```json
 {
   "error": "Pod not found"
@@ -1254,11 +1441,12 @@ DELETE /pods/delete-pod-data
 
 Request Parameters:
 
-| Parameter | Type | Required | Description |
-|-----------|------|----------|-------------|
-| podDataId | string | Yes | The pod data ID |
+| Parameter | Type   | Required | Description     |
+| --------- | ------ | -------- | --------------- |
+| podDataId | string | Yes      | The pod data ID |
 
 Request Body:
+
 ```json
 {
   "podDataId": "123" // Required
@@ -1266,6 +1454,7 @@ Request Body:
 ```
 
 Response (200 OK):
+
 ```json
 {
   "message": "Pod data deleted successfully",
@@ -1274,6 +1463,7 @@ Response (200 OK):
 ```
 
 Response (404 Not Found):
+
 ```json
 {
   "error": "Pod data not found"
@@ -1281,6 +1471,7 @@ Response (404 Not Found):
 ```
 
 Response (400 Bad Request):
+
 ```json
 {
   "error": "Invalid pod data ID"
