@@ -104,6 +104,17 @@ export default function PodMarkers() {
     [],
   );
 
+  const pinIconOwned = useMemo(
+    () =>
+      L.divIcon({
+        className: "pod-pin-icon",
+        html: '<span class="pod-pin-marker pod-pin-marker-owned" aria-hidden="true"></span>',
+        iconSize: [PIN_ICON_WIDTH_PX, PIN_ICON_HEIGHT_PX],
+        iconAnchor: [PIN_ICON_WIDTH_PX / 2, PIN_ICON_HEIGHT_PX],
+      }),
+    [],
+  );
+
   async function fetchPods(map: MapLike) {
     abortRef.current?.abort();
     const ac = new AbortController();
@@ -159,6 +170,12 @@ export default function PodMarkers() {
       }
     };
     // map is stable for the lifetime of the MapContainer
+  }, [map]);
+
+  useEffect(() => {
+    const handleLogin = () => void fetchPods(map as unknown as MapLike);
+    window.addEventListener("eva.login", handleLogin);
+    return () => window.removeEventListener("eva.login", handleLogin);
   }, [map]);
 
   function closeTooltip() {
@@ -289,7 +306,7 @@ export default function PodMarkers() {
             <Marker
               key={p.id}
               position={[p.latitude, p.longitude]}
-              icon={pinIcon}
+              icon={p.isOwner ? pinIconOwned : pinIcon}
               eventHandlers={{
                 click: (e: any) => handlePodClick(p, e),
               }}
@@ -304,7 +321,7 @@ export default function PodMarkers() {
             key={p.id}
             center={[p.latitude, p.longitude]}
             radius={markerRadiusMeters}
-            pathOptions={{ color: "red", weight: 2, fillOpacity: 0.5 }}
+            pathOptions={p.isOwner ? { color: "#30A46C", weight: 2, fillOpacity: 0.5 } : { color: "red", weight: 2, fillOpacity: 0.5 }}
             eventHandlers={{
               click: (e: any) => handlePodClick(p, e),
             }}

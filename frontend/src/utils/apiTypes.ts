@@ -43,6 +43,7 @@ export type PodLocation = {
   longitude: number;
   visibility: "public" | "private";
   lastUpdated?: string;
+  isOwner?: boolean;
 };
 
 export type PodLocationsResponse = { pods: PodLocation[] };
@@ -51,14 +52,13 @@ export type PodDataEntry = {
   id: string;
   timestamp: string;
   data: {
-    sensor_data_id: string;
-    pod_data_id: string;
     sensor_type: string;
     reading_value: number;
     reading_units: string;
-    reading_timestamp: string;
-    raw_data: Record<string, unknown>; // JSONB raw sensor payload
-    created_at: string;
+    location: {
+      latitude: number;
+      longitude: number;
+    };
   };
   visibility: "public" | "private";
 };
@@ -66,11 +66,17 @@ export type PodDataEntry = {
 export type PodDataResponse = {
   id: string;
   nickname: string;
-  latitude: number;
-  longitude: number;
+  latitude: number | null;
+  longitude: number | null;
   visibility: "public" | "private";
-  lastUpdated: string;
+  lastUpdated: string | null;
   data: PodDataEntry[];
+  viewer?: {
+    isAuthenticated: boolean;
+    isOwner: boolean;
+    isAdmin: boolean;
+    canManagePod: boolean;
+  };
 };
 
 // ----------------------------
@@ -152,3 +158,24 @@ export type UploadPodDataResponse = MessageResponse & { podDataId: string };
 export type DeletePodDataRequest = { podDataId: string };
 export type DeletePodDataResponse = MessageResponse & { podDataId: string };
 
+export type PodOwnerCandidate = {
+  id: number;
+  username: string;
+};
+
+export type SearchPodOwnerCandidatesResponse = {
+  users: PodOwnerCandidate[];
+};
+
+export type AddPodOwnerRequest = {
+  userId: number;
+};
+
+export type AddPodOwnerResponse = MessageResponse & {
+  podId: string;
+  userId: string;
+};
+
+export type GetPodOwnersResponse = {
+  owners: PodOwnerCandidate[];
+};

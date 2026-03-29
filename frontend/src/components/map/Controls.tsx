@@ -54,15 +54,17 @@ function Geocoder() {
   return null;
 }
 
-function LegendControl() {
+function LegendControl({ isAuthenticated }: { isAuthenticated?: boolean | null }) {
   const map = useMap() as any;
 
   useEffect(() => {
     const control: any = (L as any).control({ position: "topright" });
 
     let swatch: HTMLElement | null = null;
+    let ownedSwatch: HTMLElement | null = null;
+
     function updateSwatch() {
-      if (!swatch) return;
+      if (!swatch || !ownedSwatch) return;
       const center = map.getCenter();
       const zoom = map.getZoom();
       const isPin = shouldUsePinAtZoom(MARKER_BASE_RADIUS_METERS, center.lat, zoom, MARKER_MIN_VISIBLE_RADIUS_PX);
@@ -70,23 +72,33 @@ function LegendControl() {
       if (isPin) {
         swatch.className = "pod-pin-icon eva-legend-swatch-pin";
         swatch.innerHTML = '<span class="pod-pin-marker" aria-hidden="true"></span>';
+        ownedSwatch.className = "pod-pin-icon eva-legend-swatch-pin";
+        ownedSwatch.innerHTML = '<span class="pod-pin-marker pod-pin-marker-owned" aria-hidden="true"></span>';
       } else {
         swatch.className = "eva-legend-swatch";
         swatch.innerHTML = "";
+        ownedSwatch.className = "eva-legend-swatch eva-legend-swatch-owned";
+        ownedSwatch.innerHTML = "";
       }
     }
 
     control.onAdd = () => {
       // Reuse existing Leaflet control styling from Map.css by using leaflet-control-layers classes.
       const div = (L as any).DomUtil.create("div", "leaflet-control-layers leaflet-control eva-legend");
-      div.innerHTML = ``;
       swatch = (L as any).DomUtil.create("span", "eva-legend-swatch");
 
       const row = (L as any).DomUtil.create("div", "eva-legend-row", div);
       row.appendChild(swatch);
-
       const label = (L as any).DomUtil.create("span", "", row);
       label.textContent = "EVA Pod";
+
+      if (isAuthenticated) {
+        ownedSwatch = (L as any).DomUtil.create("span", "eva-legend-swatch eva-legend-swatch-owned");
+        const ownedRow = (L as any).DomUtil.create("div", "eva-legend-row", div);
+        ownedRow.appendChild(ownedSwatch);
+        const ownedLabel = (L as any).DomUtil.create("span", "", ownedRow);
+        ownedLabel.textContent = "Your Pod";
+      }
 
       (L as any).DomEvent.disableClickPropagation(div);
       (L as any).DomEvent.disableScrollPropagation(div);
@@ -95,7 +107,6 @@ function LegendControl() {
 
       return div;
     };
-
     control.addTo(map);
     map.on("zoomend", updateSwatch);
 
@@ -107,7 +118,7 @@ function LegendControl() {
         // no-op
       }
     };
-  }, [map]);
+  }, [map, isAuthenticated]);
 
   return null;
 }
@@ -319,12 +330,12 @@ function UserLocationControl() {
   return null;
 }
 
-export default function Controls() {
+export default function Controls({ isAuthenticated }: { isAuthenticated?: boolean | null }) {
   // Preserve the existing add-to-map ordering:
   // Legend (top-right), then Geocoder (top-left), then Search this area (top-left), then User Location (top-left).
   return (
     <>
-      <LegendControl />
+      <LegendControl isAuthenticated={isAuthenticated} />
       <Geocoder />
       <SearchAreaControl />
       <UserLocationControl />

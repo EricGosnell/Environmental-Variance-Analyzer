@@ -218,7 +218,22 @@ module.exports = (db) => {
                     })
                     .filter(Boolean);
 
-                return res.status(200).json({ pods });
+                let ownedPodIds = new Set();
+                if (userId && pods.length > 0) {
+                    const placeholders = pods.map(() => "?").join(",");
+                    const ownedRows = await db.all(
+                        `SELECT pod_id FROM user_pod WHERE user_id = ? AND pod_id IN (${placeholders})`,
+                        [userId, ...pods.map((p) => p.id)]
+                    );
+                    ownedPodIds = new Set(ownedRows.map((r) => String(r.pod_id)));
+                }
+
+                const podsWithOwnership = pods.map((p) => ({
+                    ...p,
+                    isOwner: ownedPodIds.has(p.id),
+                }));
+
+                return res.status(200).json({ pods: podsWithOwnership });
             } catch (error) {
                 return res.status(500).json({
                     error: "Internal server error",
@@ -290,7 +305,17 @@ module.exports = (db) => {
                 }
 
 
+                const latestPodData = podDataRows.length > 0 ? podDataRows[0] : null;
+
                 return res.status(200).json({
+                    id: String(pod.pod_id),
+                    nickname: pod.pod_name ?? null,
+                    latitude: latestPodData ? Number(latestPodData.latitude) : null,
+                    longitude: latestPodData ? Number(latestPodData.longitude) : null,
+                    visibility: isPublic ? "public" : "private",
+                    lastUpdated: latestPodData?.created_at
+                        ? new Date(latestPodData.created_at).toISOString()
+                        : null,
                     data,
                     viewer: {
                         isAuthenticated: !!userId,
@@ -378,6 +403,67 @@ module.exports = (db) => {
                     message: "Pod owner added successfully",
                     podId: String(podId),
                     userId: String(targetUserId),
+                });
+            } catch (error) {
+                return res.status(500).json({
+                    error: "Internal server error",
+                    where: "/pods/:id/owners",
+                    message: error?.message,
+                    code: error?.code,
+                });
+            }
+        }
+    );
+
+    // -------------------------
+    // GET /pods/:id/owners
+    // -------------------------
+    // Get all owners of a pod (owner or admin required)
+    router.get("/:id/owners",
+        authenticateToken,
+        [param("id").isInt({ gt: 0 }).withMessage("Pod id must be a positive integer")],
+        async (req, res) => {
+            try {
+                const errors = validationResult(req);
+                if (!errors.isEmpty()) {
+                    return res.status(400).json({
+                        error: "Validation failed",
+                        details: errors.array().map((err) => ({
+                            field: err.param,
+                            message: err.msg,
+                        })),
+                    });
+                }
+
+                const podId = Number(req.params.id);
+                const userId = req.user.id;
+
+                const pod = await getPodById(db, podId);
+                if (!pod) return res.status(404).json({ error: "Pod not found" });
+
+                const isAdmin = await getIsAdmin(userId);
+                const isOwner = await userOwnsPod(db, userId, podId);
+
+                if (!isOwner && !isAdmin) {
+                    return res.status(403).json({ error: "Forbidden" });
+                }
+
+                const owners = await db.all(
+                    `
+                    SELECT u.user_id, u.username
+                    FROM users u
+                    JOIN user_pod up ON u.user_id = up.user_id
+                    WHERE up.pod_id = ?
+                    ORDER BY LOWER(u.username) ASC
+                    `,
+                    [podId]
+                );
+
+                return res.status(200).json({
+                    owners: owners.map((owner) => ({
+                        id: owner.user_id,
+                        username: owner.username,
+                    })),
                 });
             } catch (error) {
                 return res.status(500).json({

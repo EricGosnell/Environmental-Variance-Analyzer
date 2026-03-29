@@ -94,6 +94,7 @@ export default function Home() {
                                 const profile = await getMe();
                                 setUser(profile.user);
                                 setIsAuthenticated(true);
+                                window.dispatchEvent(new Event("eva.login"));
                             } catch {
                                 setUser(null);
                                 setIsAuthenticated(false);
@@ -103,7 +104,7 @@ export default function Home() {
                 ) : null}
             </div>
             <div className="map-container">
-                <MapView />
+                <MapView isAuthenticated={isAuthenticated} />
             </div>
         </div>
     )

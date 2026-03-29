@@ -7,6 +7,8 @@
  */
 
 import type {
+  AddPodOwnerRequest,
+  AddPodOwnerResponse,
   AdminDeactivateUserRequest,
   AdminGenerateInvitationTokenResponse,
   AdminRevokeInvitationTokenRequest,
@@ -21,12 +23,14 @@ import type {
   AuthResetPasswordRequest,
   DeletePodDataRequest,
   DeletePodDataResponse,
+  GetPodOwnersResponse,
   MessageResponse,
   PodDataResponse,
   GetPodLocationsRequest,
   PodLocationsResponse,
   RegisterPodRequest,
   RequestEmailChangeRequest,
+  SearchPodOwnerCandidatesResponse,
   UnregisterPodRequest,
   UpdatePasswordRequest,
   UpdatePodRequest,
@@ -552,7 +556,7 @@ export async function getPodLocations(
     method: "GET",
     path: "/pods/locations",
     query: params,
-    auth: false,
+    auth: true,
     signal,
   });
 }
@@ -584,6 +588,45 @@ export async function deletePodData(payload: DeletePodDataRequest, signal?: Abor
     method: "DELETE",
     path: "/pods/delete-pod-data",
     body: payload,
+    auth: true,
+    signal,
+  });
+}
+
+export async function searchUsers(
+  username: string,
+  signal?: AbortSignal,
+): Promise<SearchPodOwnerCandidatesResponse> {
+  return await request<SearchPodOwnerCandidatesResponse>({
+    method: "GET",
+    path: "/users/search",
+    query: { username, limit: 10 },
+    auth: true,
+    signal,
+  });
+}
+
+export async function addPodOwner(
+  podId: string,
+  payload: AddPodOwnerRequest,
+  signal?: AbortSignal,
+): Promise<AddPodOwnerResponse> {
+  return await request<AddPodOwnerResponse>({
+    method: "POST",
+    path: `/pods/${encodeURIComponent(podId)}/owners`,
+    body: payload,
+    auth: true,
+    signal,
+  });
+}
+
+export async function getPodOwners(
+  podId: string,
+  signal?: AbortSignal,
+): Promise<GetPodOwnersResponse> {
+  return await request<GetPodOwnersResponse>({
+    method: "GET",
+    path: `/pods/${encodeURIComponent(podId)}/owners`,
     auth: true,
     signal,
   });
