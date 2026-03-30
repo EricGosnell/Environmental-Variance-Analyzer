@@ -1218,6 +1218,14 @@ Response (200 OK):
 }
 ```
 
+Response (400 Bad Request):
+
+```json
+{
+  "error": "Validation failed"
+}
+```
+
 Response (403 Forbidden):
 
 ```json
