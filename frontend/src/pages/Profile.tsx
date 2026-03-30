@@ -1,4 +1,5 @@
- import React, { useEffect, useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import "../styles/Profile.css";
 import { getMe, registerPod, updatePod, unregisterPod } from "../utils/api";
 import { updateMyUsername, verifyAndUpdateEmail, requestEmailChange } from "../utils/api";
@@ -29,6 +30,7 @@ type VerificationModalState = {
 };
 
 const Profile: React.FC = () => {
+	const navigate = useNavigate();
 	// Profile controls state (same order/format as Profile1)
 	const [user, setUser] = useState<User | null>(null);
 	const [loading, setLoading] = useState(true);
@@ -420,6 +422,10 @@ const Profile: React.FC = () => {
 		}
 	};
 
+	const handleViewPodData = (podId: number) => {
+		navigate(`/pod/${podId}`);
+	};
+
 	const handleDeletePod = (podId: number) => {
 		setShowDeleteConfirm(podId);
 	};
@@ -632,6 +638,7 @@ const Profile: React.FC = () => {
 													<td>{pod.lat}</td>
 													<td>{pod.long}</td>
 													<td>
+														<button className="btn" style={{ marginRight: 8 }} onClick={() => handleViewPodData(pod.id)}>View Full Data</button>
 														<button className="btn" style={{ marginRight: 8 }} onClick={() => handleEditPod(pod)}>Edit</button>
 														<button className="btn" onClick={() => handleDeletePod(pod.id)}>Delete</button>
 													</td>
