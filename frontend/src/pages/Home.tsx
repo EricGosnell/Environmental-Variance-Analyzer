@@ -132,9 +132,9 @@ export default function Home() {
                         selectedPods={selectedPods}
                         onPodSelect={(podId) => setSelectedPods((prev) =>
                             prev.includes(podId) ? prev.filter((p) => p !== podId) : [...prev, podId]
-                        )
+                        )}
                         isAuthenticated={isAuthenticated}
-                    }/>
+                    />
                 </div>
 
                 {!isPodTableOpen && (

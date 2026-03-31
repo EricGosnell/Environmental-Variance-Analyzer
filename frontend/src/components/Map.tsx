@@ -7,10 +7,6 @@ import PodMarkers from "./map/PodMarkers";
 import type { PodLocation } from "../utils/apiTypes";
 import type { MutableRefObject } from "react";
 
-type MapViewProps = {
-    isAuthenticated?: boolean | null;
-};
-
 const MAP_VIEW_STORAGE_KEY = "eva.mapView";
 const BASE_LAYER_STORAGE_KEY = "eva.baseLayer";
 const BASE_LAYER_OPEN_STREET_MAP = "OpenStreetMap";
@@ -31,6 +27,7 @@ type MapViewProps = {
     selectedPods: string[];
     onPodSelect: (podId: string) => void;
     mapRef: MutableRefObject<any>;
+    isAuthenticated?: boolean | null;
 };
 
 function readSavedMapView(): StoredMapView | null {
