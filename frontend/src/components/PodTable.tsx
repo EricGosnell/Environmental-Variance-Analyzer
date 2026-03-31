@@ -46,7 +46,7 @@ export default function PodTable({ isOpen, onClose, onHeightChange, visiblePodId
             setSensorTypes([...allTypes]);
         } catch (err: any) {
             if (err?.name !== "AbortError") {
-                setError("Failed to load pod data.");
+                setError("Failed to load pod data. Try reopening the pod table.");
             }
         } finally {
             setIsLoading(false);
@@ -173,14 +173,10 @@ export default function PodTable({ isOpen, onClose, onHeightChange, visiblePodId
                     {selectedPods.length > 0 && (
                         <>
                             <span>{selectedPods.length} Selected</span>
-                            <button className="btn primary-btn pod-table-selection-btn" onClick={zoomToSelection}>Zoom
-                                to
-                            </button>
-                            <button className="btn primary-btn pod-table-selection-btn" onClick={clearSelection}>Clear
-                            </button>
+                            <button className="btn primary-btn pod-table-selection-btn" onClick={zoomToSelection}>Zoom to</button>
+                            <button className="btn primary-btn pod-table-selection-btn" onClick={clearSelection}>Clear</button>
                             <button className="btn primary-btn pod-table-selection-btn"
-                                    onClick={invertSelection}>Invert
-                            </button>
+                                    onClick={invertSelection}>Invert</button>
                         </>
                     )}
                 </div>
