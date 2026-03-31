@@ -120,6 +120,17 @@ export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect }: 
       [],
   );
 
+  const pinIconOwned = useMemo(
+    () =>
+      L.divIcon({
+        className: "pod-pin-icon",
+        html: '<span class="pod-pin-marker pod-pin-marker-owned" aria-hidden="true"></span>',
+        iconSize: [PIN_ICON_WIDTH_PX, PIN_ICON_HEIGHT_PX],
+        iconAnchor: [PIN_ICON_WIDTH_PX / 2, PIN_ICON_HEIGHT_PX],
+      }),
+    [],
+  );
+
   async function fetchPods(map: MapLike) {
     abortRef.current?.abort();
     const ac = new AbortController();
@@ -178,6 +189,12 @@ export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect }: 
       }
     };
     // map is stable for the lifetime of the MapContainer
+  }, [map]);
+
+  useEffect(() => {
+    const handleLogin = () => void fetchPods(map as unknown as MapLike);
+    window.addEventListener("eva.login", handleLogin);
+    return () => window.removeEventListener("eva.login", handleLogin);
   }, [map]);
 
   function closeTooltip() {
@@ -310,7 +327,7 @@ export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect }: 
             <Marker
               key={p.id}
               position={[p.latitude, p.longitude]}
-              icon={isSelected ? selectedPinIcon : pinIcon}
+              icon={isSelected ? selectedPinIcon : p.isOwner ? pinIconOwned : pinIcon}
               eventHandlers={{
                 click: (e: any) => handlePodClick(p, e),
               }}
@@ -328,7 +345,9 @@ export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect }: 
             pathOptions={
               isSelected
                   ? { color: "#25b6eb", weight: 3, fillOpacity: 0.6 }
-                  : { color: "red", weight: 2, fillOpacity: 0.5 }
+                  : p.isOwner 
+                      ? { color: "#30A46C", weight: 2, fillOpacity: 0.5 } 
+                      : { color: "red", weight: 2, fillOpacity: 0.5 }
             }
             eventHandlers={{
               click: (e: any) => handlePodClick(p, e),

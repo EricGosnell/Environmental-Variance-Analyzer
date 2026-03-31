@@ -54,7 +54,8 @@ const registerValidation = [
         .withMessage("Password must contain at least one lowercase letter, one uppercase letter, and one number"),
 
     body("email")
-        .optional()
+        .notEmpty()
+        .withMessage("Email is required")
         .isEmail()
         .withMessage("Please provide a valid email address")
         .normalizeEmail()

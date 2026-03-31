@@ -8,14 +8,27 @@ const {
     loginValidation,
     registerValidation,
 } = require("./middleware/sanitize");
-
+const { sendEmail } = require("../util/email");
 const {
     generateAccessToken,
     generateRefreshToken,
     getRefreshTokenExpiry,
 } = require("../util/Tokens");
-
 const { JWT_CONFIG } = require("../util/JWT");
+const {
+    generateVerificationCode,
+    hashVerificationCode,
+} = require("../util/verificationCode");
+
+const VERIFICATION_TTL_SECONDS = 10 * 60;
+const VERIFICATION_MIN_RESEND_SECONDS = 60;
+const VERIFICATION_WINDOW_SECONDS = 15 * 60;
+const VERIFICATION_MAX_SENDS_PER_WINDOW = 5;
+const VERIFICATION_MAX_ATTEMPTS = 5;
+
+// ========= helpers ==========
+const getNowEpochSeconds = () => Math.floor(Date.now() / 1000);
+
 
 module.exports = (db) => {
     const router = express.Router();
@@ -36,7 +49,7 @@ module.exports = (db) => {
             const { email, password } = req.body;
             const user = await db.get(
                 `
-      SELECT u.user_id, u.username, u.password_hash, uc.email, uc.phone_number
+      SELECT u.user_id, u.username, u.password_hash, uc.email, uc.phone_number,  u.verified_email, u.account_locked
       FROM users u
       JOIN user_contact uc ON u.user_id = uc.user_id
       WHERE LOWER(uc.email) = LOWER(?)
@@ -49,6 +62,13 @@ module.exports = (db) => {
             const validPassword = await bcrypt.compare(password, user.password_hash);
             if (!validPassword) {
                 return res.status(401).json({ error: "Invalid credentials" });
+            }
+
+            if (!user.verified_email) {
+                return res.status(403).json({ error: "Email not verified" });
+            }
+            if (user.account_locked) {
+                return res.status(423).json({ error: "Account locked by admin" });
             }
 
             const accessToken = generateAccessToken(user);
@@ -109,23 +129,22 @@ module.exports = (db) => {
 
             if (existingUser) { return res.status(409).json({ error: "Username already exists" }); }
 
-            if (email) {
-                const existingEmail = await db.get(
-                    "SELECT user_id FROM user_contact WHERE email = ?",
-                    [email]
-                );
+            const existingEmail = await db.get(
+                "SELECT user_id FROM user_contact WHERE email = ?",
+                [email]
+            );
 
-                if (existingEmail) { return res.status(409).json({ error: "Email already registered" }); }
-            }
+            if (existingEmail) { return res.status(409).json({ error: "Email already registered" }); }
 
             await db.run("BEGIN TRANSACTION");
             transaction = true;
 
             const hashedPassword = await bcrypt.hash(password, 12);
+            const verifiedEmail = 0;
 
             const userInsertResult = await db.run(
-                "INSERT INTO users (username, password_hash) VALUES (?, ?)",
-                [username, hashedPassword]
+                "INSERT INTO users (username, password_hash, verified_email) VALUES (?, ?, ?)",
+                [username, hashedPassword, verifiedEmail]
             );
 
             const userId = userInsertResult?.lastID;
@@ -154,16 +173,6 @@ module.exports = (db) => {
                 [userId]
             );
 
-            const accessToken = generateAccessToken(userWithContact);
-            const refreshToken = generateRefreshToken(userWithContact);
-
-            const expiresAt = getRefreshTokenExpiry();
-
-            await db.run(
-                "INSERT INTO refresh_tokens (token, user_id, expires_at) VALUES (?, ?, ?)",
-                [refreshToken, userId, expiresAt]
-            );
-
             const responseUser = {
                 id: userWithContact.user_id,
                 username: userWithContact.username,
@@ -173,8 +182,7 @@ module.exports = (db) => {
 
             return res.status(201).json({
                 user: responseUser,
-                accessToken,
-                refreshToken,
+                message: "Registration successful. Please verify your email.",
             });
         } catch (error) {
             if (transaction) {
@@ -291,5 +299,181 @@ module.exports = (db) => {
         }
     }
     );
+
+    // -------------------------
+    // POST /send-verification
+    // -------------------------
+    router.post("/send-verification", [body("email").isEmail().withMessage("Valid email required")],
+        async (req, res) => {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({
+                    error: "Validation failed",
+                    details: errors.array().map((err) => ({
+                        field: err.param,
+                        message: err.msg,
+                    })),
+                });
+            }
+
+            const email = req.body.email.trim().toLowerCase();
+            const now = getNowEpochSeconds();
+            const responseMessage = "If the email exists, a verification code was sent.";
+
+            try {
+                const user = await db.get(`
+                SELECT u.user_id
+                FROM users u
+                JOIN user_contact uc ON u.user_id = uc.user_id
+                WHERE LOWER(uc.email) = LOWER(?)
+            `, [email]);
+
+                if (!user) {
+                    return res.status(200).json({ message: responseMessage });
+                }
+
+                const existingRow = await db.get(
+                    "SELECT attempts, send_count, last_sent_at, window_started_at FROM email_verification WHERE user_id = ?",
+                    [user.user_id]
+                );
+
+                let sendCount = 1;
+                let windowStartAt = now;
+                const existingSendCount = existingRow?.send_count ?? 0;
+                const existingWindowStart = existingRow?.window_started_at ?? now;
+                const existingLastSentAt = existingRow?.last_sent_at ?? 0;
+
+                if (existingRow) {
+                    if (existingLastSentAt + VERIFICATION_MIN_RESEND_SECONDS > now) {
+                        return res.status(200).json({ message: responseMessage });
+                    }
+
+                    if ((now - existingWindowStart) <= VERIFICATION_WINDOW_SECONDS) {
+                        if (existingSendCount >= VERIFICATION_MAX_SENDS_PER_WINDOW) {
+                            return res.status(200).json({ message: responseMessage });
+                        }
+
+                        sendCount = existingSendCount + 1;
+                        windowStartAt = existingWindowStart;
+                    } else {
+                        sendCount = 1;
+                        windowStartAt = now;
+                    }
+                }
+
+                const code = generateVerificationCode();
+                const hash = hashVerificationCode(code);
+                const expires = now + VERIFICATION_TTL_SECONDS;
+
+                await sendEmail({
+                    to: email,
+                    subject: "Verify your email",
+                    html: `
+                    <h2>Your verification code</h2>
+                    <p style="font-size:24px;"><b>${code}</b></p>
+                    <p>Expires in 10 minutes.</p>
+                `
+                });
+
+                await db.run(`
+                    INSERT INTO email_verification (
+                        user_id,
+                        code_hash,
+                        expires_at,
+                        attempts,
+                        send_count,
+                        last_sent_at,
+                        window_started_at
+                    )
+                    VALUES (?, ?, ?, 0, ?, ?, ?)
+                    ON CONFLICT(user_id) DO UPDATE SET
+                        code_hash = excluded.code_hash,
+                        expires_at = excluded.expires_at,
+                        attempts = excluded.attempts,
+                        send_count = excluded.send_count,
+                        last_sent_at = excluded.last_sent_at,
+                        window_started_at = excluded.window_started_at
+                `, [user.user_id, hash, expires, sendCount, now, windowStartAt]);
+
+                res.json({ message: responseMessage });
+
+            } catch (err) {
+                console.error("send-verification failed:", err);
+                res.status(500).json({ error: "Internal server error" });
+            }
+        }
+    );
+
+    // -------------------------
+    // POST /verify-email
+    // -------------------------
+    router.post("/verify-email",
+        [
+            body("email").isEmail().withMessage("Valid email required"),
+            body("code")
+                .isLength({ min: 6, max: 6 })
+                .withMessage("6 digit code required")
+                .isNumeric()
+                .withMessage("6 digit code required"),
+        ],
+        async (req, res) => {
+
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({
+                    error: "Validation failed",
+                    details: errors.array().map((err) => ({
+                        field: err.param,
+                        message: err.msg,
+                    })),
+                });
+            }
+
+            const email = req.body.email.trim().toLowerCase();
+            const code = req.body.code;
+            const now = getNowEpochSeconds();
+
+            try {
+                const row = await db.get(`
+                SELECT ev.*, u.user_id
+                FROM email_verification ev
+                JOIN user_contact uc ON ev.user_id = uc.user_id
+                JOIN users u ON u.user_id = ev.user_id
+                WHERE LOWER(uc.email) = LOWER(?)
+            `, [email]);
+
+                if (!row)
+                    return res.status(400).json({ error: "No verification code found" });
+
+                if (now > row.expires_at)
+                    return res.status(400).json({ error: "Code expired" });
+
+                if (row.attempts >= VERIFICATION_MAX_ATTEMPTS)
+                    return res.status(429).json({ error: "Too many attempts" });
+
+                if (hashVerificationCode(code) !== row.code_hash) {
+                    await db.run(
+                        "UPDATE email_verification SET attempts = attempts + 1 WHERE user_id = ?",
+                        [row.user_id]
+                    );
+                    return res.status(400).json({ error: "Invalid code" });
+                }
+
+                await db.run(
+                    "UPDATE users SET verified_email = 1 WHERE user_id = ?", [row.user_id]);
+                await db.run(
+                    "DELETE FROM email_verification WHERE user_id = ?",
+                    [row.user_id]
+                );
+
+                res.json({ message: "Email verified" });
+
+            } catch (err) {
+                console.error("verify-email failed:", err);
+                res.status(500).json({ error: "Internal server error" });
+            }
+        }
+    );
+
     return router;
 };

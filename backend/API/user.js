@@ -1,9 +1,14 @@
 // API/user.js
 const express = require("express");
 const bcrypt = require("bcryptjs");
-const { body, validationResult } = require("express-validator");
+const { body, query, validationResult } = require("express-validator");
 const { sanitizeRequestBody } = require("./middleware/sanitize");
 const { authenticateToken } = require("../util/Tokens");
+const { sendEmail } = require("../util/email");
+const {
+    generateVerificationCode,
+    hashVerificationCode,
+} = require("../util/verificationCode");
 
 //USING THESE FOR VALIDATION RESTRICTIONS FOR NOW, 
 //CAN BE CHANGED LATER IF WE DECIDE TO - Ryan
@@ -67,6 +72,67 @@ module.exports = (db) => {
                 }
             });
 
+        } catch (error) {
+            return res.status(500).json({
+                error: "Internal server error",
+                message: error?.message,
+            });
+        }
+    });
+
+    // -------------------------
+    // GET /search - Search users by username
+    // -------------------------
+    router.get("/search", authenticateToken, [
+        query("username")
+            .trim()
+            .isLength({ min: 2, max: MAX_USERNAME_LENGTH })
+            .withMessage(`Username search term must be between 2 and ${MAX_USERNAME_LENGTH} characters`)
+            .matches(/^[a-zA-Z0-9_-]+$/)
+            .withMessage("Username search term can only contain letters, numbers, underscores, and hyphens"),
+        query("limit")
+            .optional()
+            .isInt({ min: 1, max: 50 })
+            .withMessage("Limit must be an integer between 1 and 50")
+            .toInt(),
+    ], async (req, res) => {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({ error: "Invalid search parameters" });
+            }
+
+            const searchTerm = req.query.username.toLowerCase();
+            const limit = req.query.limit ?? 20;
+            const escapedSearchTerm = searchTerm.replace(/([\\%_])/g, "\\$1");
+            const containsPattern = `%${escapedSearchTerm}%`;
+            const prefixPattern = `${escapedSearchTerm}%`;
+
+            const users = await db.all(
+                `
+                SELECT u.user_id, u.username
+                FROM users u
+                WHERE LOWER(u.username) LIKE ? ESCAPE '\\'
+                AND u.admin = 0
+                AND u.user_id != ?
+                ORDER BY
+                    CASE
+                        WHEN LOWER(u.username) = ? THEN 0
+                        WHEN LOWER(u.username) LIKE ? ESCAPE '\\' THEN 1
+                        ELSE 2
+                    END ASC,
+                    LOWER(u.username) ASC
+                LIMIT ?
+                `,
+                [containsPattern, req.user.id, searchTerm, prefixPattern, limit]
+            );
+
+            return res.status(200).json({
+                users: users.map((user) => ({
+                    id: user.user_id,
+                    username: user.username,
+                })),
+            });
         } catch (error) {
             return res.status(500).json({
                 error: "Internal server error",
@@ -202,24 +268,30 @@ module.exports = (db) => {
             }
 
             // Generate verification code (6-digit)
-            const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+            const verificationCode = generateVerificationCode();
+            const verificationCodeHash = hashVerificationCode(verificationCode);
 
-            // Store pending email change with verification code
-            // TODO: Create table for pending_email_changes or use an existing one
-            // For now, storing verification code with 15 minute expiry
+            // Store pending email change with verification code for 15 minutes
             const expiresAt = Math.floor(Date.now() / 1000) + (15 * 60);
 
             await db.run(
                 `
-                INSERT INTO pending_email_changes (user_id, new_email, verification_code, expires_at)
+                INSERT INTO pending_email_changes (user_id, new_email, code_hash, expires_at)
                 VALUES (?, ?, ?, ?)
-                ON CONFLICT(user_id) DO UPDATE SET new_email = ?, verification_code = ?, expires_at = ?
+                ON CONFLICT(user_id) DO UPDATE SET new_email = ?, code_hash = ?, expires_at = ?
                 `,
-                [userId, newEmail, verificationCode, expiresAt, newEmail, verificationCode, expiresAt]
+                [userId, newEmail, verificationCodeHash, expiresAt, newEmail, verificationCodeHash, expiresAt]
             );
 
-            // TODO: Send verification code to newEmail via email service
-            console.log(`[DEV] Verification code for ${newEmail}: ${verificationCode}`);
+            await sendEmail({
+                to: newEmail,
+                subject: "Verify your new email",
+                html: `
+                    <h2>Your email change verification code</h2>
+                    <p style="font-size:24px;"><b>${verificationCode}</b></p>
+                    <p>Expires in 15 minutes.</p>
+                `
+            });
 
             return res.status(200).json({ message: "Verification code sent to new email" });
         } catch (error) {
@@ -266,7 +338,7 @@ module.exports = (db) => {
             }
 
             // Verify code matches
-            if (pendingChange.verification_code !== verificationCode) {
+            if (hashVerificationCode(verificationCode) !== pendingChange.code_hash) {
                 return res.status(400).json({ error: "Invalid or expired verification code" });
             }
 

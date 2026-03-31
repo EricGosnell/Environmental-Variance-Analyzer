@@ -8,11 +8,14 @@ This document outlines the API routes for the project.
   - [Login: `/auth/login`](#login-authlogin)
   - [Refresh: `/auth/refresh`](#refresh-authrefresh)
   - [Register: `/auth/register`](#register-authregister)
+  - [Send Verification: `/auth/send-verification`](#send-verification-authsend-verification)
+  - [Verify Email: `/auth/verify-email`](#verify-email-authverify-email)
   - [Logout: `/auth/logout`](#logout)
   - [Forgot Password: `/auth/forgot-password`](#forgot-password)
   - [Reset Password: `/auth/reset-password`](#reset-password)
 - [User Management](#user-management)
   - [Get User: `/users/me`](#get-user)
+  - [Search Users by Username: `/users/search`](#search-users-by-username)
   - [Get User by ID: `/users/{id}`](#get-user-by-id)
   - [Update User Username: `/users/me/username`](#update-user-username)
   - [Update User Email:](#update-user-email)
@@ -32,6 +35,8 @@ This document outlines the API routes for the project.
   - [Get Pod Locations: `/pods/locations`](#get-pod-locations)
   - [Get Pod Data: `/pods/{id}/data`](#get-pod-data)
   - [Upload Pod Data: `/pods/upload-pod-data`](#upload-pod-data)
+  - [Add Pod Owner: `/pods/{id}/owners`](#add-pod-owner)
+  - [Get Pod Owners: `/pods/{id}/owners`](#get-pod-owners)
   - [Delete Pod Data: `/pods/delete-pod-data`](#delete-pod-data)
 ## Authentication
 
@@ -143,7 +148,7 @@ Request Parameters:
 | email | string | Yes | User email address |
 | password | string | Yes | User password |
 | username | string | Yes | Username |
-| phone_number | string | Yes | User phone number |
+| phone_number | string | No | User phone number |
 
 Request Body:
 ```json
@@ -151,11 +156,11 @@ Request Body:
   "email": "user@example.com", // Required
   "password": "password", // Required
   "username": "user", // Required
-  "phone_number": "1234567890", // Required
+  "phone_number": "1234567890" // Optional
 }
 ```
 
-Response (200 OK):
+Response (201 Created):
 ```json
 {
   "user": {
@@ -163,15 +168,14 @@ Response (200 OK):
     "email": "user@example.com",
     "username": "user"
   },
-  "accessToken": "access_token",
-  "refreshToken": "refresh_token"
+  "message": "Registration successful. Please verify your email."
 }
 ```
 
 Response (400 Bad Request):
 ```json
 {
-  "error": "Invalid input data or invalid invitation token"
+  "error": "Validation failed"
 }
 ```
 
@@ -182,7 +186,93 @@ Response (409 Conflict):
 }
 ```
 
-This endpoint creates a new user account.
+This endpoint creates a new user account and marks it as unverified. It does not issue login tokens.  
+After registration, call `/auth/send-verification` and then `/auth/verify-email` before login.
+
+### Send verification
+
+```
+POST /auth/send-verification
+```
+
+Request Body:
+```json
+{
+  "email": "user@example.com" // Required
+}
+```
+
+Response (200 OK):
+```json
+{
+  "message": "If the email exists, a verification code was sent."
+}
+```
+
+Response (400 Bad Request):
+```json
+{
+  "errors": [
+    {
+      "msg": "Valid email required"
+    }
+  ]
+}
+```
+
+Notes:
+- This endpoint always returns a generic success message to avoid account enumeration.
+- Resend throttling is enforced internally.
+- Verification state is persisted only after the email provider accepts the send request.
+
+### Verify email
+
+```
+POST /auth/verify-email
+```
+
+Request Body:
+```json
+{
+  "email": "user@example.com", // Required
+  "code": "123456" // Required, 6 digits
+}
+```
+
+Response (200 OK):
+```json
+{
+  "message": "Email verified"
+}
+```
+
+Response (400 Bad Request):
+```json
+{
+  "error": "No verification code found"
+}
+```
+
+Response (400 Bad Request):
+```json
+{
+  "error": "Invalid code"
+}
+```
+
+Response (400 Bad Request):
+```json
+{
+  "error": "Code expired"
+}
+```
+
+Response (429 Too Many Requests):
+```json
+{
+  "error": "Too many attempts"
+}
+```
 
 ### Logout
 
@@ -324,17 +414,71 @@ Response (200 OK):
 ```json
 {
   "user": {
-    "id": "123",
+    "id": 123,
     "email": "user@example.com",
     "phone_number": "1234567890",
     "username": "user",
-    "pods": ["pod_id_1", "pod_id_2"], // Array of pod IDs
-    "podData": ["pod_data_id_1", "pod_data_id_2"] // Array of pod data IDs
+    "pods": [
+      {
+        "id": 1,
+        "name": "My Pod",
+        "visibility": true,
+        "lat": "40.014",
+        "long": "-105.270"
+      }
+    ]
   }
 }
 ```
 
-This endpoint returns the current user's information.
+This endpoint returns the current user's information including their registered pods.
+
+### Search Users by Username
+
+```
+GET /users/search
+```
+
+Authentication:
+- Bearer token required.
+
+Request Query Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| username | string | Yes | Username search term (2-16 chars, letters/numbers/underscore/hyphen) |
+| limit | integer | No | Max number of results to return (1-50, default 20) |
+
+Example Request:
+```
+GET /users/search?username=ann&limit=10
+```
+
+Response (200 OK):
+```json
+{
+  "users": [
+    { "id": 12, "username": "anna" },
+    { "id": 35, "username": "joanna" }
+  ]
+}
+```
+
+Response (400 Bad Request):
+```json
+{
+  "error": "Invalid search parameters"
+}
+```
+
+Response (401 Unauthorized):
+```json
+{
+  "error": "No token provided"
+}
+```
+
+This endpoint searches users by username using case-insensitive contains matching. Results are ranked in this order: exact match, prefix match, then contains match, with alphabetical ordering as the tiebreaker.
 
 ### Get User by ID
 
@@ -452,7 +596,7 @@ Response (409 Conflict):
 }
 ```
 
-This endpoint sends a verification code to the new email address. The user must verify this code before the email can be updated.
+This endpoint sends a verification code to the new email address via the email service. The user must verify this code before the email can be updated.
 
 #### Verify and Update Email
 
@@ -846,7 +990,8 @@ Response (200 OK):
       "latitude": 123.456,
       "longitude": 123.456,
       "visibility": "public", // "public" or "private"
-      "lastUpdated": "2021-01-01T00:00:00.000Z"
+      "lastUpdated": "2021-01-01T00:00:00.000Z",
+      "isOwner": true // true if authenticated user owns this pod, false otherwise
     }
   ]
 }
@@ -867,32 +1012,47 @@ This endpoint returns all pod names and their locations. Will return all pods if
 GET /pods/{id}/data
 ```
 
+Authentication:
+- Optional. Public pods are accessible anonymously. Private pods require the requesting user to be the owner or an admin.
+
 Response (200 OK):
 ```json
 {
   "id": "123",
   "nickname": "nickname",
-  "latitude": 123.456,
-  "longitude": 123.456,
-  "visibility": "public", // "public" or "private"
+  "latitude": 40.014,
+  "longitude": -105.270,
+  "visibility": "public",
   "lastUpdated": "2021-01-01T00:00:00.000Z",
   "data": [
     {
-      "id": "123",
+      "id": "456",
       "timestamp": "2021-01-01T00:00:00.000Z",
       "data": {
-        "sensor_data_id": "123",
-        "pod_data_id": "pod_data_id_1",
         "sensor_type": "temperature",
         "reading_value": 23.5,
         "reading_units": "C",
-        "reading_timestamp": "2021-01-01T00:00:00.000Z",
-        "raw_data": {}, // JSONB raw sensor payload
-        "created_at": "2021-01-01T00:00:00.000Z"
+        "location": {
+          "latitude": 40.014,
+          "longitude": -105.270
+        }
       },
-      "visibility": "public" // "public" or "private"
+      "visibility": "public"
     }
-  ]
+  ],
+  "viewer": {
+    "isAuthenticated": true,
+    "isOwner": true,
+    "isAdmin": false,
+    "canManagePod": true
+  }
+}
+```
+
+Response (403 Forbidden):
+```json
+{
+  "error": "Forbidden"
 }
 ```
 
@@ -903,9 +1063,7 @@ Response (404 Not Found):
 }
 ```
 
-This endpoint returns all recorded data for a specific pod sorted by timestamp in descending order. Only accessible if pod is public or the user is the owner of the pod.
-
-TODO: Location history of pod.
+This endpoint returns all recorded sensor data for a specific pod. The `viewer` object indicates the requesting user's permissions. Pod metadata (`id`, `nickname`, `latitude`, `longitude`, `visibility`, `lastUpdated`) is derived from the pod record and the most recent `pod_data` row.
 
 ### Upload Pod Data
 
@@ -960,6 +1118,133 @@ Response (403 Forbidden):
 ```
 
 This endpoint uploads pod data to the database.
+
+### Add Pod Owner
+
+```
+POST /pods/{id}/owners
+```
+
+Authentication:
+- Bearer token required. The requesting user must own the pod or be an admin.
+
+Request Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | integer | Yes | Pod ID (URL parameter, positive integer) |
+| userId | integer | Yes | ID of the user to add as an owner (positive integer) |
+
+Request Body:
+```json
+{
+  "userId": 42
+}
+```
+
+Response (201 Created):
+```json
+{
+  "message": "Pod owner added successfully",
+  "podId": "123",
+  "userId": "42"
+}
+```
+
+Response (400 Bad Request):
+```json
+{
+  "error": "Validation failed",
+  "details": [
+    { "field": "userId", "message": "userId must be a positive integer" }
+  ]
+}
+```
+
+Response (403 Forbidden):
+```json
+{
+  "error": "Forbidden"
+}
+```
+
+Response (404 Not Found):
+```json
+{
+  "error": "Pod not found"
+}
+```
+
+```json
+{
+  "error": "User not found"
+}
+```
+
+Response (409 Conflict):
+```json
+{
+  "error": "User is already an owner of this pod"
+}
+```
+
+This endpoint adds a user as a co-owner of a pod. The requesting user must already own the pod (or be an admin). The target user is looked up by `userId` — use `GET /users/search` to find users by username.
+
+### Get Pod Owners
+
+```
+GET /pods/{id}/owners
+```
+
+Authentication:
+- Bearer token required. The requesting user must own the pod or be an admin.
+
+Request Parameters:
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| id | integer | Yes | Pod ID (URL parameter, positive integer) |
+
+Example Request:
+```
+GET /pods/123/owners
+```
+
+Response (200 OK):
+```json
+{
+  "owners": [
+    { "id": 1, "username": "alice" },
+    { "id": 42, "username": "bob" }
+  ]
+}
+```
+
+Response (400 Bad Request):
+```json
+{
+  "error": "Validation failed",
+  "details": [
+    { "field": "id", "message": "Pod id must be a positive integer" }
+  ]
+}
+```
+
+Response (403 Forbidden):
+```json
+{
+  "error": "Forbidden"
+}
+```
+
+Response (404 Not Found):
+```json
+{
+  "error": "Pod not found"
+}
+```
+
+This endpoint returns all owners of a pod. The requesting user must be an owner of the pod or an admin. Owners are returned sorted alphabetically by username.
 
 ### Delete Pod Data
 

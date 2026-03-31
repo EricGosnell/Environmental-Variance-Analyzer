@@ -7,6 +7,10 @@ import PodMarkers from "./map/PodMarkers";
 import type { PodLocation } from "../utils/apiTypes";
 import type { MutableRefObject } from "react";
 
+type MapViewProps = {
+    isAuthenticated?: boolean | null;
+};
+
 const MAP_VIEW_STORAGE_KEY = "eva.mapView";
 const BASE_LAYER_STORAGE_KEY = "eva.baseLayer";
 const BASE_LAYER_OPEN_STREET_MAP = "OpenStreetMap";
@@ -96,7 +100,7 @@ function PersistMapView() {
     return null;
 }
 
-export default function MapView({ mapRef, onVisiblePodsChange, selectedPods, onPodSelect }: MapViewProps) {
+export default function MapView({ mapRef, onVisiblePodsChange, selectedPods, onPodSelect, isAuthenticated }: MapViewProps) {
     const savedView = readSavedMapView();
     const savedBaseLayer = readSavedBaseLayer();
     const initialCenter: [number, number] = savedView ? [savedView.lat, savedView.lng] : DEFAULT_CENTER;
@@ -131,7 +135,7 @@ export default function MapView({ mapRef, onVisiblePodsChange, selectedPods, onP
             </LayersControlAny>
 
             <PodMarkers onPodsLoaded={onVisiblePodsChange} selectedPods={selectedPods} onPodSelect={onPodSelect} />
-            <Controls />
+            <Controls isAuthenticated={isAuthenticated} />
             <PersistMapView />
         </MapContainerAny>
     );
