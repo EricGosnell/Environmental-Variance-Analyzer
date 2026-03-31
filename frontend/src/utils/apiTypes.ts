@@ -152,6 +152,26 @@ export type GetPodLocationsRequest = {
   fromDate?: string;
   toDate?: string;
 };
+
+export type LatestSensorReading = {
+  id: string;
+  metric: string;
+  value: number;
+  units: string | null;
+  timestamp: string;
+  location: {
+    latitude: number;
+    longitude: number;
+  };
+};
+
+export type PodLatestReadings = {
+  podId: string;
+  podName: string | null;
+  visibility: "public" | "private";
+  latestReadings: Record<string, LatestSensorReading>;
+};
+
 export type UploadPodDataRequest = { podId: string; data: File; notes?: string };
 export type UploadPodDataResponse = MessageResponse & { podDataId: string };
 
