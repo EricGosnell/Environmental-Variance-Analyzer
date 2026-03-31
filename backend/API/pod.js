@@ -635,5 +635,134 @@ module.exports = (db) => {
         }
     );
 
+    // -------------------------
+    // GET /pods/latest?ids=1,2,3
+    // -------------------------
+    router.get(
+        "/latest",
+        optionalAuth,
+        async (req, res) => {
+            try {
+                const idsParam = req.query.ids;
+                if (!idsParam) {
+                    return res.status(400).json({
+                        error: "Query param 'ids' required (comma separated pod IDs)"
+                    });
+                }
+
+                const podIds = idsParam
+                    .split(",")
+                    .map((id) => Number(id.trim()))
+                    .filter((id) => !isNaN(id) && id > 0);
+
+                if (podIds.length === 0) {
+                    return res.status(400).json({
+                        error: "No valid pod IDs provided"
+                    });
+                }
+
+                const userId = req.user?.id ?? null;
+                const isAdmin = userId ? await getIsAdmin(userId) : false;
+
+                // -------------------------
+                // Fetch pods + visibility check
+                // -------------------------
+                const pods = [];
+                for (const podId of podIds) {
+                    const pod = await getPodById(db, podId);
+                    if (!pod) continue;
+
+                    const isPublic = !!pod.pod_data_public;
+                    const owns = userId ? await userOwnsPod(db, userId, podId) : false;
+
+                    if (!isPublic && !owns && !isAdmin) continue;
+
+                    pods.push(pod);
+                }
+
+                if (pods.length === 0) {
+                    return res.status(403).json({ error: "No accessible pods" });
+                }
+
+                const accessibleIds = pods.map(p => p.pod_id);
+
+                // -------------------------
+                // Get latest per pod + sensor_type
+                // -------------------------
+                const placeholders = accessibleIds.map(() => "?").join(",");
+
+                const rows = await db.all(
+                    `
+  SELECT *
+  FROM (
+    SELECT
+      pd.pod_id,
+      p.pod_name,
+      sd.sensor_data_id,
+      sd.sensor_type,
+      sd.reading_value,
+      sd.reading_units,
+      sd.reading_timestamp,
+      pd.latitude,
+      pd.longitude,
+      ROW_NUMBER() OVER (
+        PARTITION BY pd.pod_id, sd.sensor_type
+        ORDER BY datetime(sd.reading_timestamp) DESC
+      ) as rn
+    FROM pod_data pd
+    JOIN sensor_data sd
+      ON sd.pod_data_id = pd.pod_data_id
+    JOIN pod p
+      ON p.pod_id = pd.pod_id
+    WHERE pd.pod_id IN (${placeholders})
+  )
+  WHERE rn = 1
+  `,
+                    accessibleIds
+                );
+
+                // -------------------------
+                // Build response structure
+                // -------------------------
+                const result = {};
+
+                for (const pod of pods) {
+                    result[pod.pod_id] = {
+                        podId: String(pod.pod_id),
+                        podName: pod.pod_name ?? null,
+                        visibility: pod.pod_data_public ? "public" : "private",
+                        latestReadings: {}
+                    };
+                }
+
+                for (const row of rows) {
+                    result[row.pod_id].latestReadings[row.sensor_type] = {
+                        id: String(row.sensor_data_id),
+                        metric: row.sensor_type,
+                        value: row.reading_value,
+                        units: row.reading_units ?? null,
+                        timestamp: new Date(row.reading_timestamp).toISOString(),
+                        location: {
+                            latitude: Number(row.latitude),
+                            longitude: Number(row.longitude),
+                        }
+                    };
+                }
+
+                return res.status(200).json({
+                    pods: Object.values(result)
+                });
+
+            } catch (error) {
+                return res.status(500).json({
+                    error: "Internal server error",
+                    where: "/pods/latest",
+                    message: error?.message,
+                    code: error?.code,
+                });
+            }
+        }
+    );
+
     return router;
 };
