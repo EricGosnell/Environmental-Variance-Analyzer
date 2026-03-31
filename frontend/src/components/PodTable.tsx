@@ -213,6 +213,7 @@ export default function PodTable({ isOpen, onClose, onHeightChange, visiblePodId
                             {sensorTypes.map(type => (
                                 <th key={type}>{type}</th>
                             ))}
+                            <th></th>
                         </tr>
                         </thead>
                         <tbody>
@@ -227,6 +228,7 @@ export default function PodTable({ isOpen, onClose, onHeightChange, visiblePodId
                                         {formatReading(pod.latestReadings[type])}
                                     </td>
                                 ))}
+                                <td></td>
                             </tr>
                         ))}
                         </tbody>
