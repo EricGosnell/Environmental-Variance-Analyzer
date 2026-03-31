@@ -1,0 +1,36 @@
+/* search bar for orgs - same as share pod modal */
+.search-wrap {
+    position: relative;
+}
+
+.search-bar {
+    width: 100%;
+    box-sizing: border-box;
+    border: 1px solid rgba(255, 255, 255, 0.24);
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.18);
+    color: #ffffff;
+    font-size: 0.95rem;
+    line-height: 1.4;
+    padding: 9px 10px 9px 34px;
+    outline: none;
+    margin-bottom: 12px;
+}
+
+.search-icon {
+    position: absolute;
+    top: 40%;
+    left: 10px;
+    transform: translateY(-50%);
+    color: rgba(255, 255, 255, 0.7);
+    pointer-events: none;
+}
+
+.search-bar::placeholder {
+    color: rgba(255, 255, 255, 0.6);
+}
+
+.search-bar:focus {
+    border-color: var(--primary-green);
+    box-shadow: 0 0 0 3px rgba(48, 164, 108, 0.25);
+}

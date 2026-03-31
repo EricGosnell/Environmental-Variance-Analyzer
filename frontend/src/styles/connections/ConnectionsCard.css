@@ -1,0 +1,54 @@
+.connections-card {
+    width: min(400px, 100%);
+    border-radius: 12px;
+    background: var(--secondary-green);
+    padding: 16px;
+}
+.connections-card.small {
+    height: 250px;
+}
+.connections-card.medium {
+    height: 350px;
+}
+
+.connections-list {
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+.connections-list.small {
+    max-height: 250px;
+}
+.connections-list.medium {
+    max-height: 300px;
+}
+
+.connections-item {
+    padding: 10px;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.05);
+    cursor: pointer;
+    transition: 0.2s;
+    position: relative;
+}
+
+.connections-item:hover {
+    background: rgba(255, 255, 255, 0.15);
+}
+
+.connections-item h3 {
+    margin: 0;
+    font-size: 1rem;
+}
+
+.connections-item p {
+    margin: 4px 0 0;
+    font-size: 0.8rem;
+    opacity: 0.7;
+}
+
+.no-results {
+    text-align: center;
+    opacity: 0.7;
+}
