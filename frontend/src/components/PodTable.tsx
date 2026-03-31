@@ -53,12 +53,13 @@ export default function PodTable({ isOpen, onClose, onHeightChange, visiblePodId
         }
     }, []);
 
-    // Get pod data for visible pods
+    // Get pod data for visible pods, but not while dragging
     useEffect(() => {
+        if (isDragging) return;
         const controller = new AbortController();
         fetchPodData(visiblePodIds, controller.signal);
         return () => controller.abort();
-    }, [visiblePodIds, fetchPodData]);
+    }, [visiblePodIds, isDragging, fetchPodData]);
 
     // Toggle a pod's selection state
     const handleRowClick = (podName: string) => {
@@ -173,10 +174,14 @@ export default function PodTable({ isOpen, onClose, onHeightChange, visiblePodId
                     {selectedPods.length > 0 && (
                         <>
                             <span>{selectedPods.length} Selected</span>
-                            <button className="btn primary-btn pod-table-selection-btn" onClick={zoomToSelection}>Zoom to</button>
-                            <button className="btn primary-btn pod-table-selection-btn" onClick={clearSelection}>Clear</button>
+                            <button className="btn primary-btn pod-table-selection-btn" onClick={zoomToSelection}>Zoom
+                                to
+                            </button>
+                            <button className="btn primary-btn pod-table-selection-btn" onClick={clearSelection}>Clear
+                            </button>
                             <button className="btn primary-btn pod-table-selection-btn"
-                                    onClick={invertSelection}>Invert</button>
+                                    onClick={invertSelection}>Invert
+                            </button>
                         </>
                     )}
                 </div>
