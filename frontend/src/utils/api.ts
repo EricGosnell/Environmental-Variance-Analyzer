@@ -41,6 +41,7 @@ import type {
   UsersResponse,
   VerifyAndUpdateEmailRequest,
   VerifyAndUpdateEmailResponse,
+  PodLatestReadings
 } from "./apiTypes";
 
 // ----------------------------
@@ -501,6 +502,26 @@ export async function unregisterPod(payload: UnregisterPodRequest, signal?: Abor
     path: "/users/me/unregister-pod",
     body: payload,
     auth: true,
+    signal,
+  });
+}
+
+export async function getPodsLatestReadings(
+  podIds: number[],
+  signal?: AbortSignal,
+): Promise<{ pods: PodLatestReadings[] }> {
+
+  if (!podIds.length) {
+    return { pods: [] };
+  }
+
+  return await request<{ pods: PodLatestReadings[] }>({
+    method: "GET",
+    path: "/pods/latest",
+    query: {
+      ids: podIds.join(","),
+    },
+    auth: false, // optionalAuth route
     signal,
   });
 }

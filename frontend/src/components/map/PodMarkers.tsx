@@ -45,6 +45,12 @@ type PodTooltipContentProps = {
   onViewFullData: (podId: string, event: MouseEvent<HTMLButtonElement>) => void;
 };
 
+type PodMarkersProps = {
+  onPodsLoaded: (pods: PodLocation[]) => void;
+  selectedPods: string[];
+  onPodSelect: (podId: string) => void;
+};
+
 function PodTooltipContent({
   pod,
   selectedPodData,
@@ -78,7 +84,7 @@ function PodTooltipContent({
   );
 }
 
-export default function PodMarkers() {
+export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect }: PodMarkersProps) {
   const navigate = useNavigate();
   const [pods, setPods] = useState<PodLocation[]>([]);
   const abortRef = useRef<AbortController | null>(null);
@@ -102,6 +108,16 @@ export default function PodMarkers() {
         iconAnchor: [PIN_ICON_WIDTH_PX / 2, PIN_ICON_HEIGHT_PX],
       }),
     [],
+  );
+  const selectedPinIcon = useMemo(
+      () =>
+          L.divIcon({
+            className: "pod-pin-icon pod-pin-icon--selected",
+            html: '<span class="pod-pin-marker pod-pin-marker--selected" aria-hidden="true"></span>',
+            iconSize: [PIN_ICON_WIDTH_PX, PIN_ICON_HEIGHT_PX],
+            iconAnchor: [PIN_ICON_WIDTH_PX / 2, PIN_ICON_HEIGHT_PX],
+          }),
+      [],
   );
 
   const pinIconOwned = useMemo(
@@ -135,11 +151,14 @@ export default function PodMarkers() {
         },
         ac.signal,
       );
-      setPods(Array.isArray(res.pods) ? res.pods : []);
+      const loadedPods = Array.isArray(res.pods) ? res.pods : [];
+      setPods(loadedPods);
+      onPodsLoaded(loadedPods);
     } catch (err) {
       // Ignore abort errors; other errors just result in no markers.
       if ((err as any)?.name === "AbortError") return;
       setPods([]);
+      onPodsLoaded([]);
     }
   }
 
@@ -269,6 +288,7 @@ export default function PodMarkers() {
     // Prevent the map's click handler from immediately closing the tooltip.
     e?.originalEvent?.stopPropagation?.();
     lastPodClickAtRef.current = Date.now();
+    onPodSelect(p.id);
     void selectPod(p);
   }
 
@@ -281,6 +301,7 @@ export default function PodMarkers() {
     <>
       {pods.map((p) => {
         const isPin = shouldUsePinAtZoom(markerRadiusMeters, p.latitude, zoomLevel, MARKER_MIN_VISIBLE_RADIUS_PX);
+        const isSelected = selectedPods.includes(p.id);
         const tooltip = tooltipPodId === p.id ? (
           <Tooltip
             key={`tooltip-${p.id}-${zoomLevel}`}
@@ -306,7 +327,7 @@ export default function PodMarkers() {
             <Marker
               key={p.id}
               position={[p.latitude, p.longitude]}
-              icon={p.isOwner ? pinIconOwned : pinIcon}
+              icon={isSelected ? selectedPinIcon : p.isOwner ? pinIconOwned : pinIcon}
               eventHandlers={{
                 click: (e: any) => handlePodClick(p, e),
               }}
@@ -321,7 +342,13 @@ export default function PodMarkers() {
             key={p.id}
             center={[p.latitude, p.longitude]}
             radius={markerRadiusMeters}
-            pathOptions={p.isOwner ? { color: "#30A46C", weight: 2, fillOpacity: 0.5 } : { color: "red", weight: 2, fillOpacity: 0.5 }}
+            pathOptions={
+              isSelected
+                  ? { color: "#25b6eb", weight: 3, fillOpacity: 0.6 }
+                  : p.isOwner 
+                      ? { color: "#30A46C", weight: 2, fillOpacity: 0.5 } 
+                      : { color: "red", weight: 2, fillOpacity: 0.5 }
+            }
             eventHandlers={{
               click: (e: any) => handlePodClick(p, e),
             }}

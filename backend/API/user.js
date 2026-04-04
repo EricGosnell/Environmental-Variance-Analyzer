@@ -5,6 +5,7 @@ const { body, query, validationResult } = require("express-validator");
 const { sanitizeRequestBody } = require("./middleware/sanitize");
 const { authenticateToken } = require("../util/Tokens");
 const { sendEmail } = require("../util/email");
+const { buildPasswordValidator } = require("../util/passwordPolicy");
 const {
     generateVerificationCode,
     hashVerificationCode,
@@ -14,8 +15,6 @@ const {
 //CAN BE CHANGED LATER IF WE DECIDE TO - Ryan
 const MIN_USERNAME_LENGTH = 4;
 const MAX_USERNAME_LENGTH = 16;
-const MIN_PASSWORD_LENGTH = 8;
-const MAX_PASSWORD_LENGTH = 128;
 const MAX_EMAIL_LENGTH = 255;
 
 module.exports = (db) => {
@@ -380,14 +379,9 @@ module.exports = (db) => {
     // -------------------------
     router.put("/me/password", authenticateToken, sanitizeRequestBody, [
         body("oldPassword")
-            .trim()
             .notEmpty()
             .withMessage("Old password is required"),
-        body("newPassword")
-            .isLength({ min: MIN_PASSWORD_LENGTH, max: MAX_PASSWORD_LENGTH })
-            .withMessage(`Password must be between ${MIN_PASSWORD_LENGTH} and ${MAX_PASSWORD_LENGTH} characters`)
-            .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-            .withMessage("Password must contain at least one lowercase letter, one uppercase letter, and one number"),
+        buildPasswordValidator("newPassword"),
     ], async (req, res) => {
         try {
             const errors = validationResult(req);
