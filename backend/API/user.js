@@ -17,9 +17,94 @@ const MAX_USERNAME_LENGTH = 16;
 const MIN_PASSWORD_LENGTH = 8;
 const MAX_PASSWORD_LENGTH = 128;
 const MAX_EMAIL_LENGTH = 255;
+const POD_HISTORY_ACTIONS = new Set(["added", "edited", "deleted"]);
+
+const parseJsonOrNull = (value) => {
+    if (typeof value !== "string" || !value.trim()) return null;
+    try {
+        return JSON.parse(value);
+    } catch {
+        return null;
+    }
+};
+
+const asBooleanFromVisibility = (visibility) => visibility === "public";
+
+const hasNumberChanged = (fromValue, toValue) => {
+    const fromNum = Number(fromValue);
+    const toNum = Number(toValue);
+    if (!Number.isFinite(fromNum) || !Number.isFinite(toNum)) return true;
+    return fromNum !== toNum;
+};
+
+const buildEditChanges = ({ currentPod, currentLocation, updates }) => {
+    const changes = [];
+
+    if (Object.prototype.hasOwnProperty.call(updates, "nickname") && updates.nickname !== undefined) {
+        if ((currentPod?.pod_name ?? "") !== updates.nickname) {
+            changes.push({
+                field: "nickname",
+                from: currentPod?.pod_name ?? null,
+                to: updates.nickname,
+            });
+        }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(updates, "visibility") && updates.visibility !== undefined) {
+        const currentVisibility = !!currentPod?.pod_data_public ? "public" : "private";
+        if (currentVisibility !== updates.visibility) {
+            changes.push({
+                field: "visibility",
+                from: currentVisibility,
+                to: updates.visibility,
+            });
+        }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(updates, "latitude") && updates.latitude !== undefined) {
+        if (hasNumberChanged(currentLocation?.latitude, updates.latitude)) {
+            changes.push({
+                field: "latitude",
+                from: currentLocation?.latitude ?? null,
+                to: updates.latitude,
+            });
+        }
+    }
+
+    if (Object.prototype.hasOwnProperty.call(updates, "longitude") && updates.longitude !== undefined) {
+        if (hasNumberChanged(currentLocation?.longitude, updates.longitude)) {
+            changes.push({
+                field: "longitude",
+                from: currentLocation?.longitude ?? null,
+                to: updates.longitude,
+            });
+        }
+    }
+
+    return changes;
+};
 
 module.exports = (db) => {
     const router = express.Router();
+
+    const logPodAction = async ({ podId, actorUserId, actionType, actionDetails }) => {
+        if (!POD_HISTORY_ACTIONS.has(actionType)) {
+            throw new Error(`Invalid pod history action type: ${actionType}`);
+        }
+
+        await db.run(
+            `
+            INSERT INTO pod_action_history (pod_id, actor_user_id, action_type, action_details)
+            VALUES (?, ?, ?, ?)
+            `,
+            [
+                podId,
+                actorUserId,
+                actionType,
+                actionDetails ? JSON.stringify(actionDetails) : null,
+            ]
+        );
+    };
 
     // -------------------------
     // GET /me - Get current user's full information
@@ -72,6 +157,61 @@ module.exports = (db) => {
                 }
             });
 
+        } catch (error) {
+            return res.status(500).json({
+                error: "Internal server error",
+                message: error?.message,
+            });
+        }
+    });
+
+    // -------------------------
+    // GET /me/pod-history - Get pod action history for user's pods
+    // -------------------------
+    router.get("/me/pod-history", authenticateToken, async (req, res) => {
+        try {
+            const userId = req.user.id;
+
+            const rows = await db.all(
+                `
+                SELECT
+                    pah.pod_action_history_id,
+                    pah.pod_id,
+                    p.pod_name,
+                    pah.action_type,
+                    pah.action_details,
+                    pah.created_at,
+                    actor.user_id AS actor_user_id,
+                    actor.username AS actor_username
+                FROM pod_action_history pah
+                JOIN users actor ON actor.user_id = pah.actor_user_id
+                LEFT JOIN pod p ON p.pod_id = pah.pod_id
+                WHERE
+                    EXISTS (
+                        SELECT 1
+                        FROM user_pod up
+                        WHERE up.user_id = ? AND up.pod_id = pah.pod_id
+                    )
+                    OR pah.actor_user_id = ?
+                ORDER BY pah.created_at DESC, pah.pod_action_history_id DESC
+                `,
+                [userId, userId]
+            );
+
+            return res.status(200).json({
+                history: rows.map((row) => ({
+                    id: row.pod_action_history_id,
+                    podId: row.pod_id,
+                    podName: row.pod_name || `Pod ${row.pod_id}`,
+                    action: row.action_type,
+                    actionDetails: parseJsonOrNull(row.action_details),
+                    byUser: {
+                        id: row.actor_user_id,
+                        username: row.actor_username,
+                    },
+                    atTime: new Date(Number(row.created_at) * 1000).toISOString(),
+                })),
+            });
         } catch (error) {
             return res.status(500).json({
                 error: "Internal server error",
@@ -474,19 +614,12 @@ module.exports = (db) => {
     // POST /me/register-pod - Register a new pod
     // -------------------------
     router.post("/me/register-pod", authenticateToken, sanitizeRequestBody, [
-        body("podId")
-            .trim()
-            .notEmpty()
-            .isInt({ gt: 0 })
-            .withMessage("Pod ID is required"),
         body("nickname")
             .trim()
             .notEmpty()
             .withMessage("Nickname is required"),
         body("visibility")
             .trim()
-            //the readME lists this as a string, 
-            // should we use a bollean instead? - Ryan
             .isIn(["public", "private"])
             .withMessage("Visibility must be either 'public' or 'private'"),
         body("latitude")
@@ -504,24 +637,44 @@ module.exports = (db) => {
                 return res.status(400).json({ error: "One or more required parameters are invalid or missing" });
             }
 
-            const { podId, nickname, visibility, latitude, longitude } = req.body;
+            const { nickname, visibility, latitude, longitude } = req.body;
             const userId = req.user.id;
 
-            // Check if user already has this pod registered
+            // Enforce uniqueness by pod name
             const existingPod = await db.get(
-                "SELECT pod_id FROM user_pod WHERE user_id = ? AND pod_id = ?",
-                [userId, podId]
+                "SELECT pod_id FROM pod WHERE pod_name = ?",
+                [nickname]
             );
-
             if (existingPod) {
-                return res.status(409).json({ message: "Pod already registered" });
+                // Check if user is already registered to this pod
+                const userPod = await db.get(
+                    "SELECT * FROM user_pod WHERE user_id = ? AND pod_id = ?",
+                    [userId, existingPod.pod_id]
+                );
+                if (userPod) {
+                    return res.status(409).json({ error: "A pod with this name registered to you already exists." });
+                }
+                // Register user to existing pod
+                await db.run(
+                    "INSERT INTO user_pod (user_id, pod_id) VALUES (?, ?)",
+                    [userId, existingPod.pod_id]
+                );
+                // Insert pod location data if provided
+                if (latitude !== undefined && longitude !== undefined) {
+                    const today = new Date().toISOString().split('T')[0];
+                    await db.run(
+                        "INSERT INTO pod_data (pod_id, date_collected, latitude, longitude) VALUES (?, ?, ?, ?)",
+                        [existingPod.pod_id, today, latitude, longitude]
+                    );
+                }
+                return res.status(200).json({ message: "Pod registered to user successfully", podId: existingPod.pod_id });
             }
 
             //Check long and lat have required specificity, three decimals minimum
             if (latitude !== undefined) {
                 const latString = latitude.toString();
                 const latDecimals = latString.split(".")[1];
-                if (latDecimals.length < 3) {
+                if (!latDecimals || latDecimals.length < 3) {
                     return res.status(400).json({ error: "Latitude must have at least three decimal places" });
                 }
             }
@@ -529,23 +682,17 @@ module.exports = (db) => {
             if (longitude !== undefined) {
                 const lonString = longitude.toString();
                 const lonDecimals = lonString.split(".")[1];
-                if (lonDecimals.length < 3) {
+                if (!lonDecimals || lonDecimals.length < 3) {
                     return res.status(400).json({ error: "Longitude must have at least three decimal places" });
                 }
             }
 
-            // Create pod if it doesn't exist
-            const podResult = await db.get(
-                "SELECT pod_id FROM pod WHERE pod_id = ?",
-                [podId]
+            // Insert new pod and get pod_id
+            const podInsert = await db.run(
+                "INSERT INTO pod (pod_name, pod_data_public) VALUES (?, ?)",
+                [nickname, visibility === "public" ? 1 : 0]
             );
-
-            if (!podResult) {
-                await db.run(
-                    "INSERT INTO pod (pod_id, pod_name, pod_data_public) VALUES (?, ?, ?)",
-                    [podId, nickname, visibility === "public" ? 1 : 0]
-                );
-            }
+            const podId = podInsert.lastID;
 
             // Register user to pod
             await db.run(
@@ -556,14 +703,25 @@ module.exports = (db) => {
             // Insert pod location data if provided
             if (latitude !== undefined && longitude !== undefined) {
                 const today = new Date().toISOString().split('T')[0];
-
                 await db.run(
                     "INSERT INTO pod_data (pod_id, date_collected, latitude, longitude) VALUES (?, ?, ?, ?)",
                     [podId, today, latitude, longitude]
                 );
             }
 
-            return res.status(200).json({ message: "Pod registered successfully" });
+            await logPodAction({
+                podId,
+                actorUserId: userId,
+                actionType: "added",
+                actionDetails: {
+                    nickname,
+                    visibility,
+                    latitude: latitude ?? null,
+                    longitude: longitude ?? null,
+                },
+            });
+
+            return res.status(200).json({ message: "Pod registered successfully", podId });
         } catch (error) {
             return res.status(500).json({
                 error: "Internal server error",
@@ -606,6 +764,22 @@ module.exports = (db) => {
 
             const { podId, nickname, visibility, latitude, longitude } = req.body;
             const userId = req.user.id;
+
+            const existingPod = await db.get(
+                "SELECT pod_id, pod_name, pod_data_public FROM pod WHERE pod_id = ?",
+                [podId]
+            );
+
+            const existingLatestPodData = await db.get(
+                `
+                SELECT latitude, longitude
+                FROM pod_data
+                WHERE pod_id = ?
+                ORDER BY datetime(created_at) DESC, pod_data_id DESC
+                LIMIT 1
+                `,
+                [podId]
+            );
 
             // Check if user has this pod registered
             const userPod = await db.get(
@@ -679,6 +853,21 @@ module.exports = (db) => {
                 }
             }
 
+            const editChanges = buildEditChanges({
+                currentPod: existingPod,
+                currentLocation: existingLatestPodData,
+                updates: { nickname, visibility, latitude, longitude },
+            });
+
+            await logPodAction({
+                podId,
+                actorUserId: userId,
+                actionType: "edited",
+                actionDetails: {
+                    changes: editChanges,
+                },
+            });
+
             return res.status(200).json({ message: "Pod updated successfully" });
         } catch (error) {
             return res.status(500).json({
@@ -706,6 +895,22 @@ module.exports = (db) => {
             const { podId } = req.body;
             const userId = req.user.id;
 
+            const existingPod = await db.get(
+                "SELECT pod_id, pod_name, pod_data_public FROM pod WHERE pod_id = ?",
+                [podId]
+            );
+
+            const existingLatestPodData = await db.get(
+                `
+                SELECT latitude, longitude
+                FROM pod_data
+                WHERE pod_id = ?
+                ORDER BY datetime(created_at) DESC, pod_data_id DESC
+                LIMIT 1
+                `,
+                [podId]
+            );
+
             // Check if user has this pod registered
             const userPod = await db.get(
                 "SELECT pod_id FROM user_pod WHERE user_id = ? AND pod_id = ?",
@@ -721,6 +926,18 @@ module.exports = (db) => {
                 "DELETE FROM user_pod WHERE user_id = ? AND pod_id = ?",
                 [userId, podId]
             );
+
+            await logPodAction({
+                podId,
+                actorUserId: userId,
+                actionType: "deleted",
+                actionDetails: {
+                    nickname: existingPod?.pod_name ?? null,
+                    visibility: existingPod ? (existingPod.pod_data_public ? "public" : "private") : null,
+                    latitude: existingLatestPodData?.latitude ?? null,
+                    longitude: existingLatestPodData?.longitude ?? null,
+                },
+            });
 
             return res.status(200).json({ message: "Pod unregistered successfully" });
         } catch (error) {
