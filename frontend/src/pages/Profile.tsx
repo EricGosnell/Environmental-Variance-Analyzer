@@ -1,10 +1,10 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import "../styles/Profile.css";
-import { getMe, registerPod, updatePod, unregisterPod } from "../utils/api";
+import { getMe, getMyPodHistory, registerPod, updatePod, unregisterPod } from "../utils/api";
 import { updateMyUsername, verifyAndUpdateEmail, requestEmailChange } from "../utils/api";
 import { authForgotPassword, authResetPassword } from "../utils/api";
-import type { User, UserPod } from "../utils/apiTypes";
+import type { PodActionHistoryEntry, User, UserPod } from "../utils/apiTypes";
 import "../styles/ManagePods.css";
 
 const PASSWORD_REQUIREMENTS_MESSAGE = "Password must be 8-128 characters and include at least one lowercase letter, one uppercase letter, and one number.";
@@ -22,6 +22,26 @@ function maskEmailForLog(email: string): string {
 
 function generateTraceId(prefix = "email-change"): string {
 	return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function formatHistoryValue(value: string | number | null | undefined): string {
+	if (value === null || value === undefined) return "none";
+	if (typeof value === "number") return String(value);
+	if (!String(value).trim()) return "none";
+	return String(value);
+}
+
+function formatHistoryFieldLabel(field: "nickname" | "visibility" | "latitude" | "longitude"): string {
+	if (field === "nickname") return "Nickname";
+	if (field === "visibility") return "Visibility";
+	if (field === "latitude") return "Latitude";
+	return "Longitude";
+}
+
+function formatActionTypeLabel(action: "added" | "edited" | "deleted"): string {
+	if (action === "added") return "Added";
+	if (action === "deleted") return "Deleted";
+	return "Edited";
 }
 
 type VerificationModalState = {
@@ -74,6 +94,29 @@ const Profile: React.FC = () => {
 	const [showEditConfirm, setShowEditConfirm] = useState<boolean>(false);
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState<number | null>(null);
 	const [activeTab, setActiveTab] = useState("managePods");
+	const [podHistory, setPodHistory] = useState<PodActionHistoryEntry[]>([]);
+	const [historyLoading, setHistoryLoading] = useState(false);
+	const [historyError, setHistoryError] = useState("");
+	const [selectedHistoryEntry, setSelectedHistoryEntry] = useState<PodActionHistoryEntry | null>(null);
+
+	async function loadPodHistory() {
+		setHistoryLoading(true);
+		setHistoryError("");
+
+		try {
+			const response = await getMyPodHistory();
+			const orderedHistory = [...(response.history || [])].sort((a, b) => {
+				const aTime = new Date(a.atTime).getTime();
+				const bTime = new Date(b.atTime).getTime();
+				return bTime - aTime;
+			});
+			setPodHistory(orderedHistory);
+		} catch (err: any) {
+			setHistoryError(err?.message || "Failed to load pod history.");
+		} finally {
+			setHistoryLoading(false);
+		}
+	}
 
 		useEffect(() => {
 			getMe()
@@ -88,6 +131,7 @@ const Profile: React.FC = () => {
 				})
 				.catch(() => setMessage("Failed to load user info."))
 				.finally(() => setLoading(false));
+			void loadPodHistory();
 		}, []);
 
 		const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -387,7 +431,7 @@ const Profile: React.FC = () => {
 		}
 		try {
 			await registerPod({
-				podId: '', // not needed for new pod
+				//podId: '', // no longer needed for new pod
 				nickname: newPod.nickname,
 				visibility: newPod.visibility as 'public' | 'private',
 				latitude: Number(newPod.latitude),
@@ -411,6 +455,7 @@ const Profile: React.FC = () => {
 			} : u);
 			// Optionally, refresh from server in background
 			getMe().then(res => setUser(res.user));
+			void loadPodHistory();
 		} catch (err: any) {
 			if (err?.response && err.response?.error) {
 				setError(`Failed to add pod: ${err.response.error}`);
@@ -442,6 +487,7 @@ const Profile: React.FC = () => {
 			} : u);
 			// Optionally, refresh from server in background
 			getMe().then(res => setUser(res.user));
+			void loadPodHistory();
 		} catch (err: any) {
 			if (err?.response && err.response?.error) {
 				setError(`Failed to delete pod: ${err.response.error}`);
@@ -518,6 +564,7 @@ const Profile: React.FC = () => {
 			setShowEditConfirm(false);
 			// Optionally, refresh from server in background
 			getMe().then(res => setUser(res.user));
+			void loadPodHistory();
 		} catch (err: any) {
 			if (err?.response && err.response?.error) {
 				setError(`Failed to update pod: ${err.response.error}`);
@@ -534,9 +581,20 @@ const Profile: React.FC = () => {
 	// Sidebar tab definitions
 	const tabs = [
 		{ key: "managePods", label: "Manage Pods" },
+		{ key: "history", label: "History" },
 		{ key: "Connections", label: "Connections" },
 		{ key: "settings", label: "Settings" }
 	];
+
+	const selectedHistoryChanges = selectedHistoryEntry?.actionDetails?.changes ?? [];
+	const selectedHistoryFlatDetails = selectedHistoryEntry?.actionDetails
+		? [
+			{ label: "Nickname", value: selectedHistoryEntry.actionDetails.nickname },
+			{ label: "Visibility", value: selectedHistoryEntry.actionDetails.visibility },
+			{ label: "Latitude", value: selectedHistoryEntry.actionDetails.latitude },
+			{ label: "Longitude", value: selectedHistoryEntry.actionDetails.longitude },
+		]
+		: [];
 
 	return (
 		<div
@@ -779,6 +837,50 @@ const Profile: React.FC = () => {
 								)}
 							</div>
 						)}
+						{activeTab === "history" && (
+							<div className="manage-pods-container" style={{ width: "100%", background: "#204835", borderRadius: 16, boxShadow: "0 2px 12px rgba(0,0,0,0.08)", padding: "24px 16px", color: "#fff", marginLeft: 0, boxSizing: "border-box" }}>
+								<h3 style={{ marginBottom: 24 }}>Pod Action History</h3>
+								{historyLoading ? (
+									<div>Loading history...</div>
+								) : historyError ? (
+									<div className="error">{historyError}</div>
+								) : (
+									<table className="pods-table" style={{ width: "100%", borderCollapse: "collapse" }}>
+										<thead>
+											<tr>
+												<th>POD</th>
+												<th>ACTION</th>
+												<th>by USER</th>
+												<th>TIME</th>
+											</tr>
+										</thead>
+										<tbody>
+											{podHistory.length > 0 ? (
+												podHistory.map((entry) => (
+													<tr key={entry.id}>
+														<td>{entry.podName} ({entry.podId})</td>
+														<td>
+															<button
+																type="button"
+																className="btn"
+																style={{ padding: "6px 12px", fontSize: "0.9rem" }}
+																onClick={() => setSelectedHistoryEntry(entry)}
+															>
+																View Details
+															</button>
+														</td>
+														<td>{entry.byUser.username}</td>
+														<td>{new Date(entry.atTime).toLocaleString()}</td>
+													</tr>
+												))
+											) : (
+												<tr><td colSpan={4}>No pod actions recorded yet.</td></tr>
+											)}
+										</tbody>
+									</table>
+								)}
+							</div>
+						)}
 						{activeTab === "Connections" && (
 							<div style={{ width: "100%", background: "#204835", borderRadius: 16, padding: "16px 20px", color: "#fff", boxSizing: "border-box" }}>
 								<h3>Tab for inviting collaborators or organizations/receiving invitations</h3>
@@ -885,6 +987,80 @@ const Profile: React.FC = () => {
 											</div>
 										</form>
 									)}
+								</div>
+							</div>
+						)}
+						{selectedHistoryEntry && (
+							<div className="modal">
+								<div className="pod-form" style={{ maxWidth: 700, width: "100%" }}>
+									<h3 style={{ marginBottom: 14 }}>{formatActionTypeLabel(selectedHistoryEntry.action)}</h3>
+									{selectedHistoryEntry.action === "edited" ? (
+										selectedHistoryChanges.length > 0 ? (
+										<table className="pods-table" style={{ width: "100%", borderCollapse: "collapse", marginBottom: 14 }}>
+											<thead>
+												<tr>
+													<th>FIELD</th>
+													<th>FROM</th>
+													<th>TO</th>
+												</tr>
+											</thead>
+											<tbody>
+												{selectedHistoryChanges.map((change, index) => (
+													<tr key={`${change.field}-${index}`}>
+														<td>{formatHistoryFieldLabel(change.field)}</td>
+														<td>{formatHistoryValue(change.from)}</td>
+														<td>{formatHistoryValue(change.to)}</td>
+													</tr>
+												))}
+											</tbody>
+										</table>
+										) : (
+										<p style={{ marginBottom: 14 }}>No detailed edit changes were recorded for this event.</p>
+										)
+									) : selectedHistoryEntry.action === "added" ? (
+										<>
+											<table className="pods-table" style={{ width: "100%", borderCollapse: "collapse", marginBottom: 14 }}>
+												<thead>
+													<tr>
+														<th>FIELD</th>
+														<th>VALUE</th>
+													</tr>
+												</thead>
+												<tbody>
+													{selectedHistoryFlatDetails.map((detail) => (
+														<tr key={detail.label}>
+															<td>{detail.label}</td>
+															<td>{formatHistoryValue(detail.value as string | number | null | undefined)}</td>
+														</tr>
+													))}
+												</tbody>
+											</table>
+										</>
+									) : (
+										<>
+											<table className="pods-table" style={{ width: "100%", borderCollapse: "collapse", marginBottom: 14 }}>
+												<thead>
+													<tr>
+														<th>FIELD</th>
+														<th>VALUE</th>
+													</tr>
+												</thead>
+												<tbody>
+													{selectedHistoryFlatDetails.map((detail) => (
+														<tr key={detail.label}>
+															<td>{detail.label}</td>
+															<td>{formatHistoryValue(detail.value as string | number | null | undefined)}</td>
+														</tr>
+													))}
+												</tbody>
+											</table>
+										</>
+									)}
+									<div className="form-actions">
+										<button type="button" className="primary-btn" onClick={() => setSelectedHistoryEntry(null)}>
+											Close
+										</button>
+									</div>
 								</div>
 							</div>
 						)}
