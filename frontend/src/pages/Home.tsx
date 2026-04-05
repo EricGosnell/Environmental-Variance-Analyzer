@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import MapView from "../components/Map.tsx";
+import { useNavigate } from "react-router-dom";
 
 import { getMe, getMeSilent } from "../utils/api.ts";
 import type { User } from "../utils/apiTypes.ts";
@@ -18,6 +19,8 @@ export default function Home() {
     const emailParam = searchParams.get("email") ?? "";
     const verifiedParam = searchParams.get("verified");
     const authPanelKey = authParam === "login" ? `login:${emailParam}` : "default";
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (verifiedParam !== "1") return;
@@ -57,6 +60,10 @@ export default function Home() {
         return () => ac.abort();
     }, []);
 
+    function handleManagePods() {
+		navigate(`/profile`);
+	}
+
     return (
         <div className="homepage-container">
             <div className={`controls-container ${isAuthenticated === false ? "controls-container--unauthenticated" : ""}`}>
@@ -76,7 +83,7 @@ export default function Home() {
                         )}
                         <button className="btn primary-btn" disabled={(user.pods?.length ?? 0) === 0}>Upload EVA Data</button>
                         <br />
-                        <button className="btn secondary-btn">Manage EVA Pods</button>
+                        <button className="btn secondary-btn" onClick={() => handleManagePods()}>Manage EVA Pods</button>
 
                         <div className="filters-container">
                             <p>Filters</p>
