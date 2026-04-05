@@ -23,6 +23,7 @@ import type {
   DeletePodDataResponse,
   MessageResponse,
   PodDataResponse,
+  PodActionHistoryResponse,
   GetPodLocationsRequest,
   PodLocationsResponse,
   RegisterPodRequest,
@@ -523,6 +524,15 @@ export async function unregisterPod(payload: UnregisterPodRequest, signal?: Abor
     method: "DELETE",
     path: "/users/me/unregister-pod",
     body: payload,
+    auth: true,
+    signal,
+  });
+}
+
+export async function getMyPodHistory(signal?: AbortSignal): Promise<PodActionHistoryResponse> {
+  return await request<PodActionHistoryResponse>({
+    method: "GET",
+    path: "/users/me/pod-history",
     auth: true,
     signal,
   });

@@ -87,8 +87,8 @@ export type AuthRegisterRequest = { email: string; password: string; username: s
 export type AuthRegisterResponse = { user: User; message: string };
 
 export type AuthLogoutRequest = { refreshToken: string };
-export type AuthForgotPasswordRequest = { email: string };
-export type AuthResetPasswordRequest = { email: string; newPassword: string; token: string };
+export type AuthForgotPasswordRequest = { email: string; traceId?: string };
+export type AuthResetPasswordRequest = { email: string; newPassword: string; token: string; traceId?: string };
 
 // ----------------------------
 // User Management
@@ -120,6 +120,35 @@ export type UpdatePodRequest = {
 };
 
 export type UnregisterPodRequest = { podId: string };
+
+export type PodActionHistoryChange = {
+  field: "nickname" | "visibility" | "latitude" | "longitude";
+  from: string | number | null;
+  to: string | number | null;
+};
+
+export type PodActionHistoryEntry = {
+  id: number;
+  podId: number;
+  podName: string;
+  action: "added" | "edited" | "deleted";
+  actionDetails: {
+    changes?: PodActionHistoryChange[];
+    nickname?: string;
+    visibility?: "public" | "private";
+    latitude?: number | null;
+    longitude?: number | null;
+  } | null;
+  byUser: {
+    id: number;
+    username: string;
+  };
+  atTime: string;
+};
+
+export type PodActionHistoryResponse = {
+  history: PodActionHistoryEntry[];
+};
 
 // ----------------------------
 // Admin
