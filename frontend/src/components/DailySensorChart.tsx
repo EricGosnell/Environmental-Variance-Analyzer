@@ -50,10 +50,28 @@ export default function DailySensorChart({ data, sensorType, day }: Props) {
     return entry?.data?.reading_units || "";
   }, [data, sensorType]);
 
+  const isSinglePoint = chartData !== null && chartData.values.length === 1;
+
   if (!chartData) {
     return (
-      <div className="pod-chart pod-chart--empty">
+      <div className="pod-chart--empty">
         No data available for selected sensor on this day.
+      </div>
+    );
+  }
+
+  if (isSinglePoint) {
+    const time = chartData.times[0];
+    const value = chartData.values[0];
+    return (
+      <div className="single-point-card">
+        <div className="single-point-time">{time}:</div>
+        <div className="single-point-value">
+          {value}{units ? ` ${units}` : ""}
+        </div>
+        <div className="single-point-disclaimer">
+          Only 1 data point available for this day. A trend chart will appear once more readings are collected.
+        </div>
       </div>
     );
   }
