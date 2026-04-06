@@ -27,6 +27,7 @@ export default function Home() {
         customTo: "",
         sensorTypes: [],
         ownerFilter: "all",
+        nameSearch: "",
     });
     const [availableSensorTypes, setAvailableSensorTypes] = useState<string[]>([]);
     const mapRef = useRef<any>(null);
@@ -194,6 +195,7 @@ export default function Home() {
                         toDate={toDate}
                         sensorTypes={filters.sensorTypes}
                         ownerFilter={filters.ownerFilter}
+                        nameSearch={filters.nameSearch}
                     />
                 </div>
 

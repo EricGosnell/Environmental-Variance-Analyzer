@@ -11,6 +11,7 @@ export interface FiltersState {
     customTo: string;
     sensorTypes: string[];
     ownerFilter: OwnerFilter;
+    nameSearch: string;
 }
 
 export function uploadTimeframeToFromDate(filters: FiltersState): string | undefined {
@@ -36,7 +37,7 @@ interface FiltersProps {
 }
 
 export default function Filters({ filters, onChange, availableSensorTypes, isAuthenticated }: FiltersProps) {
-    const { uploadTimeframe, customFrom, customTo, sensorTypes, ownerFilter } = filters;
+    const { uploadTimeframe, customFrom, customTo, sensorTypes, ownerFilter, nameSearch } = filters;
     const [sensorDropdownOpen, setSensorDropdownOpen] = useState(false);
 
     const setUploadTimeframe = (value: UploadTimeframe) =>
@@ -60,6 +61,17 @@ export default function Filters({ filters, onChange, availableSensorTypes, isAut
     return (
         <div className="filters-container">
             <p className="filters-heading">Filters</p>
+
+            <div className="filter-group">
+                <p className="filter-group-label">Pod Name</p>
+                <input
+                    type="text"
+                    className={`filter-text-input ${nameSearch ? "active" : ""}`}
+                    placeholder="Search by name…"
+                    value={nameSearch}
+                    onChange={(e) => onChange({ ...filters, nameSearch: e.target.value })}
+                />
+            </div>
 
             {isAuthenticated && (
                 <div className="filter-group">

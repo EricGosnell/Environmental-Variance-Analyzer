@@ -53,6 +53,7 @@ type PodMarkersProps = {
   toDate?: string;
   sensorTypes: string[];
   ownerFilter: "all" | "owned";
+  nameSearch: string;
 };
 
 function PodTooltipContent({
@@ -88,7 +89,7 @@ function PodTooltipContent({
   );
 }
 
-export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fromDate, toDate, sensorTypes, ownerFilter }: PodMarkersProps) {
+export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fromDate, toDate, sensorTypes, ownerFilter, nameSearch }: PodMarkersProps) {
   const navigate = useNavigate();
   const [pods, setPods] = useState<PodLocation[]>([]);
   const abortRef = useRef<AbortController | null>(null);
@@ -238,6 +239,14 @@ export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fr
     void fetchPods(map as unknown as MapLike);
   }, [fromDate, toDate, sensorTypes, ownerFilter]);
 
+  const visiblePods = nameSearch.trim()
+      ? pods.filter((p) => (p.nickname ?? p.id).toLowerCase().includes(nameSearch.trim().toLowerCase()))
+      : pods;
+
+  useEffect(() => {
+    onPodsLoaded(visiblePods);
+  }, [visiblePods]);
+
   function closeTooltip() {
     if (!tooltipPodId) return;
     setTooltipVisible(false);
@@ -340,7 +349,7 @@ export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fr
 
   return (
       <>
-        {pods.map((p) => {
+        {visiblePods.map((p) => {
           const isPin = shouldUsePinAtZoom(markerRadiusMeters, p.latitude, zoomLevel, MARKER_MIN_VISIBLE_RADIUS_PX);
           const isSelected = selectedPods.includes(p.id);
           const tooltip = tooltipPodId === p.id ? (

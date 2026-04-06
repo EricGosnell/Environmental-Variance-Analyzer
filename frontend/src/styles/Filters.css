@@ -57,6 +57,32 @@
     opacity: 1;
 }
 
+.filter-text-input {
+    background: transparent;
+    border: 1px solid var(--primary-green);
+    border-radius: 8px;
+    color: #fff;
+    font-size: 0.85rem;
+    padding: 7px 10px;
+    width: 100%;
+    box-sizing: border-box;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.filter-text-input::placeholder {
+    color: rgba(255, 255, 255, 0.4);
+}
+
+.filter-text-input:focus {
+    outline: none;
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.filter-text-input.active {
+    background: rgba(255, 255, 255, 0.08);
+    border-color: rgba(255, 255, 255, 0.8);
+}
+
 .filter-date-range {
     display: flex;
     gap: 10px;
