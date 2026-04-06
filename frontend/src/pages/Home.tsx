@@ -26,6 +26,7 @@ export default function Home() {
         customFrom: "",
         customTo: "",
         sensorTypes: [],
+        ownerFilter: "all",
     });
     const [availableSensorTypes, setAvailableSensorTypes] = useState<string[]>([]);
     const mapRef = useRef<any>(null);
@@ -176,6 +177,7 @@ export default function Home() {
                     filters={filters}
                     onChange={setFilters}
                     availableSensorTypes={availableSensorTypes}
+                    isAuthenticated={isAuthenticated}
                 />
             </div>
 
@@ -191,6 +193,7 @@ export default function Home() {
                         fromDate={fromDate}
                         toDate={toDate}
                         sensorTypes={filters.sensorTypes}
+                        ownerFilter={filters.ownerFilter}
                     />
                 </div>
 

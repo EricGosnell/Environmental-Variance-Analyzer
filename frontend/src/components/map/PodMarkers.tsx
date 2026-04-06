@@ -52,6 +52,7 @@ type PodMarkersProps = {
   fromDate?: string;
   toDate?: string;
   sensorTypes: string[];
+  ownerFilter: "all" | "owned";
 };
 
 function PodTooltipContent({
@@ -87,7 +88,7 @@ function PodTooltipContent({
   );
 }
 
-export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fromDate, toDate, sensorTypes }: PodMarkersProps) {
+export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fromDate, toDate, sensorTypes, ownerFilter }: PodMarkersProps) {
   const navigate = useNavigate();
   const [pods, setPods] = useState<PodLocation[]>([]);
   const abortRef = useRef<AbortController | null>(null);
@@ -100,6 +101,8 @@ export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fr
   toDateRef.current = toDate;
   const sensorTypesRef = useRef<string[]>(sensorTypes);
   sensorTypesRef.current = sensorTypes;
+  const ownerFilterRef = useRef<"all" | "owned">(ownerFilter);
+  ownerFilterRef.current = ownerFilter;
 
   const [selectedPodData, setSelectedPodData] = useState<unknown[] | null>(null);
   const [selectedPodDataLoading, setSelectedPodDataLoading] = useState(false);
@@ -150,7 +153,7 @@ export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fr
     const size = map.getSize();
 
     const radius = radiusFromViewportMeters(center.lat, zoom, size.x, size.y);
-    
+
     try {
       const res = await getPodLocations(
           {
@@ -163,6 +166,10 @@ export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fr
           ac.signal,
       );
       let loadedPods = Array.isArray(res.pods) ? res.pods : [];
+
+      if (ownerFilterRef.current === "owned") {
+        loadedPods = loadedPods.filter((p) => p.isOwner);
+      }
 
       if (sensorTypesRef.current.length > 0 && loadedPods.length > 0) {
         const ids = loadedPods.map((p) => Number(p.id));
@@ -229,7 +236,7 @@ export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fr
 
   useEffect(() => {
     void fetchPods(map as unknown as MapLike);
-  }, [fromDate, toDate, sensorTypes]);
+  }, [fromDate, toDate, sensorTypes, ownerFilter]);
 
   function closeTooltip() {
     if (!tooltipPodId) return;

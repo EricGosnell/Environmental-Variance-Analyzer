@@ -31,6 +31,7 @@ type MapViewProps = {
     fromDate?: string;
     toDate?: string;
     sensorTypes: string[];
+    ownerFilter: "all" | "owned";
 };
 
 function readSavedMapView(): StoredMapView | null {
@@ -100,7 +101,7 @@ function PersistMapView() {
     return null;
 }
 
-export default function MapView({ mapRef, onVisiblePodsChange, selectedPods, onPodSelect, isAuthenticated, fromDate, toDate, sensorTypes }: MapViewProps) {
+export default function MapView({ mapRef, onVisiblePodsChange, selectedPods, onPodSelect, isAuthenticated, fromDate, toDate, sensorTypes, ownerFilter }: MapViewProps) {
     const savedView = readSavedMapView();
     const savedBaseLayer = readSavedBaseLayer();
     const initialCenter: [number, number] = savedView ? [savedView.lat, savedView.lng] : DEFAULT_CENTER;
@@ -134,7 +135,7 @@ export default function MapView({ mapRef, onVisiblePodsChange, selectedPods, onP
                 </LayersControlAny.BaseLayer>
             </LayersControlAny>
 
-            <PodMarkers onPodsLoaded={onVisiblePodsChange} selectedPods={selectedPods} onPodSelect={onPodSelect} fromDate={fromDate} toDate={toDate} sensorTypes={sensorTypes} />
+            <PodMarkers onPodsLoaded={onVisiblePodsChange} selectedPods={selectedPods} onPodSelect={onPodSelect} fromDate={fromDate} toDate={toDate} sensorTypes={sensorTypes} ownerFilter={ownerFilter} />
             <Controls isAuthenticated={isAuthenticated} />
             <PersistMapView />
         </MapContainerAny>

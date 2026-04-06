@@ -3,11 +3,14 @@ import "../styles/Filters.css";
 
 export type UploadTimeframe = "24h" | "7d" | "30d" | "any";
 
+export type OwnerFilter = "all" | "owned";
+
 export interface FiltersState {
     uploadTimeframe: UploadTimeframe;
     customFrom: string;
     customTo: string;
     sensorTypes: string[];
+    ownerFilter: OwnerFilter;
 }
 
 export function uploadTimeframeToFromDate(filters: FiltersState): string | undefined {
@@ -29,10 +32,11 @@ interface FiltersProps {
     filters: FiltersState;
     onChange: (filters: FiltersState) => void;
     availableSensorTypes: string[];
+    isAuthenticated: boolean | null;
 }
 
-export default function Filters({ filters, onChange, availableSensorTypes }: FiltersProps) {
-    const { uploadTimeframe, customFrom, customTo, sensorTypes } = filters;
+export default function Filters({ filters, onChange, availableSensorTypes, isAuthenticated }: FiltersProps) {
+    const { uploadTimeframe, customFrom, customTo, sensorTypes, ownerFilter } = filters;
     const [sensorDropdownOpen, setSensorDropdownOpen] = useState(false);
 
     const setUploadTimeframe = (value: UploadTimeframe) =>
@@ -56,6 +60,22 @@ export default function Filters({ filters, onChange, availableSensorTypes }: Fil
     return (
         <div className="filters-container">
             <p className="filters-heading">Filters</p>
+
+            {isAuthenticated && (
+                <div className="filter-group">
+                    <p className="filter-group-label">Pod Ownership</p>
+                    <div className="filter-chip-row">
+                        <button
+                            className={`filter-chip ${ownerFilter === "all" ? "active" : ""}`}
+                            onClick={() => onChange({ ...filters, ownerFilter: "all" })}
+                        >All</button>
+                        <button
+                            className={`filter-chip ${ownerFilter === "owned" ? "active" : ""}`}
+                            onClick={() => onChange({ ...filters, ownerFilter: "owned" })}
+                        >My Pods</button>
+                    </div>
+                </div>
+            )}
 
             <div className="filter-group">
                 <p className="filter-group-label">Last Upload</p>
