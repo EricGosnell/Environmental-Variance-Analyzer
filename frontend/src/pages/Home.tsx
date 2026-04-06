@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import MapView from "../components/Map.tsx";
 import PodTable from "../components/PodTable.tsx";
@@ -7,6 +7,9 @@ import { getMe, getMeSilent } from "../utils/api.ts";
 import type { User } from "../utils/apiTypes.ts";
 import type { PodLocation } from "../utils/apiTypes.ts";
 import AuthPanel from "../components/AuthPanel.tsx";
+import Filters from "../components/Filters.tsx";
+import type { FiltersState } from "../components/Filters.tsx";
+import { uploadTimeframeToFromDate } from "../components/Filters.tsx";
 
 import "../styles/Home.css";
 
@@ -18,6 +21,9 @@ export default function Home() {
     const [podTableHeight, setPodTableHeight] = useState(33);
     const [visiblePods, setVisiblePods] = useState<PodLocation[]>([]);
     const [selectedPods, setSelectedPods] = useState<string[]>([]);
+    const [filters, setFilters] = useState<FiltersState>({
+        uploadTimeframe: "any",
+    });
     const mapRef = useRef<any>(null);
     const [showVerifiedBanner, setShowVerifiedBanner] = useState(false);
 
@@ -64,6 +70,20 @@ export default function Home() {
         return () => ac.abort();
     }, []);
 
+    const handleVisiblePodsChange = useCallback((pods: PodLocation[]) => {
+        setVisiblePods((prev) => {
+            const prevIds = prev.map((p) => p.id).join(",");
+            const nextIds = pods.map((p) => p.id).join(",");
+            return prevIds === nextIds ? prev : pods;
+        });
+    }, []);
+
+    const handlePodSelect = useCallback((podId: string) => {
+        setSelectedPods((prev) =>
+            prev.includes(podId) ? prev.filter((p) => p !== podId) : [...prev, podId]
+        );
+    }, []);
+
     const handleZoomTo = (pods: { lat: number; lon: number }[]) => {
         if (!mapRef.current || pods.length === 0) return;
         const L = (window as any).L;
@@ -77,63 +97,67 @@ export default function Home() {
         }
     };
 
+    const fromDate = uploadTimeframeToFromDate(filters.uploadTimeframe);
+
     return (
         <div className="homepage-container">
-            <div className={`controls-container ${isAuthenticated === false ? "controls-container--unauthenticated" : ""}`}>
-                {showVerifiedBanner && (
-                    <div className="home-info-banner" role="status">
-                        <p>Email verified. Please log in to continue.</p>
-                        <button type="button" className="home-info-banner-dismiss" onClick={() => setShowVerifiedBanner(false)}>
-                            Dismiss
-                        </button>
-                    </div>
-                )}
-
-                {isAuthenticated && user ? (
-                    <>
-                        {(user.pods?.length ?? 0) === 0 && (
-                            <div className="warning-message"><p>You currently have no pods registered. Register a pod to upload data.</p></div>
-                        )}
-                        <button className="btn primary-btn" disabled={(user.pods?.length ?? 0) === 0}>Upload EVA Data</button>
-                        <br />
-                        <button className="btn secondary-btn">Manage EVA Pods</button>
-
-                        <div className="filters-container">
-                            <p>Filters</p>
+            <div className="sidebar">
+                <div className={`controls-container ${isAuthenticated === false ? "controls-container--unauthenticated" : ""}`}>
+                    {showVerifiedBanner && (
+                        <div className="home-info-banner" role="status">
+                            <p>Email verified. Please log in to continue.</p>
+                            <button type="button" className="home-info-banner-dismiss" onClick={() => setShowVerifiedBanner(false)}>
+                                Dismiss
+                            </button>
                         </div>
-                    </>
-                ) : null}
+                    )}
 
-                {isAuthenticated === false ? (
-                    <AuthPanel
-                        key={authPanelKey}
-                        initialMode={authParam === "login" ? "login" : undefined}
-                        initialLoginEmail={authParam === "login" ? emailParam : undefined}
-                        onAuthSuccess={async () => {
-                            try {
-                                const profile = await getMe();
-                                setUser(profile.user);
-                                setIsAuthenticated(true);
-                                window.dispatchEvent(new Event("eva.login"));
-                            } catch {
-                                setUser(null);
-                                setIsAuthenticated(false);
-                            }
-                        }}
-                    />
-                ) : null}
+                    {isAuthenticated && user ? (
+                        <>
+                            {(user.pods?.length ?? 0) === 0 && (
+                                <div className="warning-message"><p>You currently have no pods registered. Register a pod to upload data.</p></div>
+                            )}
+                            <button className="btn primary-btn" disabled={(user.pods?.length ?? 0) === 0}>Upload EVA Data</button>
+                            <br />
+                            <button className="btn secondary-btn">Manage EVA Pods</button>
+                        </>
+                    ) : null}
+
+                    {isAuthenticated === false ? (
+                        <AuthPanel
+                            key={authPanelKey}
+                            initialMode={authParam === "login" ? "login" : undefined}
+                            initialLoginEmail={authParam === "login" ? emailParam : undefined}
+                            onAuthSuccess={async () => {
+                                try {
+                                    const profile = await getMe();
+                                    setUser(profile.user);
+                                    setIsAuthenticated(true);
+                                    window.dispatchEvent(new Event("eva.login"));
+                                } catch {
+                                    setUser(null);
+                                    setIsAuthenticated(false);
+                                }
+                            }}
+                        />
+                    ) : null}
+                </div>
+                <Filters
+                    filters={filters}
+                    onChange={setFilters}
+                />
             </div>
+
 
             <div className="map-container">
                 <div className="map-content" style={{flex: isPodTableOpen ? `0 0 ${100 - podTableHeight}%` : '1'}}>
                     <MapView
                         mapRef={mapRef}
-                        onVisiblePodsChange={setVisiblePods}
+                        onVisiblePodsChange={handleVisiblePodsChange}
                         selectedPods={selectedPods}
-                        onPodSelect={(podId) => setSelectedPods((prev) =>
-                            prev.includes(podId) ? prev.filter((p) => p !== podId) : [...prev, podId]
-                        )}
+                        onPodSelect={handlePodSelect}
                         isAuthenticated={isAuthenticated}
+                        fromDate={fromDate}
                     />
                 </div>
 

@@ -6,17 +6,23 @@
     min-height: 80vh;
 }
 
+.sidebar {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: 25%;
+}
+
 .controls-container {
     background-color: var(--secondary-green);
     padding: 24px 32px;
     border-radius: 16px;
-    width: 20%;
     color: #ffffff;
 }
 
-.controls-container.controls-container--unauthenticated {
-    width: 20%;
-}
+/*.controls-container.controls-container--unauthenticated {*/
+/*    width: 20%;*/
+/*}*/
 
 .controls-container .btn {
     width: 100%;
@@ -26,7 +32,7 @@
     background: #555;
     border-radius: 16px;
     overflow: hidden;
-    width: 75%;
+    flex: 1;
     color: white;
     position: relative;
     display: flex;
@@ -38,6 +44,8 @@
     width: 100%;
     flex: 1;
     position: relative;
+}
+
 .home-info-banner {
     display: flex;
     align-items: center;
