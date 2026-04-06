@@ -3,14 +3,16 @@
     justify-content: center;
     gap: 24px;
     margin: 32px 40px;
-    min-height: 80vh;
+    height: calc(100vh - 150px);
 }
 
 .sidebar {
     display: flex;
     flex-direction: column;
     gap: 24px;
-    width: 25%;
+    width: 24%;
+    min-height: 0;
+    overflow: hidden;
 }
 
 .controls-container {
@@ -37,7 +39,6 @@
     position: relative;
     display: flex;
     flex-direction: column;
-    min-height: 600px;
 }
 
 .map-content {
