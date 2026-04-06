@@ -187,6 +187,7 @@ export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fr
           });
         } catch (err) {
           if ((err as any)?.name === "AbortError") return;
+          loadedPods = [];
         }
       }
 
