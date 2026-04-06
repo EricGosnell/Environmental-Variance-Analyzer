@@ -191,12 +191,10 @@ export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fr
       }
 
       setPods(loadedPods);
-      onPodsLoaded(loadedPods);
     } catch (err) {
       // Ignore abort errors; other errors just result in no markers.
       if ((err as any)?.name === "AbortError") return;
       setPods([]);
-      onPodsLoaded([]);
     }
   }
 
@@ -235,16 +233,24 @@ export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fr
     return () => window.removeEventListener("eva.login", handleLogin);
   }, [map]);
 
+  const sensorTypesKey = sensorTypes.join(",");
+
   useEffect(() => {
     void fetchPods(map as unknown as MapLike);
-  }, [fromDate, toDate, sensorTypes, ownerFilter]);
+  }, [fromDate, toDate, sensorTypesKey, ownerFilter]);
 
-  const visiblePods = nameSearch.trim()
-      ? pods.filter((p) => (p.nickname ?? p.id).toLowerCase().includes(nameSearch.trim().toLowerCase()))
-      : pods;
+  const visiblePods = useMemo(() => {
+    const query = nameSearch.trim().toLowerCase();
+    return query
+        ? pods.filter((p) => (p.nickname ?? p.id).toLowerCase().includes(query))
+        : pods;
+  }, [pods, nameSearch]);
+
+  const onPodsLoadedRef = useRef(onPodsLoaded);
+  onPodsLoadedRef.current = onPodsLoaded;
 
   useEffect(() => {
-    onPodsLoaded(visiblePods);
+    onPodsLoadedRef.current(visiblePods);
   }, [visiblePods]);
 
   function closeTooltip() {

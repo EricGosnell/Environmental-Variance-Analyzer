@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import MapView from "../components/Map.tsx";
 import PodTable from "../components/PodTable.tsx";
@@ -130,6 +130,7 @@ export default function Home() {
 
     const fromDate = uploadTimeframeToFromDate(filters);
     const toDate = uploadTimeframeToToDate(filters);
+    const sensorTypes = useMemo(() => filters.sensorTypes, [filters.sensorTypes.join(",")]);
 
     return (
         <div className="homepage-container">
@@ -193,7 +194,7 @@ export default function Home() {
                         isAuthenticated={isAuthenticated}
                         fromDate={fromDate}
                         toDate={toDate}
-                        sensorTypes={filters.sensorTypes}
+                        sensorTypes={sensorTypes}
                         ownerFilter={filters.ownerFilter}
                         nameSearch={filters.nameSearch}
                     />
