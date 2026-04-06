@@ -1,3 +1,4 @@
+import { useState } from "react";
 import "../styles/Filters.css";
 
 export type UploadTimeframe = "24h" | "7d" | "30d" | "any";
@@ -6,6 +7,7 @@ export interface FiltersState {
     uploadTimeframe: UploadTimeframe;
     customFrom: string;
     customTo: string;
+    sensorTypes: string[];
 }
 
 export function uploadTimeframeToFromDate(filters: FiltersState): string | undefined {
@@ -26,10 +28,12 @@ export function uploadTimeframeToToDate(filters: FiltersState): string | undefin
 interface FiltersProps {
     filters: FiltersState;
     onChange: (filters: FiltersState) => void;
+    availableSensorTypes: string[];
 }
 
-export default function Filters({ filters, onChange }: FiltersProps) {
-    const { uploadTimeframe, customFrom, customTo } = filters;
+export default function Filters({ filters, onChange, availableSensorTypes }: FiltersProps) {
+    const { uploadTimeframe, customFrom, customTo, sensorTypes } = filters;
+    const [sensorDropdownOpen, setSensorDropdownOpen] = useState(false);
 
     const setUploadTimeframe = (value: UploadTimeframe) =>
         onChange({ ...filters, uploadTimeframe: value, customFrom: "", customTo: "" });
@@ -40,6 +44,13 @@ export default function Filters({ filters, onChange }: FiltersProps) {
 
     const handleCustomTo = (value: string) => {
         onChange({ ...filters, uploadTimeframe: "any", customTo: value });
+    };
+
+    const toggleSensorType = (type: string) => {
+        const next = sensorTypes.includes(type)
+            ? sensorTypes.filter((t) => t !== type)
+            : [...sensorTypes, type];
+        onChange({ ...filters, sensorTypes: next });
     };
 
     return (
@@ -80,6 +91,39 @@ export default function Filters({ filters, onChange }: FiltersProps) {
                         />
                     </div>
                 </div>
+            </div>
+
+            <div className="filter-group">
+                <p className="filter-group-label">Data Types</p>
+                <button
+                    className={`filter-dropdown-toggle ${sensorTypes.length > 0 ? "active" : ""}`}
+                    onClick={() => setSensorDropdownOpen((o) => !o)}
+                >
+                    <span>
+                        {sensorTypes.length > 0 ? `${sensorTypes.length} selected` : "Any"}
+                    </span>
+                    <span className={`filter-dropdown-chevron ${sensorDropdownOpen ? "open" : ""}`}>▾</span>
+                </button>
+
+                {sensorDropdownOpen && (
+                    <div className="filter-dropdown">
+                        {availableSensorTypes.length === 0 ? (
+                            <p className="filter-dropdown-empty">No data types found</p>
+                        ) : (
+                            availableSensorTypes.map((type) => (
+                                <label key={type} className="filter-dropdown-option">
+                                    <input
+                                        type="checkbox"
+                                        className="filter-dropdown-checkbox"
+                                        checked={sensorTypes.includes(type)}
+                                        onChange={() => toggleSensorType(type)}
+                                    />
+                                    <span>{type}</span>
+                                </label>
+                            ))
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     );

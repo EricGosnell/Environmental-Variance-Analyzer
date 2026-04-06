@@ -3,7 +3,7 @@ import { useSearchParams } from "react-router-dom";
 import MapView from "../components/Map.tsx";
 import PodTable from "../components/PodTable.tsx";
 
-import { getMe, getMeSilent } from "../utils/api.ts";
+import { getMe, getMeSilent, getPodsLatestReadings } from "../utils/api.ts";
 import type { User } from "../utils/apiTypes.ts";
 import type { PodLocation } from "../utils/apiTypes.ts";
 import AuthPanel from "../components/AuthPanel.tsx";
@@ -25,7 +25,9 @@ export default function Home() {
         uploadTimeframe: "any",
         customFrom: "",
         customTo: "",
+        sensorTypes: [],
     });
+    const [availableSensorTypes, setAvailableSensorTypes] = useState<string[]>([]);
     const mapRef = useRef<any>(null);
     const [showVerifiedBanner, setShowVerifiedBanner] = useState(false);
 
@@ -71,6 +73,31 @@ export default function Home() {
 
         return () => ac.abort();
     }, []);
+
+    useEffect(() => {
+        if (visiblePods.length === 0) return;
+        const ac = new AbortController();
+
+        (async () => {
+            try {
+                const res = await getPodsLatestReadings(visiblePods.map((p) => Number(p.id)), ac.signal);
+                const types = new Set<string>();
+                for (const pod of res.pods) {
+                    for (const key of Object.keys(pod.latestReadings)) {
+                        types.add(key);
+                    }
+                }
+                setAvailableSensorTypes((prev) => {
+                    const next = Array.from(types).sort();
+                    return prev.join(",") === next.join(",") ? prev : next;
+                });
+            } catch {
+                // no-op
+            }
+        })();
+
+        return () => ac.abort();
+    }, [visiblePods]);
 
     const handleVisiblePodsChange = useCallback((pods: PodLocation[]) => {
         setVisiblePods((prev) => {
@@ -148,6 +175,7 @@ export default function Home() {
                 <Filters
                     filters={filters}
                     onChange={setFilters}
+                    availableSensorTypes={availableSensorTypes}
                 />
             </div>
 
@@ -162,6 +190,7 @@ export default function Home() {
                         isAuthenticated={isAuthenticated}
                         fromDate={fromDate}
                         toDate={toDate}
+                        sensorTypes={filters.sensorTypes}
                     />
                 </div>
 

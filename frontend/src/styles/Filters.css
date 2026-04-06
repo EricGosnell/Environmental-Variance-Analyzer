@@ -111,3 +111,105 @@
     opacity: 1;
     color: white;
 }
+
+.filter-dropdown-toggle {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    background: transparent;
+    border: 1px solid var(--primary-green);
+    border-radius: 8px;
+    color: #fff;
+    padding: 7px 12px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    opacity: 0.75;
+    transition: background 0.15s, opacity 0.15s;
+    box-sizing: border-box;
+}
+
+.filter-dropdown-toggle:hover {
+    background: rgba(255, 255, 255, 0.08);
+    opacity: 1;
+}
+
+.filter-dropdown-toggle.active {
+    background: var(--primary-green);
+    opacity: 1;
+}
+
+.filter-dropdown-chevron {
+    font-size: 0.75rem;
+    transition: transform 0.15s;
+    display: inline-block;
+}
+
+.filter-dropdown-chevron.open {
+    transform: rotate(180deg);
+}
+
+.filter-dropdown {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--primary-green);
+    border-radius: 8px;
+    overflow: hidden;
+    margin-top: 4px;
+}
+
+.filter-dropdown-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 8px 12px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: background 0.15s;
+}
+
+.filter-dropdown-option:not(:last-child) {
+    border-bottom: 1px solid var(--primary-green);
+}
+
+.filter-dropdown-option:hover {
+    background: rgba(255, 255, 255, 0.08);
+}
+
+.filter-dropdown-checkbox {
+    appearance: none;
+    width: 15px;
+    height: 15px;
+    min-width: 15px;
+    border: 1px solid rgba(255, 255, 255, 0.5);
+    border-radius: 4px;
+    background: transparent;
+    cursor: pointer;
+    position: relative;
+    transition: background 0.15s, border-color 0.15s;
+}
+
+.filter-dropdown-checkbox:checked {
+    background: var(--primary-green);
+    border-color: var(--primary-green);
+}
+
+.filter-dropdown-checkbox:checked::after {
+    content: "";
+    position: absolute;
+    left: 4px;
+    top: 1px;
+    width: 4px;
+    height: 8px;
+    border: 2px solid #fff;
+    border-top: none;
+    border-left: none;
+    transform: rotate(45deg);
+}
+
+.filter-dropdown-empty {
+    margin: 0;
+    padding: 10px 12px;
+    font-size: 0.82rem;
+    opacity: 0.6;
+}

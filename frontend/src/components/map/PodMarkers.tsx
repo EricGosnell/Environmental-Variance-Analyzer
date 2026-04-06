@@ -4,7 +4,7 @@ import { Circle, Marker, Tooltip, useMapEvents } from "react-leaflet";
 import { useNavigate } from "react-router-dom";
 import * as L from "leaflet";
 
-import { getPodData, getPodLocations } from "../../utils/api";
+import { getPodData, getPodLocations, getPodsLatestReadings } from "../../utils/api";
 import type { PodLocation } from "../../utils/apiTypes";
 import {
   circleTooltipOffset,
@@ -51,6 +51,7 @@ type PodMarkersProps = {
   onPodSelect: (podId: string) => void;
   fromDate?: string;
   toDate?: string;
+  sensorTypes: string[];
 };
 
 function PodTooltipContent({
@@ -86,7 +87,7 @@ function PodTooltipContent({
   );
 }
 
-export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fromDate, toDate }: PodMarkersProps) {
+export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fromDate, toDate, sensorTypes }: PodMarkersProps) {
   const navigate = useNavigate();
   const [pods, setPods] = useState<PodLocation[]>([]);
   const abortRef = useRef<AbortController | null>(null);
@@ -97,6 +98,8 @@ export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fr
   fromDateRef.current = fromDate;
   const toDateRef = useRef<string | undefined>(toDate);
   toDateRef.current = toDate;
+  const sensorTypesRef = useRef<string[]>(sensorTypes);
+  sensorTypesRef.current = sensorTypes;
 
   const [selectedPodData, setSelectedPodData] = useState<unknown[] | null>(null);
   const [selectedPodDataLoading, setSelectedPodDataLoading] = useState(false);
@@ -159,7 +162,26 @@ export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fr
           },
           ac.signal,
       );
-      const loadedPods = Array.isArray(res.pods) ? res.pods : [];
+      let loadedPods = Array.isArray(res.pods) ? res.pods : [];
+
+      if (sensorTypesRef.current.length > 0 && loadedPods.length > 0) {
+        const ids = loadedPods.map((p) => Number(p.id));
+        try {
+          const { pods: readings } = await getPodsLatestReadings(ids, ac.signal);
+          const readingsById = new Map(readings.map((r) => [r.podId, r.latestReadings]));
+          loadedPods = loadedPods.filter((p) => {
+            const podReadings = readingsById.get(p.id);
+            if (!podReadings) return false;
+            return sensorTypesRef.current.every((type) => {
+              const reading = podReadings[type];
+              return reading !== undefined;
+            });
+          });
+        } catch (err) {
+          if ((err as any)?.name === "AbortError") return;
+        }
+      }
+
       setPods(loadedPods);
       onPodsLoaded(loadedPods);
     } catch (err) {
@@ -207,7 +229,7 @@ export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fr
 
   useEffect(() => {
     void fetchPods(map as unknown as MapLike);
-  }, [fromDate, toDate]);
+  }, [fromDate, toDate, sensorTypes]);
 
   function closeTooltip() {
     if (!tooltipPodId) return;
