@@ -50,6 +50,7 @@ type PodMarkersProps = {
   selectedPods: string[];
   onPodSelect: (podId: string) => void;
   fromDate?: string;
+  toDate?: string;
 };
 
 function PodTooltipContent({
@@ -85,7 +86,7 @@ function PodTooltipContent({
   );
 }
 
-export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fromDate }: PodMarkersProps) {
+export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fromDate, toDate }: PodMarkersProps) {
   const navigate = useNavigate();
   const [pods, setPods] = useState<PodLocation[]>([]);
   const abortRef = useRef<AbortController | null>(null);
@@ -94,6 +95,8 @@ export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fr
   const closeTooltipTimeoutRef = useRef<number | null>(null);
   const fromDateRef = useRef<string | undefined>(fromDate);
   fromDateRef.current = fromDate;
+  const toDateRef = useRef<string | undefined>(toDate);
+  toDateRef.current = toDate;
 
   const [selectedPodData, setSelectedPodData] = useState<unknown[] | null>(null);
   const [selectedPodDataLoading, setSelectedPodDataLoading] = useState(false);
@@ -152,6 +155,7 @@ export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fr
             longitude: center.lng,
             radius,
             fromDate: fromDateRef.current,
+            toDate: toDateRef.current,
           },
           ac.signal,
       );
@@ -203,7 +207,7 @@ export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fr
 
   useEffect(() => {
     void fetchPods(map as unknown as MapLike);
-  }, [fromDate]);
+  }, [fromDate, toDate]);
 
   function closeTooltip() {
     if (!tooltipPodId) return;

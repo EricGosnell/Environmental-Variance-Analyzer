@@ -29,6 +29,7 @@ type MapViewProps = {
     mapRef: MutableRefObject<any>;
     isAuthenticated?: boolean | null;
     fromDate?: string;
+    toDate?: string;
 };
 
 function readSavedMapView(): StoredMapView | null {
@@ -98,7 +99,7 @@ function PersistMapView() {
     return null;
 }
 
-export default function MapView({ mapRef, onVisiblePodsChange, selectedPods, onPodSelect, isAuthenticated, fromDate }: MapViewProps) {
+export default function MapView({ mapRef, onVisiblePodsChange, selectedPods, onPodSelect, isAuthenticated, fromDate, toDate }: MapViewProps) {
     const savedView = readSavedMapView();
     const savedBaseLayer = readSavedBaseLayer();
     const initialCenter: [number, number] = savedView ? [savedView.lat, savedView.lng] : DEFAULT_CENTER;
@@ -132,7 +133,7 @@ export default function MapView({ mapRef, onVisiblePodsChange, selectedPods, onP
                 </LayersControlAny.BaseLayer>
             </LayersControlAny>
 
-            <PodMarkers onPodsLoaded={onVisiblePodsChange} selectedPods={selectedPods} onPodSelect={onPodSelect} fromDate={fromDate} />
+            <PodMarkers onPodsLoaded={onVisiblePodsChange} selectedPods={selectedPods} onPodSelect={onPodSelect} fromDate={fromDate} toDate={toDate} />
             <Controls isAuthenticated={isAuthenticated} />
             <PersistMapView />
         </MapContainerAny>

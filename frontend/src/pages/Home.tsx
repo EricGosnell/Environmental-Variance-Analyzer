@@ -9,7 +9,7 @@ import type { PodLocation } from "../utils/apiTypes.ts";
 import AuthPanel from "../components/AuthPanel.tsx";
 import Filters from "../components/Filters.tsx";
 import type { FiltersState } from "../components/Filters.tsx";
-import { uploadTimeframeToFromDate } from "../components/Filters.tsx";
+import { uploadTimeframeToFromDate, uploadTimeframeToToDate } from "../components/Filters.tsx";
 
 import "../styles/Home.css";
 
@@ -23,6 +23,8 @@ export default function Home() {
     const [selectedPods, setSelectedPods] = useState<string[]>([]);
     const [filters, setFilters] = useState<FiltersState>({
         uploadTimeframe: "any",
+        customFrom: "",
+        customTo: "",
     });
     const mapRef = useRef<any>(null);
     const [showVerifiedBanner, setShowVerifiedBanner] = useState(false);
@@ -97,7 +99,8 @@ export default function Home() {
         }
     };
 
-    const fromDate = uploadTimeframeToFromDate(filters.uploadTimeframe);
+    const fromDate = uploadTimeframeToFromDate(filters);
+    const toDate = uploadTimeframeToToDate(filters);
 
     return (
         <div className="homepage-container">
@@ -158,6 +161,7 @@ export default function Home() {
                         onPodSelect={handlePodSelect}
                         isAuthenticated={isAuthenticated}
                         fromDate={fromDate}
+                        toDate={toDate}
                     />
                 </div>
 
