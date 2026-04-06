@@ -59,49 +59,49 @@ export default function DailySensorChart({ data, sensorType, day }: Props) {
   }
 
   return (
-    <Plot
-      data={[
-        {
-          type: "scatter",
-          mode: "lines+markers",
-          x: chartData.times,
-          y: chartData.values,
-          marker: {
-            color: "rgba(48, 164, 108, 1)",
-            size: 6,
+      <Plot
+        data={[
+          {
+            type: "scatter",
+            mode: "lines+markers",
+            x: chartData.times,
+            y: chartData.values,
+            marker: {
+              color: "rgba(255, 255, 255, 1)",
+              size: 8,
+            },
+            line: {
+              color: "rgba(255, 255, 255, 0.8)",
+              width: 2,
+              shape: "linear",
+            },
+            hovertemplate: "%{y} " + (units ? units : "") + "<extra></extra>",
           },
-          line: {
-            color: "rgba(48, 164, 108, 0.8)",
-            width: 2,
-            shape: "linear",
+        ]}
+        layout={{
+          autosize: true,
+          margin: { l: 60, r: 20, t: 20, b: 60 },
+          paper_bgcolor: "transparent",
+          plot_bgcolor: "transparent",
+          font: { color: "rgba(255, 255, 255, 0.85)" },
+          xaxis: {
+            title: { text: "Time", standoff: 10 },
+            gridcolor: "rgba(255, 255, 255, 0.1)",
+            zerolinecolor: "rgba(255, 255, 255, 0.2)",
+            tickangle: -45,
           },
-          hovertemplate: "%{y} " + (units ? units : "") + "<extra></extra>",
-        },
-      ]}
-      layout={{
-        autosize: true,
-        margin: { l: 60, r: 20, t: 20, b: 60 },
-        paper_bgcolor: "transparent",
-        plot_bgcolor: "transparent",
-        font: { color: "rgba(255, 255, 255, 0.85)" },
-        xaxis: {
-          title: { text: "Time", standoff: 10 },
-          gridcolor: "rgba(255, 255, 255, 0.1)",
-          zerolinecolor: "rgba(255, 255, 255, 0.2)",
-          tickangle: -45,
-        },
-        yaxis: {
-          title: { text: units ? `Value (${units})` : "Value" },
-          gridcolor: "rgba(255, 255, 255, 0.1)",
-          zerolinecolor: "rgba(255, 255, 255, 0.2)",
-        },
-      }}
-      config={{
-        responsive: true,
-        displayModeBar: false,
-      }}
-      style={{ width: "100%", height: "100%" }}
-      useResizeHandler
-    />
+          yaxis: {
+            title: { text: units ? `Value (${units})` : "Value" },
+            gridcolor: "rgba(255, 255, 255, 0.1)",
+            zerolinecolor: "rgba(255, 255, 255, 0.2)",
+          },
+        }}
+        config={{
+          responsive: true,
+          displayModeBar: false,
+        }}
+        style={{ width: "100%", height: "100%" }}
+        useResizeHandler
+      />
   );
 }

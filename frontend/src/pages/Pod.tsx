@@ -6,8 +6,8 @@ import "../styles/Pod.css";
 import { getPodData, getPodOwners } from "../utils/api";
 import type { PodDataEntry, PodOwnerCandidate } from "../utils/apiTypes";
 import SharePodModal from "../components/SharePodModal";
-// import SensorTrendChart from "../components/SensorTrendChart";
-// import DailySensorChart from "../components/DailySensorChart";
+import SensorTrendChart from "../components/SensorTrendChart";
+import DailySensorChart from "../components/DailySensorChart";
 
 function titleCaseSensor(value: string): string {
   const raw = String(value ?? "").trim();
@@ -284,12 +284,13 @@ export default function Pod() {
                 </select>
               </div>
             </div>
-            <div className="pod-chart">Insert boxplot of data over each day</div>
-            {/* <SensorTrendChart
-              data={data}
-              sensorType={selectedSensorOverall}
-              dateRange={selectedRange as "Last 7 Days" | "Last 30 Days" | "All Time"}
-            /> */}
+            <div className="pod-chart">
+              <SensorTrendChart
+                data={data}
+                  sensorType={selectedSensorOverall}
+                  dateRange={selectedRange as "Last 7 Days" | "Last 30 Days" | "All Time"}
+                />
+            </div>
           </section>
 
           <h2 className="pod-daily-title">Daily Data</h2>
@@ -326,12 +327,14 @@ export default function Pod() {
                   </select>
                 </div>
               </div>
-              <div className="pod-chart">Insert trendline/scatterplot of data over 24 hours</div>
-              {/* <DailySensorChart
-                data={data}
-                sensorType={selectedSensorDaily}
-                day={selectedDay}
-              /> */}
+              {/* <div className="pod-chart">Insert trendline/scatterplot of data over 24 hours</div> */}
+              <div className="pod-chart">
+                <DailySensorChart
+                  data={data}
+                    sensorType={selectedSensorDaily}
+                    day={selectedDay}
+                  />
+              </div>
             </section>
           ) : null}
         </>

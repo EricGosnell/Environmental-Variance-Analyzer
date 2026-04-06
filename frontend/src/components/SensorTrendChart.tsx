@@ -74,48 +74,69 @@ export default function SensorTrendChart({ data, sensorType, dateRange }: Props)
     );
   }
 
+  const jitterMax = 0.12;
+
+  const xJittered: number[] = [];
+  const yValues: number[] = [];
+  const hoverTexts: string[] = [];
+
+  for (let i = 0; i < chartData.xLabels.length; i++) {
+    const dayLabel = chartData.xLabels[i];
+    const dayValues = chartData.yValues[i];
+    const pointCount = dayValues.length;
+    const jitterForDay = pointCount <= 2 ? 0 : pointCount <= 5 ? 0.08 : jitterMax;
+    for (const val of dayValues) {
+      const jitter = (Math.random() - 0.5) * 2 * jitterForDay;
+      xJittered.push(i + jitter);
+      yValues.push(val);
+      hoverTexts.push(dayLabel);
+    }
+  }
+
+  const unitsLabel = units ? ` ${units}` : "";
+
   return (
-    <Plot
-      data={[
-        {
-          type: "box",
-          x: chartData.xLabels,
-          y: chartData.yValues.flat(),
-          boxpoints: "outliers",
-          marker: {
-            color: "rgba(48, 164, 108, 0.6)",
-            outliercolor: "rgba(255, 255, 255, 0.8)",
+      <Plot
+        data={[
+          {
+            type: "scatter",
+            mode: "markers",
+            x: xJittered,
+            y: yValues,
+            marker: {
+              size: 8,
+              color: "rgba(255, 255, 255, 0.7)",
+            },
+            hovertemplate:
+              "Value: %{y}" + unitsLabel + "<br>Date: %{text}<extra></extra>",
+            text: hoverTexts,
           },
-          line: {
-            color: "rgba(48, 164, 108, 1)",
+        ]}
+        layout={{
+          autosize: true,
+          margin: { l: 60, r: 20, t: 20, b: 50 },
+          paper_bgcolor: "transparent",
+          plot_bgcolor: "transparent",
+          font: { color: "rgba(255, 255, 255, 0.85)" },
+          xaxis: {
+            title: { text: "Date", standoff: 10 },
+            gridcolor: "rgba(255, 255, 255, 0.1)",
+            zerolinecolor: "rgba(255, 255, 255, 0.2)",
+            tickvals: chartData.xLabels.map((_, i) => i),
+            ticktext: chartData.xLabels,
           },
-          fillcolor: "rgba(48, 164, 108, 0.3)",
-          boxmean: true,
-        },
-      ]}
-      layout={{
-        autosize: true,
-        margin: { l: 60, r: 20, t: 20, b: 50 },
-        paper_bgcolor: "transparent",
-        plot_bgcolor: "transparent",
-        font: { color: "rgba(255, 255, 255, 0.85)" },
-        xaxis: {
-          title: { text: "Date", standoff: 10 },
-          gridcolor: "rgba(255, 255, 255, 0.1)",
-          zerolinecolor: "rgba(255, 255, 255, 0.2)",
-        },
-        yaxis: {
-          title: { text: units ? `Value (${units})` : "Value" },
-          gridcolor: "rgba(255, 255, 255, 0.1)",
-          zerolinecolor: "rgba(255, 255, 255, 0.2)",
-        },
-      }}
-      config={{
-        responsive: true,
-        displayModeBar: false,
-      }}
-      style={{ width: "100%", height: "100%" }}
-      useResizeHandler
-    />
+          yaxis: {
+            title: { text: units ? `Value (${units})` : "Value" },
+            gridcolor: "rgba(255, 255, 255, 0.1)",
+            zerolinecolor: "rgba(255, 255, 255, 0.2)",
+          },
+        }}
+        config={{
+          responsive: true,
+          displayModeBar: false,
+        }}
+        style={{ width: "100%", height: "100%" }}
+        useResizeHandler
+      />
   );
 }
