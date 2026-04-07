@@ -1,10 +1,11 @@
 import { useMemo } from "react";
 import Plot from "react-plotly.js";
 import type { PodDataEntry } from "../utils/apiTypes";
+import { getSensorColor } from "../utils/sensorColors";
 
 type Props = {
   data: PodDataEntry[];
-  sensorType: string;
+  sensorTypes: string[];
   dateRange: "Last 7 Days" | "Last 30 Days" | "All Time";
 };
 
@@ -19,10 +20,9 @@ function formatDateLabel(date: Date): string {
   return date.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 }
 
-export default function SensorTrendChart({ data, sensorType, dateRange }: Props) {
+export default function SensorTrendChart({ data, sensorTypes, dateRange }: Props) {
   const chartData = useMemo(() => {
-    const filtered = data.filter((e) => e?.data?.sensor_type === sensorType);
-    if (filtered.length === 0) return null;
+    if (sensorTypes.length === 0) return null;
 
     const cutoffDate =
       dateRange === "Last 7 Days"
@@ -31,130 +31,138 @@ export default function SensorTrendChart({ data, sensorType, dateRange }: Props)
         ? getDaysAgo(30)
         : null;
 
-    const grouped = new Map<string, number[]>();
+    const allDays = new Set<string>();
 
-    for (const entry of filtered) {
-      const d = new Date(entry.timestamp);
-      if (isNaN(d.getTime())) continue;
-      if (cutoffDate && d < cutoffDate) continue;
+    const sensorData = sensorTypes.map((sensorType) => {
+      const filtered = data.filter((e) => e?.data?.sensor_type === sensorType);
+      const grouped = new Map<string, number[]>();
 
-      const dayKey = d.toISOString().slice(0, 10);
-      const val = entry.data.reading_value;
-      if (typeof val !== "number") continue;
+      for (const entry of filtered) {
+        const d = new Date(entry.timestamp);
+        if (isNaN(d.getTime())) continue;
+        if (cutoffDate && d < cutoffDate) continue;
 
-      if (!grouped.has(dayKey)) grouped.set(dayKey, []);
-      grouped.get(dayKey)!.push(val);
-    }
+        const dayKey = d.toISOString().slice(0, 10);
+        const val = entry.data.reading_value;
+        if (typeof val !== "number") continue;
 
-    const sortedDays = Array.from(grouped.keys()).sort();
+        allDays.add(dayKey);
+        if (!grouped.has(dayKey)) grouped.set(dayKey, []);
+        grouped.get(dayKey)!.push(val);
+      }
+
+      return {
+        sensorType,
+        grouped,
+      };
+    });
+
+    const sortedDays = Array.from(allDays).sort();
     if (sortedDays.length === 0) return null;
 
-    const xLabels: string[] = [];
-    const yValues: number[][] = [];
+    return {
+      days: sortedDays,
+      sensorData,
+    };
+  }, [data, sensorTypes, dateRange]);
 
-    for (const day of sortedDays) {
-      const dayDate = new Date(day + "T00:00:00");
-      xLabels.push(formatDateLabel(dayDate));
-      yValues.push(grouped.get(day)!);
+  const unitsMap = useMemo(() => {
+    const map = new Map<string, string>();
+    for (const st of sensorTypes) {
+      const entry = data.find((e) => e?.data?.sensor_type === st);
+      map.set(st, entry?.data?.reading_units || "");
     }
+    return map;
+  }, [data, sensorTypes]);
 
-    return { xLabels, yValues };
-  }, [data, sensorType, dateRange]);
-
-  const units = useMemo(() => {
-    const entry = data.find((e) => e?.data?.sensor_type === sensorType);
-    return entry?.data?.reading_units || "";
-  }, [data, sensorType]);
-
-  const isSinglePoint = chartData !== null && chartData.yValues.length === 1 && chartData.yValues[0].length === 1;
-
-  if (!chartData) {
+  if (!chartData || sensorTypes.length === 0) {
     return (
       <div className="pod-chart--empty">
-        No data available for selected sensor and time range.
-      </div>
-    );
-  }
-
-  if (isSinglePoint) {
-    const dayLabel = chartData.xLabels[0];
-    const value = chartData.yValues[0][0];
-    return (
-      <div className="single-point-card">
-        <div className="single-point-date">{dayLabel}:</div>
-        <div className="single-point-value">
-          {value}{units ? ` ${units}` : ""}
-        </div>
-        <div className="single-point-disclaimer">
-          Only 1 data point available for this view. A trend chart will appear once more readings are collected.
-        </div>
+        No sensors selected or no data available.
       </div>
     );
   }
 
   const jitterMax = 0.12;
 
-  const xJittered: number[] = [];
-  const yValues: number[] = [];
-  const hoverTexts: string[] = [];
+  const traces: Plotly.Data[] = chartData.sensorData.map(({ sensorType, grouped }) => {
+    const xJittered: number[] = [];
+    const yValues: number[] = [];
+    const hoverTexts: string[] = [];
 
-  for (let i = 0; i < chartData.xLabels.length; i++) {
-    const dayLabel = chartData.xLabels[i];
-    const dayValues = chartData.yValues[i];
-    const pointCount = dayValues.length;
-    const jitterForDay = pointCount <= 2 ? 0 : pointCount <= 5 ? 0.08 : jitterMax;
-    for (const val of dayValues) {
-      const jitter = (Math.random() - 0.5) * 2 * jitterForDay;
-      xJittered.push(i + jitter);
-      yValues.push(val);
-      hoverTexts.push(dayLabel);
+    for (let i = 0; i < chartData.days.length; i++) {
+      const day = chartData.days[i];
+      const dayDate = new Date(day + "T00:00:00");
+      const dayLabel = formatDateLabel(dayDate);
+      const dayValues = grouped.get(day) || [];
+      const pointCount = dayValues.length;
+      const jitterForDay = pointCount <= 2 ? 0 : pointCount <= 5 ? 0.08 : jitterMax;
+
+      for (const val of dayValues) {
+        const jitter = (Math.random() - 0.5) * 2 * jitterForDay;
+        xJittered.push(i + jitter);
+        yValues.push(val);
+        hoverTexts.push(dayLabel);
+      }
     }
-  }
 
-  const unitsLabel = units ? ` ${units}` : "";
+    const units = unitsMap.get(sensorType) || "";
+    const unitsLabel = units ? ` ${units}` : "";
+    const color = getSensorColor(sensorType);
+
+    return {
+      type: "scatter",
+      mode: "markers",
+      name: sensorType,
+      x: xJittered,
+      y: yValues,
+      marker: {
+        size: 8,
+        color: color,
+      },
+      hovertemplate: "Value: %{y}" + unitsLabel + "<br>Date: %{text}<extra></extra>",
+      text: hoverTexts,
+    };
+  });
+
+  const xLabels = chartData.days.map((day) => {
+    const dayDate = new Date(day + "T00:00:00");
+    return formatDateLabel(dayDate);
+  });
 
   return (
-      <Plot
-        data={[
-          {
-            type: "scatter",
-            mode: "markers",
-            x: xJittered,
-            y: yValues,
-            marker: {
-              size: 8,
-              color: "rgba(255, 255, 255, 0.7)",
-            },
-            hovertemplate:
-              "Value: %{y}" + unitsLabel + "<br>Date: %{text}<extra></extra>",
-            text: hoverTexts,
-          },
-        ]}
-        layout={{
-          autosize: true,
-          margin: { l: 60, r: 20, t: 20, b: 50 },
-          paper_bgcolor: "transparent",
-          plot_bgcolor: "transparent",
+    <Plot
+      data={traces}
+      layout={{
+        autosize: true,
+        margin: { l: 60, r: 20, t: 20, b: 50 },
+        paper_bgcolor: "transparent",
+        plot_bgcolor: "transparent",
+        font: { color: "rgba(255, 255, 255, 0.85)" },
+        showlegend: sensorTypes.length > 1,
+        legend: {
           font: { color: "rgba(255, 255, 255, 0.85)" },
-          xaxis: {
-            title: { text: "Date", standoff: 10 },
-            gridcolor: "rgba(255, 255, 255, 0.1)",
-            zerolinecolor: "rgba(255, 255, 255, 0.2)",
-            tickvals: chartData.xLabels.map((_, i) => i),
-            ticktext: chartData.xLabels,
-          },
-          yaxis: {
-            title: { text: units ? `Value (${units})` : "Value" },
-            gridcolor: "rgba(255, 255, 255, 0.1)",
-            zerolinecolor: "rgba(255, 255, 255, 0.2)",
-          },
-        }}
-        config={{
-          responsive: true,
-          displayModeBar: false,
-        }}
-        style={{ width: "100%", height: "100%" }}
-        useResizeHandler
-      />
+          bgcolor: "transparent",
+        },
+        xaxis: {
+          title: { text: "Date", standoff: 10 },
+          gridcolor: "rgba(255, 255, 255, 0.1)",
+          zerolinecolor: "rgba(255, 255, 255, 0.2)",
+          tickvals: xLabels.map((_, i) => i),
+          ticktext: xLabels,
+        },
+        yaxis: {
+          title: { text: "Value" },
+          gridcolor: "rgba(255, 255, 255, 0.1)",
+          zerolinecolor: "rgba(255, 255, 255, 0.2)",
+        },
+      }}
+      config={{
+        responsive: true,
+        displayModeBar: false,
+      }}
+      style={{ width: "100%", height: "100%" }}
+      useResizeHandler
+    />
   );
 }
