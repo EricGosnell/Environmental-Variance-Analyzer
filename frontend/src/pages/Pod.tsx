@@ -8,6 +8,7 @@ import type { PodDataEntry, PodOwnerCandidate } from "../utils/apiTypes";
 import SharePodModal from "../components/SharePodModal";
 import SensorTrendChart from "../components/SensorTrendChart";
 import DailySensorChart from "../components/DailySensorChart";
+import MultiSensorDropdown from "../components/MultiSensorDropdown";
 
 function titleCaseSensor(value: string): string {
   const raw = String(value ?? "").trim();
@@ -68,8 +69,8 @@ export default function Pod() {
     canManagePod: boolean;
   } | null>(null);
 
-  const [selectedSensorOverall, setSelectedSensorOverall] = useState<string>("");
-  const [selectedSensorDaily, setSelectedSensorDaily] = useState<string>("");
+  const [selectedSensorsOverall, setSelectedSensorsOverall] = useState<string[]>([]);
+  const [selectedSensorsDaily, setSelectedSensorsDaily] = useState<string[]>([]);
   const [selectedRange, setSelectedRange] = useState<string>("Last 7 Days");
   const [selectedDay, setSelectedDay] = useState<string>("");
   const [showShareModal, setShowShareModal] = useState<boolean>(false);
@@ -135,14 +136,14 @@ export default function Pod() {
   }, [data]);
 
   useEffect(() => {
-    if (selectedSensorOverall) return;
-    if (sensorOptions.length > 0) setSelectedSensorOverall(sensorOptions[0].key);
-  }, [sensorOptions, selectedSensorOverall]);
+    if (selectedSensorsOverall.length > 0) return;
+    if (sensorOptions.length > 0) setSelectedSensorsOverall([sensorOptions[0].key]);
+  }, [sensorOptions, selectedSensorsOverall]);
 
   useEffect(() => {
-    if (selectedSensorDaily) return;
-    if (sensorOptions.length > 0) setSelectedSensorDaily(sensorOptions[0].key);
-  }, [sensorOptions, selectedSensorDaily]);
+    if (selectedSensorsDaily.length > 0) return;
+    if (sensorOptions.length > 0) setSelectedSensorsDaily([sensorOptions[0].key]);
+  }, [sensorOptions, selectedSensorsDaily]);
 
   const dayOptions = useMemo(() => {
     const seen = new Set<string>();
@@ -269,14 +270,12 @@ export default function Pod() {
             <div className="pod-section-header">
               <h2 className="pod-section-title">Sensor Trends</h2>
               <div className="pod-filters">
-                <select value={selectedSensorOverall} onChange={(e) => setSelectedSensorOverall(e.target.value)}>
-                  {sensorOptions.length === 0 ? <option value="">No sensors</option> : null}
-                  {sensorOptions.map((o) => (
-                    <option key={o.key} value={o.key}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
+                <MultiSensorDropdown
+                  options={sensorOptions}
+                  selected={selectedSensorsOverall}
+                  onChange={setSelectedSensorsOverall}
+                  placeholder="Select sensors"
+                />
                 <select value={selectedRange} onChange={(e) => setSelectedRange(e.target.value)}>
                   <option value="Last 7 Days">Last 7 Days</option>
                   <option value="Last 30 Days">Last 30 Days</option>
@@ -287,9 +286,9 @@ export default function Pod() {
             <div className="pod-chart">
               <SensorTrendChart
                 data={data}
-                  sensorType={selectedSensorOverall}
-                  dateRange={selectedRange as "Last 7 Days" | "Last 30 Days" | "All Time"}
-                />
+                sensorTypes={selectedSensorsOverall}
+                dateRange={selectedRange as "Last 7 Days" | "Last 30 Days" | "All Time"}
+              />
             </div>
           </section>
 
@@ -317,23 +316,21 @@ export default function Pod() {
               <div className="pod-section-header">
                 <h2 className="pod-section-title">{`${formatDateMDY(new Date(selectedDay))} Sensor Trends`}</h2>
                 <div className="pod-filters">
-                  <select value={selectedSensorDaily} onChange={(e) => setSelectedSensorDaily(e.target.value)}>
-                    {sensorOptions.length === 0 ? <option value="">No sensors</option> : null}
-                    {sensorOptions.map((o) => (
-                      <option key={o.key} value={o.key}>
-                        {o.label}
-                      </option>
-                    ))}
-                  </select>
+                  <MultiSensorDropdown
+                    options={sensorOptions}
+                    selected={selectedSensorsDaily}
+                    onChange={setSelectedSensorsDaily}
+                    placeholder="Select sensors"
+                  />
                 </div>
               </div>
               {/* <div className="pod-chart">Insert trendline/scatterplot of data over 24 hours</div> */}
               <div className="pod-chart">
                 <DailySensorChart
-                  data={data}
-                    sensorType={selectedSensorDaily}
-                    day={selectedDay}
-                  />
+                data={data}
+                sensorTypes={selectedSensorsDaily}
+                day={selectedDay}
+              />
               </div>
             </section>
           ) : null}
