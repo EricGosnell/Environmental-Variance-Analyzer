@@ -858,7 +858,7 @@ const Profile: React.FC = () => {
 											{podHistory.length > 0 ? (
 												podHistory.map((entry) => (
 													<tr key={entry.id}>
-														<td>{entry.podName} ({entry.podId})</td>
+														<td>{entry.podName}</td>
 														<td>
 															<button
 																type="button"
