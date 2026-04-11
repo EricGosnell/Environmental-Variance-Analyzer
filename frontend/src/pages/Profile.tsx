@@ -582,7 +582,7 @@ const Profile: React.FC = () => {
 	const tabs = [
 		{ key: "managePods", label: "Manage Pods" },
 		{ key: "history", label: "History" },
-		{ key: "Connections", label: "Connections" },
+		// { key: "Connections", label: "Connections" },
 		{ key: "settings", label: "Settings" }
 	];
 
@@ -881,11 +881,12 @@ const Profile: React.FC = () => {
 								)}
 							</div>
 						)}
-						{activeTab === "Connections" && (
+						{/* Connections tab commented out - To be added later... hopefully */}
+						{/* activeTab === "Connections" && (
 							<div style={{ width: "100%", background: "#204835", borderRadius: 16, padding: "16px 20px", color: "#fff", boxSizing: "border-box" }}>
 								<h3>Tab for inviting collaborators or organizations/receiving invitations</h3>
 							</div>
-						)}
+						) */}
 						{activeTab === "settings" && (
 							<div style={{ width: "100%", background: "#204835", borderRadius: 16, padding: "32px 40px", color: "#fff", minWidth: 0, marginLeft: 0, boxSizing: "border-box" }}>
 								<h3 style={{ marginBottom: 24 }}>Account Settings</h3>
@@ -1106,8 +1107,8 @@ const Profile: React.FC = () => {
 
 				{/* New Right Container */}
 				<div style={{ width: 280, background: "#204835", borderRadius: 16, padding: "32px 24px", color: "#fff", display: "flex", flexDirection: "column", alignItems: "flex-start", flexShrink: 0, boxSizing: "border-box" }}>
-					<h3 style={{ marginBottom: 16 }}>Possible room for Organizations/collaborators</h3>
-					<p style={{ color: "#ccc", fontSize: "1rem" }}>Space that could be used for organizations, friends, or other additonal features in the future.</p>
+					<h3 style={{ marginBottom: 16 }}>Organizations/collaborators</h3>
+					<p style={{ color: "#ccc", fontSize: "1rem" }}>Coming Soon! </p>
 				</div>
 			</div>
 		</div>
