@@ -72,6 +72,33 @@ erDiagram
         JSONB raw_data
         TIMESTAMP created_at
     }
+        
+    org {
+        SERIAL org_id PK
+        TEXT org_name
+        TEXT org_email
+        TEXT org_bio
+        TIMESTAMP created_at
+    }
+    
+    user_org {
+        INT user_id FK
+        INT org_id FK
+        TEXT role
+        TEXT status
+        TIMESTAMP created_at
+    }
+    
+    message {
+        SERIAL message_id PK
+        INT sender_id FK
+        INT receiver_id FK
+        TEXT type
+        TEXT status
+        INT org_id FK
+        INT pod_id FK
+        TIMESTAMP created_at
+    }
     
     users ||--|| user_contact : "has"
     users ||--o| pending_email_changes : "pending email change"
@@ -80,6 +107,11 @@ erDiagram
     pod ||--o{ user_pod : "contains"
     pod ||--o{ pod_data : "contains"
     pod_data ||--o{ sensor_data : "has"
+    users ||--o{ user_org : "belongs to"
+    org ||--o{ user_org : "contains"
+    users ||--o{ message : "sends and receives"
+    pod ||--o| message : "may be in"
+    org ||--o| message : "may be in"
 ```
 
 ## Database Schema Overview
@@ -91,6 +123,10 @@ erDiagram
 - **users ↔ pod**: Many-to-many (users can belong to multiple pods, pods can have multiple users) via `user_pod` junction table
 - **pod → pod_data**: One-to-many (one pod can have multiple data entries)
 - **pod_data → sensor_data**: One-to-many (one pod_data entry can have multiple sensor readings)
+- **users ↔ org**: Many-to-many (users can belong to multiple organizations, organizations can have multiple users) via `user_org` junction table
+- **users → message**: One-to-many (one user can have multiple messages)
+- **pod → message**: One-to-zero/one (message can contain info from one pod)
+- **org → message**: One-to-zero/one (message can contain info from one org)
 
 ### Indexes
 - `idx_user_contact_user_id` on `user_contact(user_id)`
@@ -102,6 +138,8 @@ erDiagram
 - `idx_pod_data_date` on `pod_data(date_collected)`
 - `idx_sensor_data_pod_data_id` on `sensor_data(pod_data_id)`
 - `idx_sensor_data_timestamp` on `sensor_data(reading_timestamp)`
+- `idx_user_org_user_id` on `user_org(user_id)`
+- `idx_user_org_org_id` on `user_org(org_id)`
 
 ### Constraints
 - All foreign key relationships use `ON DELETE CASCADE`
@@ -111,3 +149,6 @@ erDiagram
 - `pending_email_changes.user_id` is PRIMARY KEY and references `users(user_id)`
 - `email_verification.user_id` is PRIMARY KEY and references `users(user_id)`
 - `user_pod` has a composite primary key on `(user_id, pod_id)`
+- `org.org_name` is UNIQUE
+- `org.org_email` is UNIQUE
+- `user_org` has a composite primary key on `(user_id, org_id)`

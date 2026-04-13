@@ -91,6 +91,45 @@ CREATE TABLE IF NOT EXISTS sensor_data (
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+-- organizations
+
+CREATE TABLE IF NOT EXISTS org (
+    org_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    org_name TEXT UNIQUE NOT NULL,
+    org_email TEXT UNIQUE NOT NULL,
+    org_bio TEXT,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- many to many for users to org
+CREATE TABLE IF NOT EXISTS user_org (
+    user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    org_id INTEGER NOT NULL REFERENCES org(org_id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, org_id),
+    role TEXT NOT NULL CHECK (role IN ('owner', 'member')),
+    status TEXT NOT NULL CHECK (status IN ('invited', 'requested', 'active')),
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS message (
+    message_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    sender_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    receiver_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    type TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
+    -- for organization invites
+    org_id INTEGER REFERENCES org(org_id) ON DELETE CASCADE,
+    status TEXT,
+
+    -- for shared pods notifications
+    pod_id INTEGER REFERENCES pod(pod_id) ON DELETE CASCADE
+
+    -- restrict status to invitations and requests only
+    CHECK ((type IN ('invite', 'request') AND status IS NOT NULL) OR (type = 'shared_pod' AND status IS NULL)),
+    CHECK (status IS NULL OR status IN ('pending', 'accepted', 'denied')),
+);
+
 CREATE INDEX IF NOT EXISTS idx_user_contact_user_id ON user_contact(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_pod_user_id ON user_pod(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_pod_pod_id ON user_pod(pod_id);
@@ -100,3 +139,5 @@ CREATE INDEX IF NOT EXISTS idx_sensor_data_pod_data_id ON sensor_data(pod_data_i
 CREATE INDEX IF NOT EXISTS idx_sensor_data_timestamp ON sensor_data(reading_timestamp);
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);
+CREATE INDEX IF NOT EXISTS idx_user_org_user_id ON user_org(user_id);
+CREATE INDEX IF NOT EXISTS idx_user_org_org_id ON user_org(org_id);
