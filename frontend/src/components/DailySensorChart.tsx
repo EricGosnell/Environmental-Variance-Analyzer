@@ -56,8 +56,6 @@ export default function DailySensorChart({ data, sensorTypes, day }: Props) {
     return map;
   }, [data, sensorTypes]);
 
-  const isSinglePoint = chartData !== null && chartData.sensorData.length === 1 && chartData.sensorData[0].points.length === 1;
-
   if (!chartData || sensorTypes.length === 0) {
     return (
       <div className="pod-chart--empty">
