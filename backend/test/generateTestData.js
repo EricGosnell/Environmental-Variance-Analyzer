@@ -73,7 +73,7 @@ function getSensorSubset() {
 function generateReading(sensors, baseValues, timeDrift) {
     const readings =[];
     for (const sensor of sensors) {
-        const baseValue = baseValues[sensor.metric] || randomInRange(sensor.min, sensor.max);
+        const baseValue = baseValues[sensor.metric] ?? randomInRange(sensor.min, sensor.max);
         const drift = (random() - 0.5) * (sensor.max - sensor.min) * 0.1;
         const timeVariation = Math.sin(timeDrift) * (sensor.max - sensor.min) * 0.05;
         let value = baseValue + drift + timeVariation;
