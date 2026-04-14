@@ -30,7 +30,7 @@ const ALL_SENSORS = [
     { metric: "soil temperature", unit: "C", min: 15, max: 30 },
     { metric: "soil pH", unit: "pH", min: 5, max: 8 },
     { metric: "Temp", unit: "C", min: 18, max: 35 },
-    { metric: "Ambient Pressure", unit: "hPa", min: 80000, max: 83000 },
+    { metric: "Ambient Pressure", unit: "Pa", min: 80000, max: 83000 },
     { metric: "Humidity", unit: "%", min: 10, max: 95 },
     { metric: "Illuminance", unit: "lux", min: 200, max: 2500 },
     { metric: "CO", unit: "ppm", min: 390, max: 1400 },
