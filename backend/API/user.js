@@ -667,6 +667,12 @@ module.exports = (db) => {
                         [existingPod.pod_id, today, parsedLatitude, parsedLongitude]
                     );
                 }
+                await logPodAction(existingPod.pod_id, userId, "added", {
+                    podName: nickname,
+                    existingPod: true,
+                    latitude,
+                    longitude,
+                });
                 await logPodAction({
                     podId: existingPod.pod_id,
                     actorUserId: userId,
