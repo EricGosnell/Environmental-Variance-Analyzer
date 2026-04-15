@@ -937,7 +937,7 @@ const Profile: React.FC = () => {
 												})()}
 												onChange={handleChange}
 												onFocus={handlePhoneFocus}
-												disabled={!phoneEditMode ? false : undefined}
+												readOnly={!phoneEditMode}
 												className=""
 												style={{ width: "100%", marginRight: 0, marginTop: 0, padding: "12px 14px", border: '1px solid #30A46C', borderRadius: 16, fontSize: '1rem', background: '#204835', color: '#fff', boxSizing: "border-box" }}
 											/> 
