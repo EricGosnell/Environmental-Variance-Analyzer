@@ -1,13 +1,12 @@
 const xss = require("xss");
 const { body } = require("express-validator");
+const { buildPasswordValidator } = require("../../util/passwordPolicy");
 
 const MIN_USERNAME_LENGTH = 4;
 const MAX_USERNAME_LENGTH = 16;
 
-const MIN_PASSWORD_LENGTH = 8;
-const MAX_PASSWORD_LENGTH = 128;
-
 const MAX_EMAIL_LENGTH = 255;
+const PASSWORD_FIELD_KEYS = new Set(["password", "newpassword", "oldpassword", "confirmpassword"]);
 
 // sanitize single value
 const sanitizeInput = (input) => {
@@ -19,7 +18,10 @@ const sanitizeInput = (input) => {
 const sanitizeRequestBody = (req, res, next) => {
     if (req.body && typeof req.body === "object") {
         Object.keys(req.body).forEach((key) => {
-            req.body[key] = sanitizeInput(req.body[key]);
+            const value = req.body[key];
+            if (typeof value !== "string") return;
+            if (PASSWORD_FIELD_KEYS.has(key.toLowerCase())) return;
+            req.body[key] = sanitizeInput(value);
         });
     }
     next();
@@ -47,11 +49,7 @@ const registerValidation = [
         .trim()
         .escape(),
 
-    body("password")
-        .isLength({ min: MIN_PASSWORD_LENGTH, max: MAX_PASSWORD_LENGTH })
-        .withMessage(`Password must be between ${MIN_PASSWORD_LENGTH} and ${MAX_PASSWORD_LENGTH} characters`)
-        .matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)/)
-        .withMessage("Password must contain at least one lowercase letter, one uppercase letter, and one number"),
+    buildPasswordValidator("password"),
 
     body("email")
         .notEmpty()

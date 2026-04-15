@@ -4,6 +4,8 @@ import "../styles/Map.css";
 
 import Controls from "./map/Controls";
 import PodMarkers from "./map/PodMarkers";
+import type { PodLocation } from "../utils/apiTypes";
+import type { MutableRefObject } from "react";
 
 const MAP_VIEW_STORAGE_KEY = "eva.mapView";
 const BASE_LAYER_STORAGE_KEY = "eva.baseLayer";
@@ -19,6 +21,14 @@ type StoredMapView = {
 };
 
 type BaseLayerPreference = typeof BASE_LAYER_OPEN_STREET_MAP | typeof BASE_LAYER_ESRI_SATELLITE;
+
+type MapViewProps = {
+    onVisiblePodsChange: (pods: PodLocation[]) => void;
+    selectedPods: string[];
+    onPodSelect: (podId: string) => void;
+    mapRef: MutableRefObject<any>;
+    isAuthenticated?: boolean | null;
+};
 
 function readSavedMapView(): StoredMapView | null {
     try {
@@ -87,7 +97,7 @@ function PersistMapView() {
     return null;
 }
 
-export default function MapView() {
+export default function MapView({ mapRef, onVisiblePodsChange, selectedPods, onPodSelect, isAuthenticated }: MapViewProps) {
     const savedView = readSavedMapView();
     const savedBaseLayer = readSavedBaseLayer();
     const initialCenter: [number, number] = savedView ? [savedView.lat, savedView.lng] : DEFAULT_CENTER;
@@ -99,33 +109,31 @@ export default function MapView() {
     const TileLayerAny = TileLayer as any;
     const ZoomControlAny = ZoomControl as any;
 
+
     return (
         <MapContainerAny
             center={initialCenter}
             zoom={initialZoom}
             zoomControl={false}
             style={{ width: "100%", height: "100%" }}
+            ref={mapRef}
         >
 
-        <ZoomControlAny position="bottomright" />
-        <LayersControlAny position="bottomright">
-            <LayersControlAny.BaseLayer name={BASE_LAYER_OPEN_STREET_MAP} checked={savedBaseLayer === BASE_LAYER_OPEN_STREET_MAP}>
-                <TileLayerAny url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-                           attribution="&copy; OpenStreetMap contributors"
-                />
-            </LayersControlAny.BaseLayer>
+            <ZoomControlAny position="bottomright" />
+            <LayersControlAny position="bottomright">
+                <LayersControlAny.BaseLayer name={BASE_LAYER_OPEN_STREET_MAP} checked={savedBaseLayer === BASE_LAYER_OPEN_STREET_MAP}>
+                    <TileLayerAny url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+                                  attribution="&copy; OpenStreetMap contributors" />
+                </LayersControlAny.BaseLayer>
+                <LayersControlAny.BaseLayer name={BASE_LAYER_ESRI_SATELLITE} checked={savedBaseLayer === BASE_LAYER_ESRI_SATELLITE}>
+                    <TileLayerAny url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
+                                  attribution="Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics" />
+                </LayersControlAny.BaseLayer>
+            </LayersControlAny>
 
-            <LayersControlAny.BaseLayer name={BASE_LAYER_ESRI_SATELLITE} checked={savedBaseLayer === BASE_LAYER_ESRI_SATELLITE}>
-                <TileLayerAny url="https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}"
-                           attribution="Tiles © Esri — Source: Esri, Maxar, Earthstar Geographics"/>
-            </LayersControlAny.BaseLayer>
-        </LayersControlAny>
-
-        <PodMarkers />
-        <Controls />
-        <PersistMapView />
-
-
+            <PodMarkers onPodsLoaded={onVisiblePodsChange} selectedPods={selectedPods} onPodSelect={onPodSelect} />
+            <Controls isAuthenticated={isAuthenticated} />
+            <PersistMapView />
         </MapContainerAny>
     );
 }

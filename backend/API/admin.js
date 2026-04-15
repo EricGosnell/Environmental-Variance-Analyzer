@@ -1,8 +1,8 @@
 const express = require("express");
 const crypto = require("crypto");
-const { authenticateToken } = require("../Util/Tokens");
+const { authenticateToken } = require("../util/Tokens");
 
-const { JWT_CONFIG } = require("../Util/JWT");
+const { JWT_CONFIG } = require("../util/JWT");
 
 module.exports = (db) => {
     const router = express.Router();

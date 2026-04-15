@@ -1,10 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { FiUpload } from "react-icons/fi";
+import { FiUpload, FiShare2 } from "react-icons/fi";
 
 import "../styles/Pod.css";
-import { getPodData } from "../utils/api";
-import type { PodDataEntry } from "../utils/apiTypes";
+import { getPodData, getPodOwners } from "../utils/api";
+import type { PodDataEntry, PodOwnerCandidate } from "../utils/apiTypes";
+import SharePodModal from "../components/SharePodModal";
+// import SensorTrendChart from "../components/SensorTrendChart";
+// import DailySensorChart from "../components/DailySensorChart";
 
 function titleCaseSensor(value: string): string {
   const raw = String(value ?? "").trim();
@@ -53,15 +56,24 @@ export default function Pod() {
   const [podMeta, setPodMeta] = useState<{
     id: string;
     nickname: string;
-    latitude: number;
-    longitude: number;
+    latitude: number | null;
+    longitude: number | null;
     visibility: "public" | "private";
-    lastUpdated: string;
+    lastUpdated: string | null;
+  } | null>(null);
+  const [viewer, setViewer] = useState<{
+    isAuthenticated: boolean;
+    isOwner: boolean;
+    isAdmin: boolean;
+    canManagePod: boolean;
   } | null>(null);
 
-  const [selectedSensor, setSelectedSensor] = useState<string>("");
+  const [selectedSensorOverall, setSelectedSensorOverall] = useState<string>("");
+  const [selectedSensorDaily, setSelectedSensorDaily] = useState<string>("");
   const [selectedRange, setSelectedRange] = useState<string>("Last 7 Days");
   const [selectedDay, setSelectedDay] = useState<string>("");
+  const [showShareModal, setShowShareModal] = useState<boolean>(false);
+  const [podOwners, setPodOwners] = useState<PodOwnerCandidate[]>([]);
 
   useEffect(() => {
     if (!podId) {
@@ -85,12 +97,14 @@ export default function Pod() {
           visibility: res.visibility,
           lastUpdated: res.lastUpdated,
         });
+        setViewer(res.viewer ?? null);
         setData(Array.isArray(res.data) ? res.data : []);
       } catch (e: any) {
         if (e?.name === "AbortError") return;
         setError(e?.message ? String(e.message) : "Failed to load pod data.");
         setData([]);
         setPodMeta(null);
+        setViewer(null);
       } finally {
         setLoading(false);
       }
@@ -121,15 +135,20 @@ export default function Pod() {
   }, [data]);
 
   useEffect(() => {
-    if (selectedSensor) return;
-    if (sensorOptions.length > 0) setSelectedSensor(sensorOptions[0].key);
-  }, [sensorOptions, selectedSensor]);
+    if (selectedSensorOverall) return;
+    if (sensorOptions.length > 0) setSelectedSensorOverall(sensorOptions[0].key);
+  }, [sensorOptions, selectedSensorOverall]);
+
+  useEffect(() => {
+    if (selectedSensorDaily) return;
+    if (sensorOptions.length > 0) setSelectedSensorDaily(sensorOptions[0].key);
+  }, [sensorOptions, selectedSensorDaily]);
 
   const dayOptions = useMemo(() => {
     const seen = new Set<string>();
     const days: { key: string; label: string }[] = [];
     for (const e of data) {
-      const ts = e?.data?.reading_timestamp || e?.timestamp;
+      const ts = e?.timestamp;
       if (!ts) continue;
       const d = new Date(ts);
       if (isNaN(d.getTime())) continue;
@@ -146,6 +165,23 @@ export default function Pod() {
     if (selectedDay) return;
     if (dayOptions.length > 0) setSelectedDay(dayOptions[0].key);
   }, [dayOptions, selectedDay]);
+
+  useEffect(() => {
+    if (!showShareModal) return;
+    if (!podMeta?.id) return;
+
+    const ac = new AbortController();
+    (async () => {
+      try {
+        const res = await getPodOwners(podMeta.id, ac.signal);
+        setPodOwners(res.owners ?? []);
+      } catch {
+        setPodOwners([]);
+      }
+    })();
+
+    return () => ac.abort();
+  }, [showShareModal, podMeta?.id]);
 
   // Latest cards are derived at render time from whatever sensor types exist (no hardcoding).
 
@@ -167,9 +203,21 @@ export default function Pod() {
           <div className="pod-meta">
             <div>Last updated: {lastUpdatedDate ? formatDateMDY(lastUpdatedDate) : "—"}</div>
           </div>
-          <button className="pod-action" type="button" title="Upload/Export (placeholder)">
-            <FiUpload size={28} />
-          </button>
+          {viewer?.canManagePod && (
+            <>
+            <button className="pod-action" type="button" title="Upload/Export (placeholder)">
+              <FiUpload size={28} />
+            </button>
+            <button
+              className="pod-action"
+              type="button"
+              title="Share Pod"
+              onClick={() => setShowShareModal(true)}
+            >
+              <FiShare2 size={28} />
+            </button>
+            </>
+          )}
         </div>
       </section>
 
@@ -221,7 +269,7 @@ export default function Pod() {
             <div className="pod-section-header">
               <h2 className="pod-section-title">Sensor Trends</h2>
               <div className="pod-filters">
-                <select value={selectedSensor} onChange={(e) => setSelectedSensor(e.target.value)}>
+                <select value={selectedSensorOverall} onChange={(e) => setSelectedSensorOverall(e.target.value)}>
                   {sensorOptions.length === 0 ? <option value="">No sensors</option> : null}
                   {sensorOptions.map((o) => (
                     <option key={o.key} value={o.key}>
@@ -237,6 +285,11 @@ export default function Pod() {
               </div>
             </div>
             <div className="pod-chart">Insert boxplot of data over each day</div>
+            {/* <SensorTrendChart
+              data={data}
+              sensorType={selectedSensorOverall}
+              dateRange={selectedRange as "Last 7 Days" | "Last 30 Days" | "All Time"}
+            /> */}
           </section>
 
           <h2 className="pod-daily-title">Daily Data</h2>
@@ -263,7 +316,7 @@ export default function Pod() {
               <div className="pod-section-header">
                 <h2 className="pod-section-title">{`${formatDateMDY(new Date(selectedDay))} Sensor Trends`}</h2>
                 <div className="pod-filters">
-                  <select value={selectedSensor} onChange={(e) => setSelectedSensor(e.target.value)}>
+                  <select value={selectedSensorDaily} onChange={(e) => setSelectedSensorDaily(e.target.value)}>
                     {sensorOptions.length === 0 ? <option value="">No sensors</option> : null}
                     {sensorOptions.map((o) => (
                       <option key={o.key} value={o.key}>
@@ -271,20 +324,26 @@ export default function Pod() {
                       </option>
                     ))}
                   </select>
-                  <select value={selectedRange} onChange={(e) => setSelectedRange(e.target.value)}>
-                    <option value="Last 7 Days">Last 7 Days</option>
-                    <option value="Last 30 Days">Last 30 Days</option>
-                    <option value="All Time">All Time</option>
-                  </select>
                 </div>
               </div>
               <div className="pod-chart">Insert trendline/scatterplot of data over 24 hours</div>
+              {/* <DailySensorChart
+                data={data}
+                sensorType={selectedSensorDaily}
+                day={selectedDay}
+              /> */}
             </section>
           ) : null}
         </>
       )}
+
+      <SharePodModal
+        show={showShareModal}
+        podId={podMeta?.id ?? podId ?? ""}
+        onClose={() => setShowShareModal(false)}
+        currentOwnerIds={podOwners.map((o) => o.id)}
+      />
     </div>
   );
 }
-
 

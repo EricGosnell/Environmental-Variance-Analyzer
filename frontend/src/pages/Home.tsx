@@ -1,10 +1,14 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import MapView from "../components/Map.tsx";
+
 import { useNavigate } from "react-router-dom";
+import PodTable from "../components/PodTable.tsx";
+
 
 import { getMe, getMeSilent } from "../utils/api.ts";
 import type { User } from "../utils/apiTypes.ts";
+import type { PodLocation } from "../utils/apiTypes.ts";
 import AuthPanel from "../components/AuthPanel.tsx";
 
 import "../styles/Home.css";
@@ -13,6 +17,11 @@ export default function Home() {
     const [searchParams, setSearchParams] = useSearchParams();
     const [isAuthenticated, setIsAuthenticated] = useState<boolean | null>(null);
     const [user, setUser] = useState<User | null>(null);
+    const [isPodTableOpen, setIsPodTableOpen] = useState(false);
+    const [podTableHeight, setPodTableHeight] = useState(33);
+    const [visiblePods, setVisiblePods] = useState<PodLocation[]>([]);
+    const [selectedPods, setSelectedPods] = useState<string[]>([]);
+    const mapRef = useRef<any>(null);
     const [showVerifiedBanner, setShowVerifiedBanner] = useState(false);
 
     const authParam = searchParams.get("auth");
@@ -61,8 +70,21 @@ export default function Home() {
     }, []);
 
     function handleManagePods() {
-		navigate(`/profile`);
-	}
+        navigate(`/profile`);
+    }
+
+    const handleZoomTo = (pods: { lat: number; lon: number }[]) => {
+        if (!mapRef.current || pods.length === 0) return;
+        const L = (window as any).L;
+        if (!L) return;
+
+        if (pods.length === 1) {
+            mapRef.current.setView([pods[0].lat, pods[0].lon], 16);
+        } else {
+            const bounds = L.latLngBounds(pods.map((p) => [p.lat, p.lon]));
+            mapRef.current.fitBounds(bounds, { padding: [60, 60] });
+        }
+    };
 
     return (
         <div className="homepage-container">
@@ -101,6 +123,7 @@ export default function Home() {
                                 const profile = await getMe();
                                 setUser(profile.user);
                                 setIsAuthenticated(true);
+                                window.dispatchEvent(new Event("eva.login"));
                             } catch {
                                 setUser(null);
                                 setIsAuthenticated(false);
@@ -109,9 +132,36 @@ export default function Home() {
                     />
                 ) : null}
             </div>
+
             <div className="map-container">
-                <MapView />
+                <div className="map-content" style={{flex: isPodTableOpen ? `0 0 ${100 - podTableHeight}%` : '1'}}>
+                    <MapView
+                        mapRef={mapRef}
+                        onVisiblePodsChange={setVisiblePods}
+                        selectedPods={selectedPods}
+                        onPodSelect={(podId) => setSelectedPods((prev) =>
+                            prev.includes(podId) ? prev.filter((p) => p !== podId) : [...prev, podId]
+                        )}
+                        isAuthenticated={isAuthenticated}
+                    />
+                </div>
+
+                {!isPodTableOpen && (
+                    <button className="pod-table-open-btn" onClick={() => setIsPodTableOpen(true)}>
+                        Pod Table
+                    </button>
+                )}
+
+                <PodTable
+                    isOpen={isPodTableOpen}
+                    onClose={() => setIsPodTableOpen(false)}
+                    onHeightChange={setPodTableHeight}
+                    visiblePodIds={visiblePods.map(p => Number(p.id))}
+                    selectedPods={selectedPods}
+                    onSelectionChange={setSelectedPods}
+                    onZoomTo={handleZoomTo}
+                />
             </div>
         </div>
-    )
+    );
 }

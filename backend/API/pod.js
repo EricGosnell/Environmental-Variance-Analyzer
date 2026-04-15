@@ -218,7 +218,22 @@ module.exports = (db) => {
                     })
                     .filter(Boolean);
 
-                return res.status(200).json({ pods });
+                let ownedPodIds = new Set();
+                if (userId && pods.length > 0) {
+                    const placeholders = pods.map(() => "?").join(",");
+                    const ownedRows = await db.all(
+                        `SELECT pod_id FROM user_pod WHERE user_id = ? AND pod_id IN (${placeholders})`,
+                        [userId, ...pods.map((p) => p.id)]
+                    );
+                    ownedPodIds = new Set(ownedRows.map((r) => String(r.pod_id)));
+                }
+
+                const podsWithOwnership = pods.map((p) => ({
+                    ...p,
+                    isOwner: ownedPodIds.has(p.id),
+                }));
+
+                return res.status(200).json({ pods: podsWithOwnership });
             } catch (error) {
                 return res.status(500).json({
                     error: "Internal server error",
@@ -290,11 +305,170 @@ module.exports = (db) => {
                 }
 
 
-                return res.status(200).json({ data });
+                const latestPodData = podDataRows.length > 0 ? podDataRows[0] : null;
+
+                return res.status(200).json({
+                    id: String(pod.pod_id),
+                    nickname: pod.pod_name ?? null,
+                    latitude: latestPodData ? Number(latestPodData.latitude) : null,
+                    longitude: latestPodData ? Number(latestPodData.longitude) : null,
+                    visibility: isPublic ? "public" : "private",
+                    lastUpdated: latestPodData?.created_at
+                        ? new Date(latestPodData.created_at).toISOString()
+                        : null,
+                    data,
+                    viewer: {
+                        isAuthenticated: !!userId,
+                        isOwner: owns,
+                        isAdmin,
+                        canManagePod: owns || isAdmin,
+                    },
+                });
             } catch (error) {
                 return res.status(500).json({
                     error: "Internal server error",
                     where: "/pods/:id/data",
+                    message: error?.message,
+                    code: error?.code,
+                });
+            }
+        }
+    );
+
+    // -------------------------
+    // POST /pods/:id/owners
+    // -------------------------
+    // owner (or admin) can add another user as a pod owner
+    router.post("/:id/owners",
+        authenticateToken,
+        sanitizeRequestBody,
+        [
+            param("id").isInt({ gt: 0 }).withMessage("Pod id must be a positive integer"),
+            body("userId").isInt({ gt: 0 }).withMessage("userId must be a positive integer"),
+        ],
+        async (req, res) => {
+            try {
+                const errors = validationResult(req);
+                if (!errors.isEmpty()) {
+                    return res.status(400).json({
+                        error: "Validation failed",
+                        details: errors.array().map((err) => ({
+                            field: err.param,
+                            message: err.msg,
+                        })),
+                    });
+                }
+
+                const podId = Number(req.params.id);
+                const targetUserId = Number(req.body.userId);
+                const requestingUserId = req.user.id;
+
+                const pod = await getPodById(db, podId);
+                if (!pod) return res.status(404).json({ error: "Pod not found" });
+
+                const isAdmin = await getIsAdmin(requestingUserId);
+                const requesterOwnsPod = await userOwnsPod(db, requestingUserId, podId);
+
+                if (!requesterOwnsPod && !isAdmin) {
+                    return res.status(403).json({ error: "Forbidden" });
+                }
+
+                const targetUser = await db.get(
+                    `
+                    SELECT user_id
+                    FROM users
+                    WHERE user_id = ?
+                    `,
+                    [targetUserId]
+                );
+
+                if (!targetUser) {
+                    return res.status(404).json({ error: "User not found" });
+                }
+
+                const targetAlreadyOwnsPod = await userOwnsPod(db, targetUserId, podId);
+                if (targetAlreadyOwnsPod) {
+                    return res.status(409).json({ error: "User is already an owner of this pod" });
+                }
+
+                await db.run(
+                    `
+                    INSERT INTO user_pod (user_id, pod_id)
+                    VALUES (?, ?)
+                    `,
+                    [targetUserId, podId]
+                );
+
+                return res.status(201).json({
+                    message: "Pod owner added successfully",
+                    podId: String(podId),
+                    userId: String(targetUserId),
+                });
+            } catch (error) {
+                return res.status(500).json({
+                    error: "Internal server error",
+                    where: "/pods/:id/owners",
+                    message: error?.message,
+                    code: error?.code,
+                });
+            }
+        }
+    );
+
+    // -------------------------
+    // GET /pods/:id/owners
+    // -------------------------
+    // Get all owners of a pod (owner or admin required)
+    router.get("/:id/owners",
+        authenticateToken,
+        [param("id").isInt({ gt: 0 }).withMessage("Pod id must be a positive integer")],
+        async (req, res) => {
+            try {
+                const errors = validationResult(req);
+                if (!errors.isEmpty()) {
+                    return res.status(400).json({
+                        error: "Validation failed",
+                        details: errors.array().map((err) => ({
+                            field: err.param,
+                            message: err.msg,
+                        })),
+                    });
+                }
+
+                const podId = Number(req.params.id);
+                const userId = req.user.id;
+
+                const pod = await getPodById(db, podId);
+                if (!pod) return res.status(404).json({ error: "Pod not found" });
+
+                const isAdmin = await getIsAdmin(userId);
+                const isOwner = await userOwnsPod(db, userId, podId);
+
+                if (!isOwner && !isAdmin) {
+                    return res.status(403).json({ error: "Forbidden" });
+                }
+
+                const owners = await db.all(
+                    `
+                    SELECT u.user_id, u.username
+                    FROM users u
+                    JOIN user_pod up ON u.user_id = up.user_id
+                    WHERE up.pod_id = ?
+                    ORDER BY LOWER(u.username) ASC
+                    `,
+                    [podId]
+                );
+
+                return res.status(200).json({
+                    owners: owners.map((owner) => ({
+                        id: owner.user_id,
+                        username: owner.username,
+                    })),
+                });
+            } catch (error) {
+                return res.status(500).json({
+                    error: "Internal server error",
+                    where: "/pods/:id/owners",
                     message: error?.message,
                     code: error?.code,
                 });
@@ -454,6 +628,135 @@ module.exports = (db) => {
                 return res.status(500).json({
                     error: "Internal server error",
                     where: "/pods/delete-pod-data",
+                    message: error?.message,
+                    code: error?.code,
+                });
+            }
+        }
+    );
+
+    // -------------------------
+    // GET /pods/latest?ids=1,2,3
+    // -------------------------
+    router.get(
+        "/latest",
+        optionalAuth,
+        async (req, res) => {
+            try {
+                const idsParam = req.query.ids;
+                if (!idsParam) {
+                    return res.status(400).json({
+                        error: "Query param 'ids' required (comma separated pod IDs)"
+                    });
+                }
+
+                const podIds = idsParam
+                    .split(",")
+                    .map((id) => Number(id.trim()))
+                    .filter((id) => !isNaN(id) && id > 0);
+
+                if (podIds.length === 0) {
+                    return res.status(400).json({
+                        error: "No valid pod IDs provided"
+                    });
+                }
+
+                const userId = req.user?.id ?? null;
+                const isAdmin = userId ? await getIsAdmin(userId) : false;
+
+                // -------------------------
+                // Fetch pods + visibility check
+                // -------------------------
+                const pods = [];
+                for (const podId of podIds) {
+                    const pod = await getPodById(db, podId);
+                    if (!pod) continue;
+
+                    const isPublic = !!pod.pod_data_public;
+                    const owns = userId ? await userOwnsPod(db, userId, podId) : false;
+
+                    if (!isPublic && !owns && !isAdmin) continue;
+
+                    pods.push(pod);
+                }
+
+                if (pods.length === 0) {
+                    return res.status(403).json({ error: "No accessible pods" });
+                }
+
+                const accessibleIds = pods.map(p => p.pod_id);
+
+                // -------------------------
+                // Get latest per pod + sensor_type
+                // -------------------------
+                const placeholders = accessibleIds.map(() => "?").join(",");
+
+                const rows = await db.all(
+                    `
+  SELECT *
+  FROM (
+    SELECT
+      pd.pod_id,
+      p.pod_name,
+      sd.sensor_data_id,
+      sd.sensor_type,
+      sd.reading_value,
+      sd.reading_units,
+      sd.reading_timestamp,
+      pd.latitude,
+      pd.longitude,
+      ROW_NUMBER() OVER (
+        PARTITION BY pd.pod_id, sd.sensor_type
+        ORDER BY datetime(sd.reading_timestamp) DESC
+      ) as rn
+    FROM pod_data pd
+    JOIN sensor_data sd
+      ON sd.pod_data_id = pd.pod_data_id
+    JOIN pod p
+      ON p.pod_id = pd.pod_id
+    WHERE pd.pod_id IN (${placeholders})
+  )
+  WHERE rn = 1
+  `,
+                    accessibleIds
+                );
+
+                // -------------------------
+                // Build response structure
+                // -------------------------
+                const result = {};
+
+                for (const pod of pods) {
+                    result[pod.pod_id] = {
+                        podId: String(pod.pod_id),
+                        podName: pod.pod_name ?? null,
+                        visibility: pod.pod_data_public ? "public" : "private",
+                        latestReadings: {}
+                    };
+                }
+
+                for (const row of rows) {
+                    result[row.pod_id].latestReadings[row.sensor_type] = {
+                        id: String(row.sensor_data_id),
+                        metric: row.sensor_type,
+                        value: row.reading_value,
+                        units: row.reading_units ?? null,
+                        timestamp: new Date(row.reading_timestamp).toISOString(),
+                        location: {
+                            latitude: Number(row.latitude),
+                            longitude: Number(row.longitude),
+                        }
+                    };
+                }
+
+                return res.status(200).json({
+                    pods: Object.values(result)
+                });
+
+            } catch (error) {
+                return res.status(500).json({
+                    error: "Internal server error",
+                    where: "/pods/latest",
                     message: error?.message,
                     code: error?.code,
                 });

@@ -46,6 +46,7 @@ createDB()
         try {
           const now = Math.floor(Date.now() / 1000);
           await db.run(`DELETE FROM email_verification WHERE expires_at < ?`, [now]);
+          await db.run(`DELETE FROM password_reset WHERE expires_at < ?`, [now]);
           await db.run(`DELETE FROM pending_email_changes WHERE expires_at < ?`, [now]);
           await db.run(`DELETE FROM refresh_tokens WHERE expires_at < ?`, [now]);
         } catch (err) {
