@@ -203,7 +203,6 @@ const validateCodeAttempt = async ({
     notFoundError,
     expiredError,
     invalidError,
-    checkAttemptsFirst = true,
     deleteOnExpired = false,
 }) => {
     if (!row) {
@@ -217,11 +216,7 @@ const validateCodeAttempt = async ({
         return { status: 400, error: expiredError };
     }
 
-    if (checkAttemptsFirst && row.attempts >= maxAttempts) {
-        return { status: 429, error: "Too many attempts" };
-    }
-
-    if (!checkAttemptsFirst && row.attempts >= maxAttempts) {
+    if (row.attempts >= maxAttempts) {
         return { status: 429, error: "Too many attempts" };
     }
 
@@ -632,6 +627,9 @@ module.exports = (db) => {
         const now = getNowEpochSeconds();
 
         try {
+            await db.run("BEGIN IMMEDIATE TRANSACTION");
+            transaction = true;
+
             const row = await getCodeRowByEmail(db, "password_reset", email);
 
             const codeError = await validateCodeAttempt({
@@ -644,11 +642,12 @@ module.exports = (db) => {
                 notFoundError: "Invalid or expired reset token",
                 expiredError: "Invalid or expired reset token",
                 invalidError: "Invalid or expired reset token",
-                checkAttemptsFirst: true,
                 deleteOnExpired: true,
             });
 
             if (codeError) {
+                await db.run("COMMIT");
+                transaction = false;
                 console.warn("[auth:/reset-password] code_validation_failed", {
                     traceId,
                     email: maskEmailForLog(email),
@@ -659,9 +658,6 @@ module.exports = (db) => {
             }
 
             const hashedPassword = await bcrypt.hash(newPassword, 12);
-
-            await db.run("BEGIN TRANSACTION");
-            transaction = true;
 
             await db.run(
                 "UPDATE users SET password_hash = ? WHERE user_id = ?",
@@ -822,7 +818,6 @@ module.exports = (db) => {
                     notFoundError: "No verification code found",
                     expiredError: "Code expired",
                     invalidError: "Invalid code",
-                    checkAttemptsFirst: false,
                     deleteOnExpired: false,
                 });
 

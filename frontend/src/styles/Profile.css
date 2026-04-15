@@ -169,24 +169,6 @@
   height: 100vh;
 }
 
-/* General utility */
-.btn {
-  background: #204835;
-  color: #fff;
-  border: 2px solid #30A46C;
-  border-radius: 16px;
-  padding: 10px 22px;
-  font-size: 1rem;
-  font-weight: 500;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn:hover {
-  background: #30A46C;
-  color: #fff;
-}
-
 .profile-verification-modal {
   min-width: 360px;
   max-width: 460px;

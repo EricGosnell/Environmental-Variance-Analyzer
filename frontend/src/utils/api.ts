@@ -30,6 +30,7 @@ import type {
   GetPodLocationsRequest,
   PodLocationsResponse,
   RegisterPodRequest,
+  RegisterPodResponse,
   RequestEmailChangeRequest,
   SearchPodOwnerCandidatesResponse,
   UnregisterPodRequest,
@@ -450,40 +451,13 @@ export async function requestEmailChange(
   payload: RequestEmailChangeRequest,
   signal?: AbortSignal,
 ): Promise<MessageResponse> {
-  const maskedEmail =
-    typeof payload.newEmail === "string"
-      ? payload.newEmail.replace(/(^.).*(@.*$)/, "$1***$2")
-      : "***";
-
-  console.log("[api.ts][requestEmailChange] Outgoing request", {
-    traceId: payload.traceId,
+  return await request<MessageResponse>({
+    method: "POST",
     path: "/users/me/email/request-change",
-    targetEmail: maskedEmail,
+    body: payload,
+    auth: true,
+    signal,
   });
-
-  try {
-    const response = await request<MessageResponse>({
-      method: "POST",
-      path: "/users/me/email/request-change",
-      body: payload,
-      auth: true,
-      signal,
-    });
-
-    console.log("[api.ts][requestEmailChange] Request succeeded", {
-      traceId: payload.traceId,
-      path: "/users/me/email/request-change",
-    });
-
-    return response;
-  } catch (error) {
-    console.error("[api.ts][requestEmailChange] Request failed", {
-      traceId: payload.traceId,
-      path: "/users/me/email/request-change",
-      error,
-    });
-    throw error;
-  }
 }
 export async function verifyAndUpdateEmail(
   payload: VerifyAndUpdateEmailRequest,
@@ -506,8 +480,8 @@ export async function updateMyPassword(payload: UpdatePasswordRequest, signal?: 
     signal,
   });
 }
-export async function registerPod(payload: RegisterPodRequest, signal?: AbortSignal): Promise<MessageResponse> {
-  return await request<MessageResponse>({
+export async function registerPod(payload: RegisterPodRequest, signal?: AbortSignal): Promise<RegisterPodResponse> {
+  return await request<RegisterPodResponse>({
     method: "POST",
     path: "/users/me/register-pod",
     body: payload,

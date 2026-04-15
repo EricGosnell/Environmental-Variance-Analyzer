@@ -9,21 +9,6 @@ import "../styles/ManagePods.css";
 
 const PASSWORD_REQUIREMENTS_MESSAGE = "Password must be 8-128 characters and include at least one lowercase letter, one uppercase letter, and one number.";
 
-function isValidPassword(password: string): boolean {
-	return password.length >= 8 && password.length <= 128 && /[a-z]/.test(password) && /[A-Z]/.test(password) && /\d/.test(password);
-}
-
-function maskEmailForLog(email: string): string {
-	const trimmed = email.trim();
-	const atIndex = trimmed.indexOf("@");
-	if (atIndex <= 1) return "***";
-	return `${trimmed[0]}***${trimmed.slice(atIndex)}`;
-}
-
-function generateTraceId(prefix = "email-change"): string {
-	return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-}
-
 function formatHistoryValue(value: string | number | null | undefined): string {
 	if (value === null || value === undefined) return "none";
 	if (typeof value === "number") return String(value);
@@ -66,7 +51,6 @@ const Profile: React.FC = () => {
 	const [passwordCode, setPasswordCode] = useState("");
 	const [newPassword, setNewPassword] = useState("");
 	const [confirmPassword, setConfirmPassword] = useState("");
-	const [passwordResetTraceId, setPasswordResetTraceId] = useState("");
 	const [passwordRequestInFlight, setPasswordRequestInFlight] = useState(false);
 	const [passwordUpdateInFlight, setPasswordUpdateInFlight] = useState(false);
 	const [verificationModal, setVerificationModal] = useState<VerificationModalState | null>(null);
@@ -161,7 +145,6 @@ const Profile: React.FC = () => {
 			setPasswordCode("");
 			setNewPassword("");
 			setConfirmPassword("");
-			setPasswordResetTraceId("");
 			closeVerificationModal();
 		};
 
@@ -171,13 +154,6 @@ const Profile: React.FC = () => {
 				return;
 			}
 
-			const traceId = passwordResetTraceId || generateTraceId("password-reset");
-			setPasswordResetTraceId(traceId);
-			console.log("[Profile][PasswordReset] Step 1: Request reset submit", {
-				traceId,
-				targetEmail: maskEmailForLog(user.email),
-			});
-
 			setMessage("");
 			setPasswordRequestInFlight(true);
 			setShowPasswordForm(false);
@@ -186,24 +162,10 @@ const Profile: React.FC = () => {
 			setConfirmPassword("");
 
 			try {
-				console.log("[Profile][PasswordReset] Step 2: Sending reset code", {
-					traceId,
-					targetEmail: maskEmailForLog(user.email),
-				});
-				const response = await authForgotPassword({ email: user.email, traceId });
-				console.log("[Profile][PasswordReset] Step 3: Reset code request succeeded", {
-					traceId,
-					targetEmail: maskEmailForLog(user.email),
-					responseMessage: response?.message,
-				});
+				const response = await authForgotPassword({ email: user.email });
 				openVerificationModal("password", user.email);
 				setMessage(response.message || "A password reset code was sent.");
 			} catch (err: any) {
-				console.error("[Profile][PasswordReset] Reset code request failed", {
-					traceId,
-					targetEmail: maskEmailForLog(user.email),
-					error: err,
-				});
 				setMessage(err?.message || "Failed to send password reset code.");
 			} finally {
 				setPasswordRequestInFlight(false);
@@ -233,39 +195,18 @@ const Profile: React.FC = () => {
 				return;
 			}
 
-			if (!isValidPassword(newPassword)) {
-				setMessage(PASSWORD_REQUIREMENTS_MESSAGE);
-				return;
-			}
-
 			setMessage("");
 			setPasswordUpdateInFlight(true);
-			console.log("[Profile][PasswordReset] Step 5: Submit new password", {
-				traceId: passwordResetTraceId,
-				targetEmail: maskEmailForLog(user.email),
-				hasCode: Boolean(passwordCode.trim()),
-			});
 
 			try {
 				const response = await authResetPassword({
 					email: user.email,
 					newPassword,
 					token: passwordCode.trim(),
-					traceId: passwordResetTraceId,
-				});
-				console.log("[Profile][PasswordReset] Step 6: Password reset succeeded", {
-					traceId: passwordResetTraceId,
-					targetEmail: maskEmailForLog(user.email),
-					responseMessage: response?.message,
 				});
 				resetPasswordFlow();
 				setMessage(response.message || "Password updated successfully.");
 			} catch (err: any) {
-				console.error("[Profile][PasswordReset] Password reset failed", {
-					traceId: passwordResetTraceId,
-					targetEmail: maskEmailForLog(user.email),
-					error: err,
-				});
 				setMessage(err?.message || "Failed to update password.");
 			} finally {
 				setPasswordUpdateInFlight(false);
@@ -285,31 +226,12 @@ const Profile: React.FC = () => {
 		};
 
 		const requestEmailChangeCode = async () => {
-			const traceId = generateTraceId();
-			console.log("[Profile][EmailChange] Step 1: Request change submit", {
-				traceId,
-				targetEmail: maskEmailForLog(form.email),
-			});
 			setMessage("");
 			try {
-				console.log("[Profile][EmailChange] Step 2: Sending verification code", {
-					traceId,
-					targetEmail: maskEmailForLog(form.email),
-				});
-				const response = await requestEmailChange({ newEmail: form.email, traceId });
-				console.log("[Profile][EmailChange] Step 3: Verification code request succeeded", {
-					traceId,
-					targetEmail: maskEmailForLog(form.email),
-					responseMessage: response?.message,
-				});
+				const response = await requestEmailChange({ newEmail: form.email });
 				openVerificationModal("email", form.email);
 				setMessage(response?.message || "Verification code sent to new email.");
 			} catch (err: any) {
-				console.error("[Profile][EmailChange] Verification code request failed", {
-					traceId,
-					targetEmail: maskEmailForLog(form.email),
-					error: err,
-				});
 				setMessage(err?.message || "Failed to request email change.");
 			}
 		};
@@ -340,35 +262,20 @@ const Profile: React.FC = () => {
 
 			try {
 				if (verificationModal.mode === "email") {
-					console.log("[Profile][EmailChange] Step 4: Verifying code from modal", {
-						targetEmail: maskEmailForLog(form.email),
-						hasVerificationCode: true,
-					});
-					await verifyAndUpdateEmail({ newEmail: form.email, verificationCode: trimmedCode });
-					console.log("[Profile][EmailChange] Step 5: Email update succeeded", {
-						targetEmail: maskEmailForLog(form.email),
-					});
+					await verifyAndUpdateEmail({ newEmail: verificationModal.targetEmail, verificationCode: trimmedCode });
 					setForm(currentForm => ({ ...currentForm, verificationCode: trimmedCode }));
-					setUser(u => u ? { ...u, email: form.email } : u);
+					setUser(u => u ? { ...u, email: verificationModal.targetEmail } : u);
 					closeVerificationModal();
 					setMessage("Email updated!");
 					return;
 				}
 
-				console.log("[Profile][PasswordReset] Step 4: Code submit", {
-					traceId: passwordResetTraceId,
-					hasCode: true,
-				});
 				setPasswordCode(trimmedCode);
 				closeVerificationModal();
 				setShowPasswordForm(true);
 				setMessage("Verification code accepted. Enter your new password below.");
 			} catch (err: any) {
 				if (verificationModal.mode === "email") {
-					console.error("[Profile][EmailChange] Email verify/update failed", {
-						targetEmail: maskEmailForLog(form.email),
-						error: err,
-					});
 					setVerificationModalError(err?.message || "Failed to verify email.");
 				} else {
 					setVerificationModalError(err?.message || "Failed to accept verification code.");
@@ -395,10 +302,7 @@ const Profile: React.FC = () => {
 		const handlePhoneUpdate = async (e: React.FormEvent) => {
 			e.preventDefault();
 			setMessage("");
-			// Here you would call an API endpoint to update phone number, e.g. updateMyPhoneNumber
-			// For now, just update local state
-			setUser(u => u ? { ...u, phone_number: form.phone_number } : u);
-			setMessage("Phone number updated!");
+			setMessage("Phone number updates are not supported yet.");
 			setPhoneEditMode(false);
 		};
 
@@ -430,6 +334,7 @@ const Profile: React.FC = () => {
 			return;
 		}
 		try {
+			setError(null);
 			await registerPod({
 				//podId: '', // no longer needed for new pod
 				nickname: newPod.nickname,
@@ -437,24 +342,10 @@ const Profile: React.FC = () => {
 				latitude: Number(newPod.latitude),
 				longitude: Number(newPod.longitude),
 			});
+			const refreshedUser = await getMe();
+			setUser(refreshedUser.user);
 			setShowAddModal(false);
 			setNewPod({ nickname: '', visibility: 'public', latitude: '', longitude: '' });
-			// Optimistically update user.pods for immediate UI update
-			setUser(u => u && u.pods ? {
-				...u,
-				pods: [
-					...u.pods,
-					{
-						id: Math.floor(Math.random() * 1000000),
-						name: newPod.nickname,
-						visibility: newPod.visibility === 'public',
-						lat: newPod.latitude,
-						long: newPod.longitude
-					}
-				]
-			} : u);
-			// Optionally, refresh from server in background
-			getMe().then(res => setUser(res.user));
 			void loadPodHistory();
 		} catch (err: any) {
 			if (err?.response && err.response?.error) {
@@ -472,6 +363,7 @@ const Profile: React.FC = () => {
 	};
 
 	const handleDeletePod = (podId: number) => {
+		setError(null);
 		setShowDeleteConfirm(podId);
 	};
 
@@ -500,6 +392,7 @@ const Profile: React.FC = () => {
 	};
 
 	const handleEditPod = (pod: UserPod) => {
+		setError(null);
 		setEditPodId(pod.id);
 		setEditPod({
 			nickname: pod.name,
@@ -674,7 +567,7 @@ const Profile: React.FC = () => {
 						{activeTab === "managePods" && (
 							<div className="manage-pods-container" style={{ width: "100%", background: "#204835", borderRadius: 16, boxShadow: "0 2px 12px rgba(0,0,0,0.08)", padding: "24px 16px", color: "#fff", marginLeft: 0, boxSizing: "border-box" }}>
 								<h3 style={{ marginBottom: 24 }}>Your Pods</h3>
-								<button className="add-pod-btn" style={{ marginBottom: 18 }} onClick={() => setShowAddModal(true)}>Add New Pod</button>
+								<button className="add-pod-btn" style={{ marginBottom: 18 }} onClick={() => { setError(null); setShowAddModal(true); }}>Add New Pod</button>
 								<table className="pods-table" style={{ width: "100%", borderCollapse: "collapse" }}>
 									<thead>
 										<tr>
@@ -752,7 +645,7 @@ const Profile: React.FC = () => {
 											</label>
 											<div className="form-actions">
 												<button type="button" className="primary-btn" onClick={handleAddPod}>Add Pod</button>
-												<button type="button" onClick={() => setShowAddModal(false)}>Cancel</button>
+												<button type="button" onClick={() => { setError(null); setShowAddModal(false); }}>Cancel</button>
 											</div>
 										</form>
 									</div>
@@ -766,7 +659,7 @@ const Profile: React.FC = () => {
 											<p>Are you sure you want to update this pod's information?</p>
 											<div className="form-actions">
 												<button type="button" className="primary-btn" onClick={confirmEditPod}>Yes, Update</button>
-												<button type="button" onClick={() => { setShowEditConfirm(false); setEditPodId(null); }}>Cancel</button>
+												<button type="button" onClick={() => { setError(null); setShowEditConfirm(false); setEditPodId(null); }}>Cancel</button>
 											</div>
 										</div>
 									</div>
@@ -816,7 +709,7 @@ const Profile: React.FC = () => {
 											</label>
 											<div className="form-actions">
 												<button type="button" className="primary-btn" onClick={openEditConfirm}>Update Pod</button>
-												<button type="button" onClick={() => setEditPodId(null)}>Cancel</button>
+												<button type="button" onClick={() => { setError(null); setEditPodId(null); }}>Cancel</button>
 											</div>
 										</form>
 									</div>
@@ -830,7 +723,7 @@ const Profile: React.FC = () => {
 											<p>Are you sure you want to delete this pod? This action cannot be undone.</p>
 											<div className="form-actions">
 												<button type="button" className="primary-btn" onClick={confirmDeletePod}>Yes, Delete</button>
-												<button type="button" onClick={() => setShowDeleteConfirm(null)}>Cancel</button>
+												<button type="button" onClick={() => { setError(null); setShowDeleteConfirm(null); }}>Cancel</button>
 											</div>
 										</div>
 									</div>

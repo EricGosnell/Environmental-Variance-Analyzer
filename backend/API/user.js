@@ -634,6 +634,8 @@ module.exports = (db) => {
             }
 
             const { nickname, visibility, latitude, longitude } = req.body;
+            const parsedLatitude = latitude !== undefined ? Number(latitude) : undefined;
+            const parsedLongitude = longitude !== undefined ? Number(longitude) : undefined;
             const userId = req.user.id;
 
             // Enforce uniqueness by pod name
@@ -656,27 +658,39 @@ module.exports = (db) => {
                     [userId, existingPod.pod_id]
                 );
                 // Insert pod location data if provided
-                if (latitude !== undefined && longitude !== undefined) {
+                if (parsedLatitude !== undefined && parsedLongitude !== undefined) {
                     const today = new Date().toISOString().split('T')[0];
                     await db.run(
                         "INSERT INTO pod_data (pod_id, date_collected, latitude, longitude) VALUES (?, ?, ?, ?)",
-                        [existingPod.pod_id, today, latitude, longitude]
+                        [existingPod.pod_id, today, parsedLatitude, parsedLongitude]
                     );
                 }
+                await logPodAction({
+                    podId: existingPod.pod_id,
+                    actorUserId: userId,
+                    actionType: "added",
+                    actionDetails: {
+                        nickname,
+                        visibility,
+                        latitude: parsedLatitude ?? null,
+                        longitude: parsedLongitude ?? null,
+                        existingPod: true,
+                    },
+                });
                 return res.status(200).json({ message: "Pod registered to user successfully", podId: existingPod.pod_id });
             }
 
             //Check long and lat have required specificity, three decimals minimum
-            if (latitude !== undefined) {
-                const latString = latitude.toString();
+            if (parsedLatitude !== undefined) {
+                const latString = parsedLatitude.toString();
                 const latDecimals = latString.split(".")[1];
                 if (!latDecimals || latDecimals.length < 3) {
                     return res.status(400).json({ error: "Latitude must have at least three decimal places" });
                 }
             }
 
-            if (longitude !== undefined) {
-                const lonString = longitude.toString();
+            if (parsedLongitude !== undefined) {
+                const lonString = parsedLongitude.toString();
                 const lonDecimals = lonString.split(".")[1];
                 if (!lonDecimals || lonDecimals.length < 3) {
                     return res.status(400).json({ error: "Longitude must have at least three decimal places" });
@@ -697,11 +711,11 @@ module.exports = (db) => {
             );
 
             // Insert pod location data if provided
-            if (latitude !== undefined && longitude !== undefined) {
+            if (parsedLatitude !== undefined && parsedLongitude !== undefined) {
                 const today = new Date().toISOString().split('T')[0];
                 await db.run(
                     "INSERT INTO pod_data (pod_id, date_collected, latitude, longitude) VALUES (?, ?, ?, ?)",
-                    [podId, today, latitude, longitude]
+                    [podId, today, parsedLatitude, parsedLongitude]
                 );
             }
 
@@ -712,8 +726,8 @@ module.exports = (db) => {
                 actionDetails: {
                     nickname,
                     visibility,
-                    latitude: latitude ?? null,
-                    longitude: longitude ?? null,
+                    latitude: parsedLatitude ?? null,
+                    longitude: parsedLongitude ?? null,
                 },
             });
 

@@ -36,6 +36,21 @@ CREATE TABLE IF NOT EXISTS email_verification (
 CREATE INDEX IF NOT EXISTS idx_email_verification_expires 
 ON email_verification(expires_at);
 
+-- password reset verification codes
+CREATE TABLE IF NOT EXISTS password_reset (
+    user_id INTEGER PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
+    code_hash TEXT NOT NULL,
+    expires_at INTEGER NOT NULL,
+    attempts INTEGER NOT NULL DEFAULT 0,
+    send_count INTEGER NOT NULL DEFAULT 0,
+    last_sent_at INTEGER NOT NULL DEFAULT 0,
+    window_started_at INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_password_reset_expires
+ON password_reset(expires_at);
+
 -- pending email change verification codes
 CREATE TABLE IF NOT EXISTS pending_email_changes (
     user_id INTEGER PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
@@ -103,6 +118,7 @@ CREATE TABLE IF NOT EXISTS sensor_data (
 CREATE INDEX IF NOT EXISTS idx_user_contact_user_id ON user_contact(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_pod_user_id ON user_pod(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_pod_pod_id ON user_pod(pod_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_pod_name_unique_nocase ON pod(pod_name COLLATE NOCASE);
 CREATE INDEX IF NOT EXISTS idx_pod_action_history_pod_id ON pod_action_history(pod_id);
 CREATE INDEX IF NOT EXISTS idx_pod_action_history_actor_user_id ON pod_action_history(actor_user_id);
 CREATE INDEX IF NOT EXISTS idx_pod_action_history_created_at ON pod_action_history(created_at);
