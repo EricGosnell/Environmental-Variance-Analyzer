@@ -45,7 +45,6 @@ const Profile: React.FC = () => {
 		phone_number: "",
 		verificationCode: ""
 	});
-	const [phoneEditMode, setPhoneEditMode] = useState(false);
 	const [message, setMessage] = useState("");
 	const [showPasswordForm, setShowPasswordForm] = useState(false);
 	const [passwordCode, setPasswordCode] = useState("");
@@ -263,7 +262,11 @@ const Profile: React.FC = () => {
 			try {
 				if (verificationModal.mode === "email") {
 					await verifyAndUpdateEmail({ newEmail: verificationModal.targetEmail, verificationCode: trimmedCode });
-					setForm(currentForm => ({ ...currentForm, verificationCode: trimmedCode }));
+					setForm(currentForm => ({
+						...currentForm,
+						email: verificationModal.targetEmail,
+						verificationCode: trimmedCode
+					}));
 					setUser(u => u ? { ...u, email: verificationModal.targetEmail } : u);
 					closeVerificationModal();
 					setMessage("Email updated!");
@@ -296,14 +299,13 @@ const Profile: React.FC = () => {
 		};
 
 		const handlePhoneFocus = () => {
-			setPhoneEditMode(true);
+			setMessage("Phone number updates are not supported yet.");
 		};
 
 		const handlePhoneUpdate = async (e: React.FormEvent) => {
 			e.preventDefault();
 			setMessage("");
 			setMessage("Phone number updates are not supported yet.");
-			setPhoneEditMode(false);
 		};
 
 	function isValidLat(lat: string | number): boolean {
@@ -817,7 +819,7 @@ const Profile: React.FC = () => {
 											id="profile-phone"
 												type="text"
 												name="phone_number"
-												value={phoneEditMode ? form.phone_number : (() => {
+												value={(() => {
 													const phone = form.phone_number || "";
 													const digits = phone.replace(/\D/g, "");
 													if (digits.length === 10) {
@@ -830,11 +832,11 @@ const Profile: React.FC = () => {
 												})()}
 												onChange={handleChange}
 												onFocus={handlePhoneFocus}
-												readOnly={!phoneEditMode}
+												readOnly
 												className=""
 												style={{ width: "100%", marginRight: 0, marginTop: 0, padding: "12px 14px", border: '1px solid #30A46C', borderRadius: 16, fontSize: '1rem', background: '#204835', color: '#fff', boxSizing: "border-box" }}
 											/> 
-										<button className="btn" type="submit" style={{ width: "100%", minWidth: 0, marginLeft: 0, marginRight: 0, padding: "12px 24px" }}>Update Phone Number</button>
+										<button className="btn" type="submit" disabled style={{ width: "100%", minWidth: 0, marginLeft: 0, marginRight: 0, padding: "12px 24px" }}>Update Phone Number</button>
 									</form>
 								</div>
 

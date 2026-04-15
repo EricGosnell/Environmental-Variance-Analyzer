@@ -1,6 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const rateLimit = require("express-rate-limit");
 
 const { body, validationResult } = require("express-validator");
 const {
@@ -231,6 +232,13 @@ const validateCodeAttempt = async ({
 
 module.exports = (db) => {
     const router = express.Router();
+    const resetPasswordLimiter = rateLimit({
+        windowMs: 60 * 1000,
+        max: 10,
+        standardHeaders: true,
+        legacyHeaders: false,
+        message: { error: "Too many requests. Please try again shortly." },
+    });
 
     // -------------------------
     // POST /login
@@ -592,7 +600,7 @@ module.exports = (db) => {
     // -------------------------
     // POST /reset-password
     // -------------------------
-    router.post("/reset-password", sanitizeRequestBody, [
+    router.post("/reset-password", resetPasswordLimiter, sanitizeRequestBody, [
         body("email")
             .isEmail()
             .withMessage("Valid email required"),
@@ -627,7 +635,7 @@ module.exports = (db) => {
         const now = getNowEpochSeconds();
 
         try {
-            await db.run("BEGIN IMMEDIATE TRANSACTION");
+            await db.run("BEGIN IMMEDIATE");
             transaction = true;
 
             const row = await getCodeRowByEmail(db, "password_reset", email);

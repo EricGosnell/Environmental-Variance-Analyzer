@@ -634,6 +634,8 @@ module.exports = (db) => {
             }
 
             const { nickname, visibility, latitude, longitude } = req.body;
+            const rawLatitude = latitude !== undefined ? String(latitude).trim() : undefined;
+            const rawLongitude = longitude !== undefined ? String(longitude).trim() : undefined;
             const parsedLatitude = latitude !== undefined ? Number(latitude) : undefined;
             const parsedLongitude = longitude !== undefined ? Number(longitude) : undefined;
             const userId = req.user.id;
@@ -681,20 +683,12 @@ module.exports = (db) => {
             }
 
             //Check long and lat have required specificity, three decimals minimum
-            if (parsedLatitude !== undefined) {
-                const latString = parsedLatitude.toString();
-                const latDecimals = latString.split(".")[1];
-                if (!latDecimals || latDecimals.length < 3) {
-                    return res.status(400).json({ error: "Latitude must have at least three decimal places" });
-                }
+            if (rawLatitude !== undefined && !/^-?\d+\.\d{3,}$/.test(rawLatitude)) {
+                return res.status(400).json({ error: "Latitude must have at least three decimal places" });
             }
 
-            if (parsedLongitude !== undefined) {
-                const lonString = parsedLongitude.toString();
-                const lonDecimals = lonString.split(".")[1];
-                if (!lonDecimals || lonDecimals.length < 3) {
-                    return res.status(400).json({ error: "Longitude must have at least three decimal places" });
-                }
+            if (rawLongitude !== undefined && !/^-?\d+\.\d{3,}$/.test(rawLongitude)) {
+                return res.status(400).json({ error: "Longitude must have at least three decimal places" });
             }
 
             // Insert new pod and get pod_id
