@@ -1,5 +1,62 @@
 /* Profile.css - Styling for Profile page, matching ManagePods and other pages */
 
+.profile-page-layout {
+  display: flex;
+  min-height: 100vh;
+  background: #232a27;
+  padding: 24px;
+  gap: 24px;
+  box-sizing: border-box;
+}
+
+.profile-page-sidebar-shell {
+  width: 220px;
+  background: #204835;
+  padding: 32px 0;
+  border-radius: 16px;
+  flex-shrink: 0;
+}
+
+.profile-page-tabs {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.profile-tab-btn {
+  border: none;
+  border-radius: 8px;
+  padding: 12px 0;
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin: 4px 16px;
+}
+
+.profile-tab-btn.active {
+  background: #30A46C;
+  color: #fff;
+}
+
+.profile-page-content-wrap {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  gap: 24px;
+}
+
+.profile-page-main-column {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.profile-tab-content-shell {
+  width: 100%;
+  min-width: 0;
+}
+
 .profile-header {
   display: flex;
   flex-direction: column;
@@ -24,6 +81,13 @@
   font-size: 1.1rem;
   color: #fff;
   margin-bottom: 2px;
+  text-align: left;
+}
+
+.profile-account-type {
+  font-size: 1rem;
+  color: #ccc;
+  margin-bottom: 0;
   text-align: left;
 }
 
@@ -73,6 +137,31 @@
   max-width: 600px;
 }
 
+.profile-panel-container {
+  width: 100%;
+  margin-left: 0;
+  box-sizing: border-box;
+  padding: 24px 16px;
+}
+
+.profile-section-title {
+  margin-bottom: 24px;
+}
+
+.profile-pods-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.profile-inline-action-btn {
+  margin-right: 8px;
+}
+
+.profile-history-details-btn {
+  padding: 6px 12px;
+  font-size: 0.9rem;
+}
+
 /* Error/message styling */
 .profile-message {
   background: #e74c3c;
@@ -92,6 +181,103 @@
   max-width: 900px;
   min-width: 600px;
   margin-left: 0;
+}
+
+.profile-settings-panel {
+  width: 100%;
+  min-width: 0;
+  margin-left: 0;
+  box-sizing: border-box;
+  border-radius: 16px;
+  background: #204835;
+  padding: 32px 40px;
+  color: #fff;
+}
+
+.profile-controls-container {
+  width: 100%;
+  max-width: 760px;
+  margin-bottom: 16px;
+}
+
+.profile-form-grid {
+  margin-bottom: 12px;
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) minmax(220px, 1fr);
+  column-gap: 24px;
+  align-items: center;
+  width: 100%;
+  background: var(--primary-green);
+  border-radius: 16px;
+  padding: 14px 16px;
+  box-sizing: border-box;
+}
+
+.profile-form-label-nowrap {
+  white-space: nowrap;
+}
+
+.profile-form-input {
+  width: 100%;
+  margin-top: 0;
+  padding: 12px 14px;
+  border: 1px solid #30A46C;
+  border-radius: 16px;
+  font-size: 1rem;
+  background: #204835;
+  color: #fff;
+  box-sizing: border-box;
+}
+
+.profile-form-submit-btn {
+  width: 100%;
+  min-width: 0;
+  margin-left: 0;
+  margin-right: 0;
+  padding: 12px 24px;
+}
+
+.profile-change-password-btn {
+  margin-bottom: 12px;
+  width: 280px;
+  min-width: 240px;
+  padding: 12px 24px;
+}
+
+.profile-password-form {
+  margin-bottom: 8px;
+}
+
+.profile-password-input {
+  margin-top: 6px;
+  padding: 8px;
+  border: 1px solid #30A46C;
+  border-radius: 16px;
+  font-size: 1rem;
+  background: #204835;
+  color: #fff;
+}
+
+.profile-password-requirements {
+  color: #ccc;
+  font-size: 0.95rem;
+  margin-top: 4px;
+}
+
+.profile-password-actions-row {
+  display: flex;
+  gap: 20px;
+  margin-top: 16px;
+}
+
+.profile-password-update-btn {
+  min-width: 200px;
+  padding: 12px 24px;
+}
+
+.profile-password-secondary-btn {
+  min-width: 160px;
+  padding: 12px 24px;
 }
 
 .profile-settings-form label {
@@ -210,4 +396,45 @@
 
 .profile-verification-actions {
   margin-top: 4px;
+}
+
+.profile-history-modal {
+  max-width: 700px;
+  width: 100%;
+}
+
+.profile-history-modal-title {
+  margin-bottom: 14px;
+}
+
+.profile-history-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 14px;
+}
+
+.profile-history-empty-note {
+  margin-bottom: 14px;
+}
+
+.profile-right-aside {
+  width: 280px;
+  background: #204835;
+  border-radius: 16px;
+  padding: 32px 24px;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  flex-shrink: 0;
+  box-sizing: border-box;
+}
+
+.profile-right-title {
+  margin-bottom: 16px;
+}
+
+.profile-right-copy {
+  color: #ccc;
+  font-size: 1rem;
 }
