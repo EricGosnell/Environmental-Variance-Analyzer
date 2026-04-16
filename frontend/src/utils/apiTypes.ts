@@ -110,7 +110,7 @@ export type VerifyAndUpdateEmailResponse = { message: string; user: Pick<User, "
 export type UpdatePasswordRequest = { oldPassword: string; newPassword: string };
 
 export type RegisterPodRequest = {
-  podId: string;
+  podId?: string;
   nickname: string;
   visibility: "public" | "private";
   latitude?: number;
