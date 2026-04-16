@@ -105,10 +105,10 @@ CREATE TABLE IF NOT EXISTS org (
 CREATE TABLE IF NOT EXISTS user_org (
     user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     org_id INTEGER NOT NULL REFERENCES org(org_id) ON DELETE CASCADE,
-    PRIMARY KEY (user_id, org_id),
     role TEXT NOT NULL CHECK (role IN ('owner', 'member')),
     status TEXT NOT NULL CHECK (status IN ('invited', 'requested', 'active')),
-    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, org_id)
 );
 
 CREATE TABLE IF NOT EXISTS message (
@@ -127,7 +127,7 @@ CREATE TABLE IF NOT EXISTS message (
 
     -- restrict status to invitations and requests only
     CHECK ((type IN ('invite', 'request') AND status IS NOT NULL) OR (type = 'shared_pod' AND status IS NULL)),
-    CHECK (status IS NULL OR status IN ('pending', 'accepted', 'denied')),
+    CHECK (status IS NULL OR status IN ('pending', 'accepted', 'denied'))
 );
 
 CREATE INDEX IF NOT EXISTS idx_user_contact_user_id ON user_contact(user_id);
