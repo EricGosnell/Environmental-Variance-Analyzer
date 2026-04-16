@@ -256,8 +256,8 @@ export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fr
   onPodsLoadedRef.current = onPodsLoaded;
 
   useEffect(() => {
-    onPodsLoadedRef.current(pods);
-  }, [pods]);
+    onPodsLoadedRef.current(visiblePods);
+  }, [visiblePods]);
 
   function closeTooltip() {
     if (!tooltipPodId) return;

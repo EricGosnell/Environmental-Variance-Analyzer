@@ -25,7 +25,7 @@ export function uploadTimeframeToFromDate(filters: FiltersState): string | undef
 }
 
 export function uploadTimeframeToToDate(filters: FiltersState): string | undefined {
-    if (filters.customTo) return new Date(filters.customTo + "T23:59:59.999").toISOString();
+    if (filters.customTo) return new Date(filters.customTo + "T23:59:59.999Z").toISOString();
     return undefined;
 }
 
