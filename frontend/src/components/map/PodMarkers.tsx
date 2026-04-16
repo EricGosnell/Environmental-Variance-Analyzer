@@ -243,6 +243,8 @@ export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fr
       return;
     }
     void fetchPods(map as unknown as MapLike);
+  // nameSearch is intentionally excluded — name filtering is done client-side on visiblePods,
+  // so no server refetch is needed when it changes.
   }, [fromDate, toDate, sensorTypesKey, ownerFilter]);
 
   const visiblePods = useMemo(() => {

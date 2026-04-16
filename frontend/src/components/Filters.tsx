@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import "../styles/Filters.css";
+import { useGlobalError } from "./GlobalErrorContext";
 
 export type UploadTimeframe = "24h" | "7d" | "30d" | "any";
 
@@ -14,8 +15,10 @@ export interface FiltersState {
     nameSearch: string;
 }
 
+// All date boundaries are sent as UTC ISO strings. This is correct because the backend
+// stores all pod timestamps in UTC (via JS toISOString()), so filtering in UTC matches stored data.
 export function uploadTimeframeToFromDate(filters: FiltersState): string | undefined {
-    if (filters.customFrom) return new Date(filters.customFrom).toISOString();
+    if (filters.customFrom) return new Date(filters.customFrom + "T00:00:00.000Z").toISOString();
     if (filters.uploadTimeframe === "any") return undefined;
     const now = new Date();
     if (filters.uploadTimeframe === "24h") now.setTime(now.getTime() - 24 * 60 * 60 * 1000);
@@ -39,23 +42,30 @@ interface FiltersProps {
 export default function Filters({ filters, onChange, availableSensorTypes, isAuthenticated }: FiltersProps) {
     const { uploadTimeframe, customFrom, customTo, sensorTypes, ownerFilter, nameSearch } = filters;
     const [sensorDropdownOpen, setSensorDropdownOpen] = useState(false);
+    const { showError } = useGlobalError();
 
     const setUploadTimeframe = (value: UploadTimeframe) =>
         onChange({ ...filters, uploadTimeframe: value, customFrom: "", customTo: "" });
 
-    const d = new Date();
-    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    const today = useMemo(() => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }, []);
 
     const handleCustomFrom = (value: string) => {
-        const update: Partial<FiltersState> = { uploadTimeframe: "any", customFrom: value };
-        if (customTo && value > customTo) update.customTo = "";
-        onChange({ ...filters, ...update });
+        if (customTo && value > customTo) {
+            showError("From date cannot be after To date.");
+            return;
+        }
+        onChange({ ...filters, uploadTimeframe: "any", customFrom: value });
     };
 
     const handleCustomTo = (value: string) => {
-        const update: Partial<FiltersState> = { uploadTimeframe: "any", customTo: value };
-        if (customFrom && value < customFrom) update.customFrom = "";
-        onChange({ ...filters, ...update });
+        if (customFrom && value < customFrom) {
+            showError("To date cannot be before From date.");
+            return;
+        }
+        onChange({ ...filters, uploadTimeframe: "any", customTo: value });
     };
 
     const toggleSensorType = (type: string) => {

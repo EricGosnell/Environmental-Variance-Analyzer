@@ -53,9 +53,9 @@ export default function PodTable({ isOpen, onClose, onHeightChange, visiblePodId
         }
     }, []);
 
-    // Get pod data for visible pods, but not while dragging
+    // Get pod data for visible pods, but not while dragging or when the table is closed
     useEffect(() => {
-        if (isDragging) return;
+        if (!isOpen || isDragging) return;
         const controller = new AbortController();
         fetchPodData(visiblePodIds, controller.signal);
         return () => controller.abort();
