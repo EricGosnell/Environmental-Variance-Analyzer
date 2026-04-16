@@ -43,12 +43,19 @@ export default function Filters({ filters, onChange, availableSensorTypes, isAut
     const setUploadTimeframe = (value: UploadTimeframe) =>
         onChange({ ...filters, uploadTimeframe: value, customFrom: "", customTo: "" });
 
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
     const handleCustomFrom = (value: string) => {
-        onChange({ ...filters, uploadTimeframe: "any", customFrom: value });
+        const update: Partial<FiltersState> = { uploadTimeframe: "any", customFrom: value };
+        if (customTo && value > customTo) update.customTo = "";
+        onChange({ ...filters, ...update });
     };
 
     const handleCustomTo = (value: string) => {
-        onChange({ ...filters, uploadTimeframe: "any", customTo: value });
+        const update: Partial<FiltersState> = { uploadTimeframe: "any", customTo: value };
+        if (customFrom && value < customFrom) update.customFrom = "";
+        onChange({ ...filters, ...update });
     };
 
     const toggleSensorType = (type: string) => {
@@ -58,9 +65,25 @@ export default function Filters({ filters, onChange, availableSensorTypes, isAut
         onChange({ ...filters, sensorTypes: next });
     };
 
+    const isDefault =
+        uploadTimeframe === "any" &&
+        customFrom === "" &&
+        customTo === "" &&
+        sensorTypes.length === 0 &&
+        ownerFilter === "all" &&
+        nameSearch === "";
+
+    const handleClear = () =>
+        onChange({ uploadTimeframe: "any", customFrom: "", customTo: "", sensorTypes: [], ownerFilter: "all", nameSearch: "" });
+
     return (
         <div className="filters-container">
-            <p className="filters-heading">Filters</p>
+            <div className="filters-header">
+                <p className="filters-heading">Filters</p>
+                <button className="filters-clear-btn" onClick={handleClear} disabled={isDefault}>
+                    Clear
+                </button>
+            </div>
 
             <div className="filter-group">
                 <p className="filter-group-label">Pod Name</p>
@@ -110,6 +133,7 @@ export default function Filters({ filters, onChange, availableSensorTypes, isAut
                             type="date"
                             className={`filter-date-input ${customFrom ? "active" : ""}`}
                             value={customFrom}
+                            max={customTo || today}
                             onChange={(e) => handleCustomFrom(e.target.value)}
                         />
                     </div>
@@ -119,6 +143,8 @@ export default function Filters({ filters, onChange, availableSensorTypes, isAut
                             type="date"
                             className={`filter-date-input ${customTo ? "active" : ""}`}
                             value={customTo}
+                            min={customFrom}
+                            max={today}
                             onChange={(e) => handleCustomTo(e.target.value)}
                         />
                     </div>
