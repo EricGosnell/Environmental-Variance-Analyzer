@@ -77,7 +77,10 @@ export default function Home() {
     }, []);
 
     useEffect(() => {
-        if (visiblePods.length === 0) return;
+        if (visiblePods.length === 0) {
+            setAvailableSensorTypes([]);
+            return;
+        }
         const ac = new AbortController();
 
         (async () => {
@@ -128,8 +131,14 @@ export default function Home() {
         }
     };
 
-    const fromDate = uploadTimeframeToFromDate(filters);
-    const toDate = uploadTimeframeToToDate(filters);
+    const { fromDate, toDate } = useMemo(
+        () => ({
+            fromDate: uploadTimeframeToFromDate(filters),
+            toDate: uploadTimeframeToToDate(filters),
+        }),
+        [filters]
+    );
+
     const sensorTypes = useMemo(() => filters.sensorTypes, [filters.sensorTypes.join(",")]);
 
     return (
@@ -152,7 +161,7 @@ export default function Home() {
                             )}
                             <button className="btn primary-btn" disabled={(user.pods?.length ?? 0) === 0}>Upload EVA Data</button>
                             <br />
-                            <button className="btn secondary-btn">Manage EVA Pods</button>
+                            <button className="btn primary-btn">Manage EVA Pods</button>
                         </>
                     ) : null}
 

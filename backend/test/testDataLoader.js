@@ -127,16 +127,19 @@ const loadTestData = async (db) => {
 
         const podDataId = podDataRow.pod_data_id;
 
+        const timestampISO = new Date(entry.ts * 1000).toISOString();
+
         for (const r of entry.readings) {
             await db.run(
                 `INSERT INTO sensor_data
-         (pod_data_id, sensor_type, reading_value, reading_units, raw_data)
-         VALUES (?, ?, ?, ?, ?)`,
+         (pod_data_id, sensor_type, reading_value, reading_units, reading_timestamp, raw_data)
+         VALUES (?, ?, ?, ?, ?, ?)`,
                 [
                     podDataId,
                     r.metric,
                     r.value,
                     r.unit,
+                    timestampISO,
                     JSON.stringify(r)
                 ]
             );
@@ -150,5 +153,5 @@ const loadTestData = async (db) => {
 
 module.exports = { loadTestData };
 
-
 module.exports = { loadTestData };
+
