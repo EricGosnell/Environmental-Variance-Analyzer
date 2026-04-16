@@ -621,11 +621,13 @@ module.exports = (db) => {
         body("latitude")
             .optional()
             .isFloat({ min: -90, max: 90 })
-            .withMessage("Latitude must be a valid number between -90 and 90"),
+            .withMessage("Latitude must be a valid number between -90 and 90")
+            .toFloat(),
         body("longitude")
             .optional()
             .isFloat({ min: -180, max: 180 })
-            .withMessage("Longitude must be a valid number between -180 and 180"),
+            .withMessage("Longitude must be a valid number between -180 and 180")
+            .toFloat(),
     ], async (req, res) => {
         try {
             const errors = validationResult(req);
@@ -636,34 +638,15 @@ module.exports = (db) => {
             const { nickname, visibility, latitude, longitude } = req.body;
             const userId = req.user.id;
 
-            // Enforce uniqueness by pod name
-            const existingPod = await db.get(
-                "SELECT pod_id FROM pod WHERE pod_name = ?",
-                [nickname]
+            // Enforce per-user nickname uniqueness
+            const existingUserPod = await db.get(
+                `SELECT p.pod_id FROM user_pod up
+                 JOIN pod p ON up.pod_id = p.pod_id
+                 WHERE up.user_id = ? AND p.pod_name = ?`,
+                [userId, nickname]
             );
-            if (existingPod) {
-                // Check if user is already registered to this pod
-                const userPod = await db.get(
-                    "SELECT * FROM user_pod WHERE user_id = ? AND pod_id = ?",
-                    [userId, existingPod.pod_id]
-                );
-                if (userPod) {
-                    return res.status(409).json({ error: "A pod with this name registered to you already exists." });
-                }
-                // Register user to existing pod
-                await db.run(
-                    "INSERT INTO user_pod (user_id, pod_id) VALUES (?, ?)",
-                    [userId, existingPod.pod_id]
-                );
-                // Insert pod location data if provided
-                if (latitude !== undefined && longitude !== undefined) {
-                    const today = new Date().toISOString().split('T')[0];
-                    await db.run(
-                        "INSERT INTO pod_data (pod_id, date_collected, latitude, longitude) VALUES (?, ?, ?, ?)",
-                        [existingPod.pod_id, today, latitude, longitude]
-                    );
-                }
-                return res.status(200).json({ message: "Pod registered to user successfully", podId: existingPod.pod_id });
+            if (existingUserPod) {
+                return res.status(409).json({ error: "You already have a pod registered with this nickname." });
             }
 
             //Check long and lat have required specificity, three decimals minimum
@@ -746,11 +729,13 @@ module.exports = (db) => {
         body("latitude")
             .optional()
             .isFloat({ min: -90, max: 90 })
-            .withMessage("Latitude must be a valid number between -90 and 90"),
+            .withMessage("Latitude must be a valid number between -90 and 90")
+            .toFloat(),
         body("longitude")
             .optional()
             .isFloat({ min: -180, max: 180 })
-            .withMessage("Longitude must be a valid number between -180 and 180"),
+            .withMessage("Longitude must be a valid number between -180 and 180")
+            .toFloat(),
     ], async (req, res) => {
         try {
             const errors = validationResult(req);

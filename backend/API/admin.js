@@ -7,6 +7,21 @@ const { JWT_CONFIG } = require("../util/JWT");
 module.exports = (db) => {
     const router = express.Router();
 
+    const ensureInvitationTokensTable = async (res) => {
+        const table = await db.get(
+            "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'invitation_tokens'"
+        );
+
+        if (!table) {
+            res.status(503).json({
+                error: "Invitation token endpoints are temporarily unavailable until schema migration is applied"
+            });
+            return false;
+        }
+
+        return true;
+    };
+
     // Middleware to check if user is admin
     const authenticateAdmin = async (req, res, next) => {
         const authHeader = req.headers["authorization"];
@@ -59,6 +74,10 @@ module.exports = (db) => {
     // -------------------------
     router.get("/users/invitation-token", authenticateAdmin, async (req, res) => {
         try {
+            if (!(await ensureInvitationTokensTable(res))) {
+                return;
+            }
+
             const token = crypto.randomBytes(8).toString('hex').toUpperCase(); // 16 char hex, upper
             const expiresAt = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60; // 1 week
 
@@ -91,6 +110,10 @@ module.exports = (db) => {
         }
 
         try {
+            if (!(await ensureInvitationTokensTable(res))) {
+                return;
+            }
+
             const result = await db.run("DELETE FROM invitation_tokens WHERE token = ?", [invitationToken]);
 
             if (!result.changes) {

@@ -36,6 +36,21 @@ CREATE TABLE IF NOT EXISTS email_verification (
 CREATE INDEX IF NOT EXISTS idx_email_verification_expires 
 ON email_verification(expires_at);
 
+-- password reset codes
+CREATE TABLE IF NOT EXISTS password_reset (
+    user_id INTEGER PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
+    code_hash TEXT NOT NULL,
+    expires_at INTEGER NOT NULL,
+    attempts INTEGER NOT NULL DEFAULT 0,
+    send_count INTEGER NOT NULL DEFAULT 0,
+    last_sent_at INTEGER NOT NULL DEFAULT 0,
+    window_started_at INTEGER NOT NULL DEFAULT 0,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_password_reset_expires
+ON password_reset(expires_at);
+
 -- pending email change verification codes
 CREATE TABLE IF NOT EXISTS pending_email_changes (
     user_id INTEGER PRIMARY KEY REFERENCES users(user_id) ON DELETE CASCADE,
@@ -54,6 +69,15 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     expires_at INTEGER NOT NULL,
     created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
+);
+
+CREATE TABLE IF NOT EXISTS invitation_tokens (
+    token TEXT PRIMARY KEY,
+    created_by INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    expires_at INTEGER NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+    CHECK (length(token) > 0),
+    CHECK (expires_at > 0)
 );
 
 CREATE TABLE IF NOT EXISTS pod (
@@ -112,3 +136,5 @@ CREATE INDEX IF NOT EXISTS idx_sensor_data_pod_data_id ON sensor_data(pod_data_i
 CREATE INDEX IF NOT EXISTS idx_sensor_data_timestamp ON sensor_data(reading_timestamp);
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);
+CREATE INDEX IF NOT EXISTS idx_invitation_tokens_created_by ON invitation_tokens(created_by);
+CREATE INDEX IF NOT EXISTS idx_invitation_tokens_expires_at ON invitation_tokens(expires_at);
