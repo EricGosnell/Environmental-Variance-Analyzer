@@ -130,7 +130,8 @@ export default function Pod() {
       const key = String(st);
       if (seen.has(key)) continue;
       seen.add(key);
-      out.push({ key, label: titleCaseSensor(key) });
+      const units = e?.data?.reading_units ? ` (${e.data.reading_units})` : "";
+      out.push({ key, label: `${titleCaseSensor(key)}${units}` });
     }
     return out;
   }, [data]);
