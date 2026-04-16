@@ -18,14 +18,14 @@ export function uploadTimeframeToFromDate(filters: FiltersState): string | undef
     if (filters.customFrom) return new Date(filters.customFrom).toISOString();
     if (filters.uploadTimeframe === "any") return undefined;
     const now = new Date();
-    if (filters.uploadTimeframe === "24h") now.setHours(now.getHours() - 24);
+    if (filters.uploadTimeframe === "24h") now.setTime(now.getTime() - 24 * 60 * 60 * 1000);
     else if (filters.uploadTimeframe === "7d") now.setDate(now.getDate() - 7);
     else if (filters.uploadTimeframe === "30d") now.setDate(now.getDate() - 30);
     return now.toISOString();
 }
 
 export function uploadTimeframeToToDate(filters: FiltersState): string | undefined {
-    if (filters.customTo) return new Date(filters.customTo).toISOString();
+    if (filters.customTo) return new Date(filters.customTo + "T23:59:59.999").toISOString();
     return undefined;
 }
 

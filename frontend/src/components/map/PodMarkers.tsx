@@ -173,7 +173,7 @@ export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fr
       }
 
       if (sensorTypesRef.current.length > 0 && loadedPods.length > 0) {
-        const ids = loadedPods.map((p) => Number(p.id));
+        const ids = loadedPods.map((p) => p.id);
         try {
           const { pods: readings } = await getPodsLatestReadings(ids, ac.signal);
           const readingsById = new Map(readings.map((r) => [r.podId, r.latestReadings]));
@@ -235,7 +235,12 @@ export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fr
 
   const sensorTypesKey = sensorTypes.join(",");
 
+  const filtersMountedRef = useRef(false);
   useEffect(() => {
+    if (!filtersMountedRef.current) {
+      filtersMountedRef.current = true;
+      return;
+    }
     void fetchPods(map as unknown as MapLike);
   }, [fromDate, toDate, sensorTypesKey, ownerFilter]);
 
@@ -250,8 +255,8 @@ export default function PodMarkers({ onPodsLoaded, selectedPods, onPodSelect, fr
   onPodsLoadedRef.current = onPodsLoaded;
 
   useEffect(() => {
-    onPodsLoadedRef.current(visiblePods);
-  }, [visiblePods]);
+    onPodsLoadedRef.current(pods);
+  }, [pods]);
 
   function closeTooltip() {
     if (!tooltipPodId) return;
