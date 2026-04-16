@@ -355,8 +355,8 @@
   height: 100vh;
 }
 
-/* General utility */
-.btn {
+/* Button overrides scoped to Profile page only */
+.profile-page-layout .btn {
   background: #204835;
   color: #fff;
   border: 2px solid #30A46C;
@@ -368,7 +368,7 @@
   transition: background 0.2s;
 }
 
-.btn:hover {
+.profile-page-layout .btn:hover {
   background: #30A46C;
   color: #fff;
 }

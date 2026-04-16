@@ -33,6 +33,7 @@ import type {
   RequestEmailChangeRequest,
   SearchPodOwnerCandidatesResponse,
   UnregisterPodRequest,
+  UpdatePhoneNumberRequest,
   UpdatePasswordRequest,
   UpdatePodRequest,
   UpdateUsernameRequest,
@@ -501,6 +502,15 @@ export async function updateMyPassword(payload: UpdatePasswordRequest, signal?: 
   return await request<MessageResponse>({
     method: "PUT",
     path: "/users/me/password",
+    body: payload,
+    auth: true,
+    signal,
+  });
+}
+export async function updateMyPhoneNumber(payload: UpdatePhoneNumberRequest, signal?: AbortSignal): Promise<MessageResponse> {
+  return await request<MessageResponse>({
+    method: "PUT",
+    path: "/users/me/phone-number",
     body: payload,
     auth: true,
     signal,

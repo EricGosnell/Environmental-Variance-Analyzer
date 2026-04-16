@@ -7,6 +7,7 @@ type AccountSettingsPanelProps = {
 	message: string;
 	form: ProfileFormState;
 	phoneEditMode: boolean;
+	phoneUpdateInFlight: boolean;
 	newPassword: string;
 	confirmPassword: string;
 	showPasswordForm: boolean;
@@ -27,6 +28,7 @@ const AccountSettingsPanel = ({
 	message,
 	form,
 	phoneEditMode,
+	phoneUpdateInFlight,
 	newPassword,
 	confirmPassword,
 	showPasswordForm,
@@ -80,10 +82,12 @@ const AccountSettingsPanel = ({
 						value={phoneEditMode ? form.phone_number : maskPhoneForDisplay(form.phone_number)}
 						onChange={onChange}
 						onFocus={onPhoneFocus}
-						readOnly={!phoneEditMode}
+						readOnly={!phoneEditMode || phoneUpdateInFlight}
 						className="profile-form-input"
 					/>
-					<button className="btn profile-form-submit-btn" type="submit">Update Phone Number</button>
+					<button className="btn profile-form-submit-btn" type="submit" disabled={phoneUpdateInFlight}>
+						{phoneUpdateInFlight ? "Updating..." : "Update Phone Number"}
+					</button>
 				</form>
 			</div>
 

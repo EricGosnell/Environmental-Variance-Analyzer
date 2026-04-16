@@ -54,6 +54,7 @@ export function formatActionTypeLabel(action: PodActionHistoryEntry["action"]): 
 }
 
 export function maskPhoneForDisplay(phone: string): string {
+	if (!phone || !phone.trim()) return "";
 	const digits = (phone || "").replace(/\D/g, "");
 	if (digits.length === 10) return `***-${digits.slice(3, 6)}-${digits.slice(6, 10)}`;
 	if (digits.length === 7) return `***-${digits.slice(0, 3)}-${digits.slice(3, 7)}`;

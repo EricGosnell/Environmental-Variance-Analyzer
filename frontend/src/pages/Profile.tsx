@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import "../styles/Profile.css";
 import "../styles/ManagePods.css";
 import { getMe, getMyPodHistory, registerPod, updatePod, unregisterPod } from "../utils/api";
-import { updateMyUsername, verifyAndUpdateEmail, requestEmailChange } from "../utils/api";
+import { updateMyPhoneNumber, updateMyUsername, verifyAndUpdateEmail, requestEmailChange } from "../utils/api";
 import { authForgotPassword, authResetPassword } from "../utils/api";
 import type { PodActionHistoryEntry, User, UserPod } from "../utils/apiTypes";
 import ProfileTabs from "../components/ProfileTabs";
@@ -28,6 +28,7 @@ const Profile: React.FC = () => {
 		verificationCode: "",
 	});
 	const [phoneEditMode, setPhoneEditMode] = useState(false);
+	const [phoneUpdateInFlight, setPhoneUpdateInFlight] = useState(false);
 	const [message, setMessage] = useState("");
 	const [showPasswordForm, setShowPasswordForm] = useState(false);
 	const [passwordCode, setPasswordCode] = useState("");
@@ -89,7 +90,7 @@ const Profile: React.FC = () => {
 				setForm({
 					username: res.user.username || "",
 					email: res.user.email || "",
-					phone_number: "",
+					phone_number: res.user.phone_number || "",
 					verificationCode: "",
 				});
 			})
@@ -353,10 +354,31 @@ const Profile: React.FC = () => {
 
 	const handlePhoneUpdate = async (e: React.FormEvent) => {
 		e.preventDefault();
+		const trimmedPhone = form.phone_number.trim();
+
+		if (!trimmedPhone) {
+			setMessage("Phone number is required.");
+			return;
+		}
+
+		if (trimmedPhone.length > 20 || !/^[+]?[0-9\s\-()]+$/.test(trimmedPhone)) {
+			setMessage("Please enter a valid phone number.");
+			return;
+		}
+
 		setMessage("");
-		setUser((u) => (u ? { ...u, phone_number: form.phone_number } : u));
-		setMessage("Phone number updated!");
-		setPhoneEditMode(false);
+		setPhoneUpdateInFlight(true);
+		try {
+			const response = await updateMyPhoneNumber({ phone_number: trimmedPhone });
+			setForm((current) => ({ ...current, phone_number: trimmedPhone }));
+			setUser((u) => (u ? { ...u, phone_number: trimmedPhone } : u));
+			setPhoneEditMode(false);
+			setMessage(response.message || "Phone number updated successfully.");
+		} catch (err: any) {
+			setMessage(err?.message || "Failed to update phone number.");
+		} finally {
+			setPhoneUpdateInFlight(false);
+		}
 	};
 
 	const handleAddPod = async () => {
@@ -565,6 +587,7 @@ const Profile: React.FC = () => {
 								message={message}
 								form={form}
 								phoneEditMode={phoneEditMode}
+								phoneUpdateInFlight={phoneUpdateInFlight}
 								newPassword={newPassword}
 								confirmPassword={confirmPassword}
 								showPasswordForm={showPasswordForm}

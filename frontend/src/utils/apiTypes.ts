@@ -26,6 +26,7 @@ export type UserPod = {
 export type User = {
   id: string;
   email: string;
+  phone_number?: string | null;
   username: string;
   pods?: UserPod[];
   podData?: string[];
@@ -108,6 +109,8 @@ export type VerifyAndUpdateEmailRequest = { newEmail: string; verificationCode: 
 export type VerifyAndUpdateEmailResponse = { message: string; user: Pick<User, "email"> };
 
 export type UpdatePasswordRequest = { oldPassword: string; newPassword: string };
+
+export type UpdatePhoneNumberRequest = { phone_number: string };
 
 export type RegisterPodRequest = {
   podId?: string;

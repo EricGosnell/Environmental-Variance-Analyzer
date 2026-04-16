@@ -555,6 +555,66 @@ module.exports = (db) => {
     });
 
     // -------------------------
+    // PUT /me/phone-number - Update current user's phone number
+    // -------------------------
+    router.put("/me/phone-number", authenticateToken, sanitizeRequestBody, [
+        body("phone_number")
+            .trim()
+            .notEmpty()
+            .withMessage("Phone number is required")
+            .isLength({ max: 20 })
+            .withMessage("Phone number must be less than 20 characters")
+            .matches(/^[+]?[0-9\s\-()]+$/)
+            .withMessage("Please provide a valid phone number"),
+    ], async (req, res) => {
+        try {
+            const errors = validationResult(req);
+            if (!errors.isEmpty()) {
+                return res.status(400).json({ error: "Invalid phone number format" });
+            }
+
+            const { phone_number } = req.body;
+            const userId = req.user.id;
+
+            const user = await db.get(
+                "SELECT user_id, username FROM users WHERE user_id = ?",
+                [userId]
+            );
+
+            if (!user) {
+                return res.status(404).json({ error: "User not found" });
+            }
+
+            const existingContact = await db.get(
+                "SELECT contact_id FROM user_contact WHERE user_id = ?",
+                [userId]
+            );
+
+            if (existingContact) {
+                await db.run(
+                    "UPDATE user_contact SET phone_number = ? WHERE user_id = ?",
+                    [phone_number, userId]
+                );
+            } else {
+                await db.run(
+                    "INSERT INTO user_contact (user_id, user_name, phone_number, email) VALUES (?, ?, ?, NULL)",
+                    [userId, user.username, phone_number]
+                );
+            }
+
+            return res.status(200).json({
+                message: "Phone number updated successfully",
+                user: { phone_number },
+            });
+        } catch (error) {
+            return res.status(500).json({
+                error: "Internal server error",
+                message: error?.message,
+            });
+        }
+    });
+
+    // -------------------------
     // PUT /me/password - Update password
     // -------------------------
     router.put("/me/password", authenticateToken, sanitizeRequestBody, [
