@@ -568,7 +568,7 @@ export async function getPodsLatestReadings(
     query: {
       ids: podIds.join(","),
     },
-    auth: false, // optionalAuth route
+    auth: true,
     signal,
   });
 }
