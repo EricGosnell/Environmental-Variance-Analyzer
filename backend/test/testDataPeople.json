@@ -8,24 +8,10 @@
             "phone": "3104432156",
             "password": "Admin",
             "pods": [
-                {
-                    "name": "tiny-214",
-                    "visibility": true,
-                    "lat": "50.031794",
-                    "long": "-84.985354"
-                },
-                {
-                    "name": "big-852",
-                    "visibility": false,
-                    "lat": "39.948905",
-                    "long": "-105.310784"
-                },
-                {
-                    "name": "small-653",
-                    "visibility": false,
-                    "lat": "39.979545",
-                    "long": "-105.210911"
-                }
+                { "name": "tiny-214", "visibility": true, "lat": "50.031794", "long": "-84.985354" },
+                { "name": "big-852", "visibility": false, "lat": "39.948905", "long": "-105.310784" },
+                { "name": "small-653", "visibility": false, "lat": "39.979545", "long": "-105.210911" },
+                { "name": "alpha-001", "visibility": true, "lat": "40.012345", "long": "-105.111111" }
             ]
         },
         {
@@ -36,24 +22,9 @@
             "phone": "5606345158",
             "password": "WqH*4PtU0zdO",
             "pods": [
-                {
-                    "name": "alien-715",
-                    "visibility": true,
-                    "lat": "50.018993",
-                    "long": "-85.110547"
-                },
-                {
-                    "name": "alien-74",
-                    "visibility": true,
-                    "lat": "40.047706",
-                    "long": "-105.199951"
-                },
-                {
-                    "name": "tiny-359",
-                    "visibility": true,
-                    "lat": "40.022020",
-                    "long": "-105.225893"
-                }
+                { "name": "alien-715", "visibility": true, "lat": "50.018993", "long": "-85.110547" },
+                { "name": "alien-74", "visibility": true, "lat": "40.047706", "long": "-105.199951" },
+                { "name": "tiny-359", "visibility": true, "lat": "40.022020", "long": "-105.225893" }
             ]
         },
         {
@@ -63,7 +34,9 @@
             "email": "Alex.Martinez@gmail.com",
             "phone": "3337977638",
             "password": "a*w2lvu9wG0S",
-            "pods": []
+            "pods": [
+                { "name": "sensor-444", "visibility": true, "lat": "39.990000", "long": "-105.250000" }
+            ]
         },
         {
             "first": "Casey",
@@ -73,12 +46,7 @@
             "phone": "4397643684",
             "password": "k10oAWn2AqNL",
             "pods": [
-                {
-                    "name": "fly-85",
-                    "visibility": true,
-                    "lat": "40.018906",
-                    "long": "-105.222478"
-                }
+                { "name": "fly-85", "visibility": true, "lat": "40.018906", "long": "-105.222478" }
             ]
         },
         {
@@ -98,30 +66,10 @@
             "phone": "4782287566",
             "password": "kqx39OtfFWpX",
             "pods": [
-                {
-                    "name": "tall-200",
-                    "visibility": true,
-                    "lat": "40.073700",
-                    "long": "-105.238661"
-                },
-                {
-                    "name": "small-64",
-                    "visibility": false,
-                    "lat": "39.955327",
-                    "long": "-105.270155"
-                },
-                {
-                    "name": "fly-937",
-                    "visibility": true,
-                    "lat": "50.014590",
-                    "long": "-84.998589"
-                },
-                {
-                    "name": "tim-557",
-                    "visibility": true,
-                    "lat": "50.024461",
-                    "long": "-85.043717"
-                }
+                { "name": "tall-200", "visibility": true, "lat": "40.073700", "long": "-105.238661" },
+                { "name": "small-64", "visibility": false, "lat": "39.955327", "long": "-105.270155" },
+                { "name": "fly-937", "visibility": true, "lat": "50.014590", "long": "-84.998589" },
+                { "name": "tim-557", "visibility": true, "lat": "50.024461", "long": "-85.043717" }
             ]
         },
         {
@@ -141,24 +89,9 @@
             "phone": "7279559593",
             "password": "zQDqtMw89ak5",
             "pods": [
-                {
-                    "name": "alien-152",
-                    "visibility": false,
-                    "lat": "50.048844",
-                    "long": "-85.007718"
-                },
-                {
-                    "name": "tall-108",
-                    "visibility": true,
-                    "lat": "40.086467",
-                    "long": "-105.198956"
-                },
-                {
-                    "name": "little-811",
-                    "visibility": true,
-                    "lat": "50.032842",
-                    "long": "-84.920463"
-                }
+                { "name": "alien-152", "visibility": false, "lat": "50.048844", "long": "-85.007718" },
+                { "name": "tall-108", "visibility": true, "lat": "40.086467", "long": "-105.198956" },
+                { "name": "little-811", "visibility": true, "lat": "50.032842", "long": "-84.920463" }
             ]
         },
         {
@@ -169,24 +102,9 @@
             "phone": "2089494547",
             "password": "q5qko*f^!AYx",
             "pods": [
-                {
-                    "name": "small-12",
-                    "visibility": true,
-                    "lat": "39.980281",
-                    "long": "-105.235279"
-                },
-                {
-                    "name": "tall-517",
-                    "visibility": true,
-                    "lat": "49.998610",
-                    "long": "-85.042269"
-                },
-                {
-                    "name": "farm-889",
-                    "visibility": true,
-                    "lat": "40.062594",
-                    "long": "-105.221931"
-                }
+                { "name": "small-12", "visibility": true, "lat": "39.980281", "long": "-105.235279" },
+                { "name": "tall-517", "visibility": true, "lat": "49.998610", "long": "-85.042269" },
+                { "name": "farm-889", "visibility": true, "lat": "40.062594", "long": "-105.221931" }
             ]
         },
         {
@@ -206,12 +124,7 @@
             "phone": "3434410840",
             "password": "I0j4FYPAOCX@",
             "pods": [
-                {
-                    "name": "tiny-475",
-                    "visibility": true,
-                    "lat": "40.047533",
-                    "long": "-105.292467"
-                }
+                { "name": "tiny-475", "visibility": true, "lat": "40.047533", "long": "-105.292467" }
             ]
         },
         {
@@ -222,31 +135,119 @@
             "phone": "5049882196",
             "password": "Vex8siY%Q@3K",
             "pods": [
-                {
-                    "name": "little-860",
-                    "visibility": false,
-                    "lat": "39.984152",
-                    "long": "-105.193323"
-                },
-                {
-                    "name": "big-153",
-                    "visibility": true,
-                    "lat": "39.998295",
-                    "long": "-105.236793"
-                },
-                {
-                    "name": "farm-224",
-                    "visibility": true,
-                    "lat": "39.976560",
-                    "long": "-105.323001"
-                },
-                {
-                    "name": "tim-232",
-                    "visibility": false,
-                    "lat": "50.062270",
-                    "long": "-84.937076"
-                }
+                { "name": "little-860", "visibility": false, "lat": "39.984152", "long": "-105.193323" },
+                { "name": "big-153", "visibility": true, "lat": "39.998295", "long": "-105.236793" },
+                { "name": "farm-224", "visibility": true, "lat": "39.976560", "long": "-105.323001" },
+                { "name": "tim-232", "visibility": false, "lat": "50.062270", "long": "-84.937076" }
             ]
+        },
+        {
+            "first": "Jordan",
+            "last": "Lee",
+            "dob": "1990-03-22",
+            "email": "Jordan.Lee@gmail.com",
+            "phone": "5551234567",
+            "password": "J0rd@n123!",
+            "pods": [
+                { "name": "eco-101", "visibility": true, "lat": "40.011111", "long": "-105.123456" },
+                { "name": "green-202", "visibility": true, "lat": "39.988888", "long": "-105.234567" },
+                { "name": "sky-303", "visibility": false, "lat": "50.022222", "long": "-85.111111" }
+            ]
+        },
+        {
+            "first": "Drew",
+            "last": "Wilson",
+            "dob": "1988-07-15",
+            "email": "Drew.Wilson@gmail.com",
+            "phone": "4445556666",
+            "password": "Dr3wW!ls0n",
+            "pods": [
+                { "name": "oak-404", "visibility": true, "lat": "40.033333", "long": "-105.345678" },
+                { "name": "pine-505", "visibility": false, "lat": "49.977777", "long": "-85.222222" }
+            ]
+        },
+        {
+            "first": "Quinn",
+            "last": "Davis",
+            "dob": "1992-11-30",
+            "email": "Quinn.Davis@gmail.com",
+            "phone": "3332221111",
+            "password": "Qu!nnD@v!s",
+            "pods": [
+                { "name": "river-606", "visibility": true, "lat": "40.055555", "long": "-105.456789" },
+                { "name": "lake-707", "visibility": true, "lat": "39.966666", "long": "-105.567890" },
+                { "name": "stream-808", "visibility": true, "lat": "50.044444", "long": "-85.333333" },
+                { "name": "pond-909", "visibility": false, "lat": "40.077777", "long": "-105.678901" }
+            ]
+        },
+        {
+            "first": "Reese",
+            "last": "Martinez",
+            "dob": "1985-09-12",
+            "email": "Reese.Martinez@gmail.com",
+            "phone": "2223334444",
+            "password": "R33s3M@rtz",
+            "pods": [
+                { "name": "cloud-110", "visibility": true, "lat": "40.088888", "long": "-105.789012" },
+                { "name": "storm-220", "visibility": true, "lat": "39.999999", "long": "-105.890123" }
+            ]
+        },
+        {
+            "first": "Morgan",
+            "last": "Chen",
+            "dob": "1993-04-08",
+            "email": "Morgan.Chen@gmail.com",
+            "phone": "1110009999",
+            "password": "M0rg@nCh3n!",
+            "pods": []
+        },
+        {
+            "first": "Skyler",
+            "last": "Johnson",
+            "dob": "1989-12-25",
+            "email": "Skyler.Johnson@gmail.com",
+            "phone": "9998887777",
+            "password": "Skyl3rJ@hn",
+            "pods": [
+                { "name": "mountain-330", "visibility": true, "lat": "40.099999", "long": "-105.901234" },
+                { "name": "valley-440", "visibility": true, "lat": "50.055555", "long": "-85.444444" },
+                { "name": "peak-550", "visibility": false, "lat": "39.955555", "long": "-105.012345" }
+            ]
+        },
+        {
+            "first": "Blake",
+            "last": "Anderson",
+            "dob": "1991-06-18",
+            "email": "Blake.Anderson@gmail.com",
+            "phone": "8887776666",
+            "password": "Bl@k3@nd3r",
+            "pods": [
+                { "name": "forest-660", "visibility": true, "lat": "40.100000", "long": "-105.123456" },
+                { "name": "garden-770", "visibility": true, "lat": "39.970000", "long": "-105.234567" }
+            ]
+        },
+        {
+            "first": "Charlie",
+            "last": "Thomas",
+            "dob": "1986-08-03",
+            "email": "Charlie.Thomas@gmail.com",
+            "phone": "7776665555",
+            "password": "Ch@rl!3Th0m",
+            "pods": [
+                { "name": "sunset-880", "visibility": true, "lat": "50.066666", "long": "-85.555555" },
+                { "name": "sunrise-990", "visibility": false, "lat": "40.111111", "long": "-105.345678" },
+                { "name": "dawn-111", "visibility": true, "lat": "39.987654", "long": "-105.456789" },
+                { "name": "dusk-222", "visibility": true, "lat": "50.077777", "long": "-85.666666" }
+            ]
+        },
+        {
+            "first": "Finley",
+            "last": "Garcia",
+            "dob": "1994-02-28",
+            "email": "Finley.Garcia@gmail.com",
+            "phone": "6665554444",
+            "password": "F!nl3yG@rc!",
+            "pods": []
         }
     ]
 }
