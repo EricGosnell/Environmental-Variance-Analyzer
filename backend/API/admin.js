@@ -1,11 +1,25 @@
 const express = require("express");
 const crypto = require("crypto");
-const { authenticateToken } = require("../Util/Tokens");
 
-const { JWT_CONFIG } = require("../Util/JWT");
+const { JWT_CONFIG } = require("../util/JWT");
 
 module.exports = (db) => {
     const router = express.Router();
+
+    const ensureInvitationTokensTable = async (res) => {
+        const table = await db.get(
+            "SELECT name FROM sqlite_master WHERE type = 'table' AND name = 'invitation_tokens'"
+        );
+
+        if (!table) {
+            res.status(503).json({
+                error: "Invitation token endpoints are temporarily unavailable until schema migration is applied"
+            });
+            return false;
+        }
+
+        return true;
+    };
 
     // Middleware to check if user is admin
     const authenticateAdmin = async (req, res, next) => {
@@ -59,7 +73,11 @@ module.exports = (db) => {
     // -------------------------
     router.get("/users/invitation-token", authenticateAdmin, async (req, res) => {
         try {
-            const token = crypto.randomBytes(8).toString('hex').toUpperCase(); // 16 char hex, upper
+            if (!(await ensureInvitationTokensTable(res))) {
+                return;
+            }
+
+            const token = crypto.randomBytes(8).toString("hex").toUpperCase(); // 16 char hex, upper
             const expiresAt = Math.floor(Date.now() / 1000) + 7 * 24 * 60 * 60; // 1 week
 
             const userId = req.user.id;
@@ -67,7 +85,7 @@ module.exports = (db) => {
             await db.run("INSERT INTO invitation_tokens (token, created_by, expires_at) VALUES (?, ?, ?)", [token, userId, expiresAt]);
             // placeholder URL
             //TODO: decide once and for all how our invitation system works
-            const invitationURL = `https://example.com/register?token=${token}`; 
+            const invitationURL = `https://example.com/register?token=${token}`;
 
             return res.status(200).json({
                 invitationToken: token,
@@ -91,6 +109,10 @@ module.exports = (db) => {
         }
 
         try {
+            if (!(await ensureInvitationTokensTable(res))) {
+                return;
+            }
+
             const result = await db.run("DELETE FROM invitation_tokens WHERE token = ?", [invitationToken]);
 
             if (!result.changes) {
@@ -111,7 +133,7 @@ module.exports = (db) => {
         const { id } = req.params;
         const { deactivate, removeData } = req.body;
 
-        if (typeof deactivate !== 'boolean' || typeof removeData !== 'boolean') {
+        if (typeof deactivate !== "boolean" || typeof removeData !== "boolean") {
             return res.status(400).json({ error: "deactivate and removeData must be booleans" });
         }
 
@@ -131,12 +153,15 @@ module.exports = (db) => {
 
                     for (const pod of userPods) {
                         // Delete sensor data
-                        await db.run(`
+                        await db.run(
+                            `
                             DELETE FROM sensor_data
                             WHERE pod_data_id IN (
                                 SELECT pod_data_id FROM pod_data WHERE pod_id = ?
                             )
-                        `, [pod.pod_id]);
+                        `,
+                            [pod.pod_id]
+                        );
 
                         // Delete pod data
                         await db.run("DELETE FROM pod_data WHERE pod_id = ?", [pod.pod_id]);

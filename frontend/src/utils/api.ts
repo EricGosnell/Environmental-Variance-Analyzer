@@ -26,12 +26,14 @@ import type {
   GetPodOwnersResponse,
   MessageResponse,
   PodDataResponse,
+  PodActionHistoryResponse,
   GetPodLocationsRequest,
   PodLocationsResponse,
   RegisterPodRequest,
   RequestEmailChangeRequest,
   SearchPodOwnerCandidatesResponse,
   UnregisterPodRequest,
+  UpdatePhoneNumberRequest,
   UpdatePasswordRequest,
   UpdatePodRequest,
   UpdateUsernameRequest,
@@ -449,13 +451,40 @@ export async function requestEmailChange(
   payload: RequestEmailChangeRequest,
   signal?: AbortSignal,
 ): Promise<MessageResponse> {
-  return await request<MessageResponse>({
-    method: "POST",
+  const maskedEmail =
+    typeof payload.newEmail === "string"
+      ? payload.newEmail.replace(/(^.).*(@.*$)/, "$1***$2")
+      : "***";
+
+  console.log("[api.ts][requestEmailChange] Outgoing request", {
+    traceId: payload.traceId,
     path: "/users/me/email/request-change",
-    body: payload,
-    auth: true,
-    signal,
+    targetEmail: maskedEmail,
   });
+
+  try {
+    const response = await request<MessageResponse>({
+      method: "POST",
+      path: "/users/me/email/request-change",
+      body: payload,
+      auth: true,
+      signal,
+    });
+
+    console.log("[api.ts][requestEmailChange] Request succeeded", {
+      traceId: payload.traceId,
+      path: "/users/me/email/request-change",
+    });
+
+    return response;
+  } catch (error) {
+    console.error("[api.ts][requestEmailChange] Request failed", {
+      traceId: payload.traceId,
+      path: "/users/me/email/request-change",
+      error,
+    });
+    throw error;
+  }
 }
 export async function verifyAndUpdateEmail(
   payload: VerifyAndUpdateEmailRequest,
@@ -473,6 +502,15 @@ export async function updateMyPassword(payload: UpdatePasswordRequest, signal?: 
   return await request<MessageResponse>({
     method: "PUT",
     path: "/users/me/password",
+    body: payload,
+    auth: true,
+    signal,
+  });
+}
+export async function updateMyPhoneNumber(payload: UpdatePhoneNumberRequest, signal?: AbortSignal): Promise<MessageResponse> {
+  return await request<MessageResponse>({
+    method: "PUT",
+    path: "/users/me/phone-number",
     body: payload,
     auth: true,
     signal,
@@ -501,6 +539,15 @@ export async function unregisterPod(payload: UnregisterPodRequest, signal?: Abor
     method: "DELETE",
     path: "/users/me/unregister-pod",
     body: payload,
+    auth: true,
+    signal,
+  });
+}
+
+export async function getMyPodHistory(signal?: AbortSignal): Promise<PodActionHistoryResponse> {
+  return await request<PodActionHistoryResponse>({
+    method: "GET",
+    path: "/users/me/pod-history",
     auth: true,
     signal,
   });

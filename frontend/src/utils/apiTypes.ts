@@ -26,6 +26,7 @@ export type UserPod = {
 export type User = {
   id: string;
   email: string;
+  phone_number?: string | null;
   username: string;
   pods?: UserPod[];
   podData?: string[];
@@ -93,8 +94,8 @@ export type AuthRegisterRequest = { email: string; password: string; username: s
 export type AuthRegisterResponse = { user: User; message: string };
 
 export type AuthLogoutRequest = { refreshToken: string };
-export type AuthForgotPasswordRequest = { email: string };
-export type AuthResetPasswordRequest = { email: string; newPassword: string; token: string };
+export type AuthForgotPasswordRequest = { email: string; traceId?: string };
+export type AuthResetPasswordRequest = { email: string; newPassword: string; token: string; traceId?: string };
 
 // ----------------------------
 // User Management
@@ -102,15 +103,17 @@ export type AuthResetPasswordRequest = { email: string; newPassword: string; tok
 
 export type UpdateUsernameRequest = { username: string };
 
-export type RequestEmailChangeRequest = { newEmail: string };
+export type RequestEmailChangeRequest = { newEmail: string; traceId?: string };
 
 export type VerifyAndUpdateEmailRequest = { newEmail: string; verificationCode: string };
 export type VerifyAndUpdateEmailResponse = { message: string; user: Pick<User, "email"> };
 
 export type UpdatePasswordRequest = { oldPassword: string; newPassword: string };
 
+export type UpdatePhoneNumberRequest = { phone_number: string };
+
 export type RegisterPodRequest = {
-  podId: string;
+  podId?: string;
   nickname: string;
   visibility: "public" | "private";
   latitude?: number;
@@ -126,6 +129,35 @@ export type UpdatePodRequest = {
 };
 
 export type UnregisterPodRequest = { podId: string };
+
+export type PodActionHistoryChange = {
+  field: "nickname" | "visibility" | "latitude" | "longitude";
+  from: string | number | null;
+  to: string | number | null;
+};
+
+export type PodActionHistoryEntry = {
+  id: number;
+  podId: number;
+  podName: string;
+  action: "added" | "edited" | "deleted";
+  actionDetails: {
+    changes?: PodActionHistoryChange[];
+    nickname?: string;
+    visibility?: "public" | "private";
+    latitude?: number | null;
+    longitude?: number | null;
+  } | null;
+  byUser: {
+    id: number;
+    username: string;
+  };
+  atTime: string;
+};
+
+export type PodActionHistoryResponse = {
+  history: PodActionHistoryEntry[];
+};
 
 // ----------------------------
 // Admin

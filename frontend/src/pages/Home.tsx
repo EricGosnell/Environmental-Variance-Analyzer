@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { useSearchParams } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import MapView from "../components/Map.tsx";
 import PodTable from "../components/PodTable.tsx";
 
 import { getMe, getMeSilent, getPodsLatestReadings } from "../utils/api.ts";
-import type { User } from "../utils/apiTypes.ts";
-import type { PodLocation } from "../utils/apiTypes.ts";
+import type { PodLocation, User } from "../utils/apiTypes.ts";
 import AuthPanel from "../components/AuthPanel.tsx";
 import Filters from "../components/Filters.tsx";
 import type { FiltersState } from "../components/Filters.tsx";
@@ -37,6 +36,8 @@ export default function Home() {
     const emailParam = searchParams.get("email") ?? "";
     const verifiedParam = searchParams.get("verified");
     const authPanelKey = authParam === "login" ? `login:${emailParam}` : "default";
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (verifiedParam !== "1") return;
@@ -81,6 +82,7 @@ export default function Home() {
             setAvailableSensorTypes([]);
             return;
         }
+
         const ac = new AbortController();
 
         (async () => {
@@ -117,6 +119,10 @@ export default function Home() {
             prev.includes(podId) ? prev.filter((p) => p !== podId) : [...prev, podId]
         );
     }, []);
+
+    function handleManagePods() {
+        navigate("/profile");
+    }
 
     const handleZoomTo = (pods: { lat: number; lon: number }[]) => {
         if (!mapRef.current || pods.length === 0) return;
@@ -161,7 +167,7 @@ export default function Home() {
                             )}
                             <button className="btn primary-btn" disabled={(user.pods?.length ?? 0) === 0}>Upload EVA Data</button>
                             <br />
-                            <button className="btn primary-btn">Manage EVA Pods</button>
+                            <button className="btn secondary-btn" onClick={handleManagePods}>Manage EVA Pods</button>
                         </>
                     ) : null}
 
@@ -192,9 +198,8 @@ export default function Home() {
                 />
             </div>
 
-
             <div className="map-container">
-                <div className="map-content" style={{flex: isPodTableOpen ? `0 0 ${100 - podTableHeight}%` : '1'}}>
+                <div className="map-content" style={{ flex: isPodTableOpen ? `0 0 ${100 - podTableHeight}%` : "1" }}>
                     <MapView
                         mapRef={mapRef}
                         onVisiblePodsChange={handleVisiblePodsChange}
@@ -219,7 +224,7 @@ export default function Home() {
                     isOpen={isPodTableOpen}
                     onClose={() => setIsPodTableOpen(false)}
                     onHeightChange={setPodTableHeight}
-                    visiblePodIds={visiblePods.map(p => p.id)}
+                    visiblePodIds={visiblePods.map((p) => p.id)}
                     selectedPods={selectedPods}
                     onSelectionChange={setSelectedPods}
                     onZoomTo={handleZoomTo}

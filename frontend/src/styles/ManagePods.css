@@ -1,0 +1,179 @@
+/* Add New Pod button style */
+.add-pod-btn {
+  margin-bottom: 18px;
+  padding: 10px 22px;
+  border: 2px solid #30A46C;
+  border-radius: 16px;
+  background: #204835;
+  color: #fff;
+  font-size: 1rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.add-pod-btn:hover {
+  background: #30A46C;
+  color: #fff;
+}
+/* ManagePods.css - Styling for ManagePods page */
+
+/* Main container: dark green */
+.manage-pods-container {
+  max-width: 900px;
+  margin: 40px auto;
+  background: #204835;
+  border-radius: 16px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+  padding: 32px 24px;
+  color: #fff;
+}
+
+.manage-pods-container h2 {
+  margin-bottom: 24px;
+  font-size: 2rem;
+  color: #fff;
+}
+
+.pods-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 24px;
+  background: #30A46C;
+  color: #fff;
+  border-radius: 16px;
+  overflow: hidden;
+}
+
+.pods-table th, .pods-table td {
+  padding: 12px 8px;
+  border-bottom: 1px solid #204835;
+  text-align: left;
+}
+
+.pods-table th {
+  background: #30A46C;
+  color: #fff;
+  font-weight: 600;
+}
+
+.pods-table tr:last-child td {
+  border-bottom: none;
+}
+
+.pods-table button {
+  margin-right: 8px;
+  padding: 6px 14px;
+  border: 2px solid #30A46C;
+  border-radius: 16px;
+  background: #204835;
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.pods-table button:last-child {
+  background: #204835;
+  border: 2px solid #30A46C;
+}
+
+.pods-table button:hover {
+  background: #30A46C;
+  color: #fff;
+}
+
+.modal {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(44, 62, 80, 0.25);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+}
+
+
+.pod-form {
+  background: #204835; /* secondary-green */
+  padding: 32px 24px;
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(0,0,0,0.12);
+  min-width: 320px;
+  max-width: 400px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  color: #fff;
+}
+
+.pod-form h3 {
+  margin-bottom: 8px;
+  color: #fff;
+}
+
+.pod-form label {
+  display: flex;
+  flex-direction: column;
+  font-size: 1rem;
+  color: #fff;
+}
+
+.pod-form input,
+.pod-form select {
+  margin-top: 6px;
+  padding: 8px;
+  border: 1px solid #30A46C;
+  border-radius: 16px;
+  font-size: 1rem;
+  background: #204835;
+  color: #fff;
+}
+
+.form-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: flex-end;
+}
+
+
+.form-actions button {
+  padding: 8px 18px;
+  border-radius: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.2s;
+  border: 2px solid #30A46C;
+  background: #204835;
+  color: #fff;
+}
+
+.form-actions .primary-btn {
+  background: #30A46C; /* primary-green */
+  color: #fff;
+  border: 2px solid #30A46C;
+}
+
+.form-actions .primary-btn:hover {
+  background: #238a57;
+  color: #fff;
+}
+
+.form-actions button[type="button"]:not(.primary-btn) {
+  background: #204835;
+  color: #fff;
+  border: 2px solid #30A46C;
+}
+
+.form-actions button:hover:not(.primary-btn) {
+  background: #30A46C;
+  color: #fff;
+}
+
+.error {
+  background: #e74c3c;
+  color: #fff;
+  padding: 10px 16px;
+  border-radius: 6px;
+  margin-bottom: 18px;
+  font-size: 1rem;
+}

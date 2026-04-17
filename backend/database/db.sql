@@ -71,6 +71,15 @@ CREATE TABLE IF NOT EXISTS refresh_tokens (
     created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
 );
 
+CREATE TABLE IF NOT EXISTS invitation_tokens (
+    token TEXT PRIMARY KEY,
+    created_by INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    expires_at INTEGER NOT NULL,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s','now')),
+    CHECK (length(token) > 0),
+    CHECK (expires_at > 0)
+);
+
 CREATE TABLE IF NOT EXISTS pod (
     pod_id INTEGER PRIMARY KEY,
     pod_name TEXT,
@@ -84,6 +93,15 @@ CREATE TABLE IF NOT EXISTS user_pod (
     user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     pod_id INTEGER NOT NULL REFERENCES pod(pod_id) ON DELETE CASCADE,
     PRIMARY KEY (user_id, pod_id)
+);
+
+CREATE TABLE IF NOT EXISTS pod_action_history (
+    pod_action_history_id INTEGER PRIMARY KEY AUTOINCREMENT,
+    pod_id INTEGER NOT NULL REFERENCES pod(pod_id) ON DELETE CASCADE,
+    actor_user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
+    action_type TEXT NOT NULL CHECK (action_type IN ('added', 'edited', 'deleted')),
+    action_details TEXT,
+    created_at INTEGER NOT NULL DEFAULT (strftime('%s','now'))
 );
 
 CREATE TABLE IF NOT EXISTS pod_data (
@@ -109,9 +127,14 @@ CREATE TABLE IF NOT EXISTS sensor_data (
 CREATE INDEX IF NOT EXISTS idx_user_contact_user_id ON user_contact(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_pod_user_id ON user_pod(user_id);
 CREATE INDEX IF NOT EXISTS idx_user_pod_pod_id ON user_pod(pod_id);
+CREATE INDEX IF NOT EXISTS idx_pod_action_history_pod_id ON pod_action_history(pod_id);
+CREATE INDEX IF NOT EXISTS idx_pod_action_history_actor_user_id ON pod_action_history(actor_user_id);
+CREATE INDEX IF NOT EXISTS idx_pod_action_history_created_at ON pod_action_history(created_at);
 CREATE INDEX IF NOT EXISTS idx_pod_data_pod_id ON pod_data(pod_id);
 CREATE INDEX IF NOT EXISTS idx_pod_data_date ON pod_data(date_collected);
 CREATE INDEX IF NOT EXISTS idx_sensor_data_pod_data_id ON sensor_data(pod_data_id);
 CREATE INDEX IF NOT EXISTS idx_sensor_data_timestamp ON sensor_data(reading_timestamp);
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_user_id ON refresh_tokens(user_id);
 CREATE INDEX IF NOT EXISTS idx_refresh_tokens_expires_at ON refresh_tokens(expires_at);
+CREATE INDEX IF NOT EXISTS idx_invitation_tokens_created_by ON invitation_tokens(created_by);
+CREATE INDEX IF NOT EXISTS idx_invitation_tokens_expires_at ON invitation_tokens(expires_at);

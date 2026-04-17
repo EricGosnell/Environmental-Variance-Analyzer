@@ -1,6 +1,7 @@
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const rateLimit = require("express-rate-limit");
 
 const { body, validationResult } = require("express-validator");
 const {
@@ -32,6 +33,13 @@ const PASSWORD_RESET_WINDOW_SECONDS = 15 * 60;
 const PASSWORD_RESET_MAX_SENDS_PER_WINDOW = 5;
 const PASSWORD_RESET_MAX_ATTEMPTS = 5;
 const PASSWORD_RESET_RESPONSE_MESSAGE = "If the email exists, a password reset code was sent.";
+
+const maskEmailForLog = (email = "") => {
+    const trimmed = String(email).trim();
+    const atIndex = trimmed.indexOf("@");
+    if (atIndex <= 1) return "***";
+    return `${trimmed[0]}***${trimmed.slice(atIndex)}`;
+};
 
 // ========= helpers ==========
 const getNowEpochSeconds = () => Math.floor(Date.now() / 1000);
@@ -196,7 +204,6 @@ const validateCodeAttempt = async ({
     notFoundError,
     expiredError,
     invalidError,
-    checkAttemptsFirst = true,
     deleteOnExpired = false,
 }) => {
     if (!row) {
@@ -210,11 +217,7 @@ const validateCodeAttempt = async ({
         return { status: 400, error: expiredError };
     }
 
-    if (checkAttemptsFirst && row.attempts >= maxAttempts) {
-        return { status: 429, error: "Too many attempts" };
-    }
-
-    if (!checkAttemptsFirst && row.attempts >= maxAttempts) {
+    if (row.attempts >= maxAttempts) {
         return { status: 429, error: "Too many attempts" };
     }
 
@@ -229,6 +232,13 @@ const validateCodeAttempt = async ({
 
 module.exports = (db) => {
     const router = express.Router();
+    const resetPasswordLimiter = rateLimit({
+        windowMs: 60 * 1000,
+        max: 10,
+        standardHeaders: true,
+        legacyHeaders: false,
+        message: { error: "Too many requests. Please try again shortly." },
+    });
 
     // -------------------------
     // POST /login
@@ -505,8 +515,18 @@ module.exports = (db) => {
             .isEmail()
             .withMessage("Valid email required"),
     ], async (req, res) => {
+        const traceId = req.body?.traceId || `password-reset-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
         const errors = validationResult(req);
+        console.log("[auth:/forgot-password] request_received", {
+            traceId,
+            email: maskEmailForLog(req.body?.email),
+        });
         if (!errors.isEmpty()) {
+            console.warn("[auth:/forgot-password] validation_failed", {
+                traceId,
+                email: maskEmailForLog(req.body?.email),
+                errors: errors.array(),
+            });
             return res.status(400).json(validationErrorPayload(errors));
         }
 
@@ -517,6 +537,10 @@ module.exports = (db) => {
             const user = await getUserByEmail(db, email);
 
             if (!user) {
+                console.info("[auth:/forgot-password] user_not_found", {
+                    traceId,
+                    email: maskEmailForLog(email),
+                });
                 return res.status(200).json({ message: PASSWORD_RESET_RESPONSE_MESSAGE });
             }
 
@@ -534,6 +558,11 @@ module.exports = (db) => {
             });
 
             if (!sendWindowState.canSend) {
+                console.info("[auth:/forgot-password] rate_limited_or_too_soon", {
+                    traceId,
+                    userId: user.user_id,
+                    email: maskEmailForLog(email),
+                });
                 return res.status(200).json({ message: PASSWORD_RESET_RESPONSE_MESSAGE });
             }
 
@@ -550,9 +579,20 @@ module.exports = (db) => {
                 heading: "Your password reset code",
             });
 
+            console.log("[auth:/forgot-password] code_issued", {
+                traceId,
+                userId: user.user_id,
+                email: maskEmailForLog(email),
+                sendCount: sendWindowState.sendCount,
+            });
+
             return res.status(200).json({ message: PASSWORD_RESET_RESPONSE_MESSAGE });
         } catch (err) {
-            console.error("forgot-password failed:", err);
+            console.error("[auth:/forgot-password] failed", {
+                traceId,
+                email: maskEmailForLog(req.body?.email),
+                error: err,
+            });
             return res.status(200).json({ message: PASSWORD_RESET_RESPONSE_MESSAGE });
         }
     });
@@ -560,7 +600,7 @@ module.exports = (db) => {
     // -------------------------
     // POST /reset-password
     // -------------------------
-    router.post("/reset-password", sanitizeRequestBody, [
+    router.post("/reset-password", resetPasswordLimiter, sanitizeRequestBody, [
         body("email")
             .isEmail()
             .withMessage("Valid email required"),
@@ -572,9 +612,20 @@ module.exports = (db) => {
         buildPasswordValidator("newPassword"),
     ], async (req, res) => {
         let transaction = false;
+        const traceId = req.body?.traceId || `password-reset-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
 
         const errors = validationResult(req);
+        console.log("[auth:/reset-password] request_received", {
+            traceId,
+            email: maskEmailForLog(req.body?.email),
+            hasToken: Boolean(req.body?.token),
+        });
         if (!errors.isEmpty()) {
+            console.warn("[auth:/reset-password] validation_failed", {
+                traceId,
+                email: maskEmailForLog(req.body?.email),
+                errors: errors.array(),
+            });
             return res.status(400).json(validationErrorPayload(errors));
         }
 
@@ -584,6 +635,9 @@ module.exports = (db) => {
         const now = getNowEpochSeconds();
 
         try {
+            await db.run("BEGIN IMMEDIATE");
+            transaction = true;
+
             const row = await getCodeRowByEmail(db, "password_reset", email);
 
             const codeError = await validateCodeAttempt({
@@ -596,18 +650,22 @@ module.exports = (db) => {
                 notFoundError: "Invalid or expired reset token",
                 expiredError: "Invalid or expired reset token",
                 invalidError: "Invalid or expired reset token",
-                checkAttemptsFirst: true,
                 deleteOnExpired: true,
             });
 
             if (codeError) {
+                await db.run("COMMIT");
+                transaction = false;
+                console.warn("[auth:/reset-password] code_validation_failed", {
+                    traceId,
+                    email: maskEmailForLog(email),
+                    status: codeError.status,
+                    error: codeError.error,
+                });
                 return res.status(codeError.status).json({ error: codeError.error });
             }
 
             const hashedPassword = await bcrypt.hash(newPassword, 12);
-
-            await db.run("BEGIN TRANSACTION");
-            transaction = true;
 
             await db.run(
                 "UPDATE users SET password_hash = ? WHERE user_id = ?",
@@ -625,6 +683,12 @@ module.exports = (db) => {
             await db.run("COMMIT");
             transaction = false;
 
+            console.log("[auth:/reset-password] password_reset_succeeded", {
+                traceId,
+                email: maskEmailForLog(email),
+                userId: row.user_id,
+            });
+
             return res.status(200).json({ message: "Password reset successfully" });
         } catch (err) {
             if (transaction) {
@@ -634,7 +698,11 @@ module.exports = (db) => {
                     console.error("reset-password rollback failed:", rollbackError);
                 }
             }
-            console.error("reset-password failed:", err);
+            console.error("[auth:/reset-password] failed", {
+                traceId,
+                email: maskEmailForLog(req.body?.email),
+                error: err,
+            });
             return res.status(500).json({ error: "Internal server error" });
         }
     });
@@ -644,8 +712,15 @@ module.exports = (db) => {
     // -------------------------
     router.post("/send-verification", [body("email").isEmail().withMessage("Valid email required")],
         async (req, res) => {
+            console.log("[auth:/send-verification] request_received", {
+                email: maskEmailForLog(req.body?.email),
+            });
+
             const errors = validationResult(req);
             if (!errors.isEmpty()) {
+                console.warn("[auth:/send-verification] validation_failed", {
+                    email: maskEmailForLog(req.body?.email),
+                });
                 return res.status(400).json(validationErrorPayload(errors));
             }
 
@@ -657,6 +732,9 @@ module.exports = (db) => {
                 const user = await getUserByEmail(db, email);
 
                 if (!user) {
+                    console.info("[auth:/send-verification] user_not_found", {
+                        email: maskEmailForLog(email),
+                    });
                     return res.status(200).json({ message: responseMessage });
                 }
 
@@ -674,6 +752,10 @@ module.exports = (db) => {
                 });
 
                 if (!sendWindowState.canSend) {
+                    console.info("[auth:/send-verification] rate_limited_or_too_soon", {
+                        userId: user.user_id,
+                        email: maskEmailForLog(email),
+                    });
                     return res.status(200).json({ message: responseMessage });
                 }
 
@@ -690,10 +772,19 @@ module.exports = (db) => {
                     heading: "Your verification code",
                 });
 
+                console.log("[auth:/send-verification] code_issued", {
+                    userId: user.user_id,
+                    email: maskEmailForLog(email),
+                    sendCount: sendWindowState.sendCount,
+                });
+
                 res.json({ message: responseMessage });
 
             } catch (err) {
-                console.error("send-verification failed:", err);
+                console.error("[auth:/send-verification] failed", {
+                    email: maskEmailForLog(req.body?.email),
+                    error: err,
+                });
                 res.status(500).json({ error: "Internal server error" });
             }
         }
@@ -735,7 +826,6 @@ module.exports = (db) => {
                     notFoundError: "No verification code found",
                     expiredError: "Code expired",
                     invalidError: "Invalid code",
-                    checkAttemptsFirst: false,
                     deleteOnExpired: false,
                 });
 
