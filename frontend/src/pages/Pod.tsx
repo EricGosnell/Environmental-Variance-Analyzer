@@ -138,6 +138,12 @@ export default function Pod() {
   }, [data]);
 
   useEffect(() => {
+    setSelectedSensorsOverall([]);
+    setSelectedSensorsDaily([]);
+    setSelectedDay("");
+  }, [podId]);
+
+  useEffect(() => {
     if (selectedSensorsOverall.length > 0) return;
     if (sensorOptions.length > 0) setSelectedSensorsOverall([sensorOptions[0].key]);
   }, [sensorOptions, selectedSensorsOverall]);
@@ -316,7 +322,7 @@ export default function Pod() {
           {selectedDay ? (
             <section className="pod-panel">
               <div className="pod-section-header">
-                <h2 className="pod-section-title">{`${formatDateMDY(new Date(selectedDay))} Sensor Trends`}</h2>
+                <h2 className="pod-section-title">{`${formatDateMDY(new Date(selectedDay + "T00:00:00"))} Sensor Trends`}</h2>
                 <div className="pod-filters">
                   <MultiSensorDropdown
                     options={sensorOptions}
@@ -326,7 +332,6 @@ export default function Pod() {
                   />
                 </div>
               </div>
-              {/* <div className="pod-chart">Insert trendline/scatterplot of data over 24 hours</div> */}
               <div className="pod-chart">
                 <DailySensorChart
                   data={data}

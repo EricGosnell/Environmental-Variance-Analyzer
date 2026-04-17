@@ -23,8 +23,15 @@ export default function MultiSensorDropdown({
         setIsOpen(false);
       }
     }
+    function handleKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") setIsOpen(false);
+    }
     document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
   }, []);
 
   const toggleSensor = (key: string) => {
@@ -48,6 +55,8 @@ export default function MultiSensorDropdown({
         type="button"
         className="multi-sensor-toggle"
         onClick={() => setIsOpen(!isOpen)}
+        aria-expanded={isOpen}
+        aria-haspopup="listbox"
       >
         <span>{displayText}</span>
         <span className="multi-sensor-arrow">{isOpen ? "▲" : "▼"}</span>

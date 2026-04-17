@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import Plot from "react-plotly.js";
 import type { PodDataEntry } from "../utils/apiTypes";
-import { getSensorColor } from "../utils/sensorColors";
+import { getSensorColor, buildUnitsMap } from "../utils/sensorColors";
 
 type Props = {
   data: PodDataEntry[];
@@ -47,14 +47,7 @@ export default function DailySensorChart({ data, sensorTypes, day }: Props) {
     return { sensorData };
   }, [data, sensorTypes, day]);
 
-  const unitsMap = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const st of sensorTypes) {
-      const entry = data.find((e) => e?.data?.sensor_type === st);
-      map.set(st, entry?.data?.reading_units || "");
-    }
-    return map;
-  }, [data, sensorTypes]);
+  const unitsMap = useMemo(() => buildUnitsMap(data, sensorTypes), [data, sensorTypes]);
 
   if (!chartData || sensorTypes.length === 0) {
     return (
@@ -93,6 +86,10 @@ export default function DailySensorChart({ data, sensorTypes, day }: Props) {
       </div>
     );
   }
+
+  const uniqueUnits = [...new Set(sensorTypes.map((st) => unitsMap.get(st) || ""))].filter(Boolean);
+  const yAxisTitle =
+    uniqueUnits.length > 1 ? "Value (mixed units)" : uniqueUnits.length === 1 ? `Value (${uniqueUnits[0]})` : "Value";
 
   const traces: Plotly.Data[] = chartData.sensorData.map(({ sensorType, points }) => {
     const color = getSensorColor(sensorType);
@@ -140,7 +137,7 @@ export default function DailySensorChart({ data, sensorTypes, day }: Props) {
           tickformat: "%I:%M %p",
         },
         yaxis: {
-          title: { text: "Value" },
+          title: { text: yAxisTitle },
           gridcolor: "rgba(255, 255, 255, 0.1)",
           zerolinecolor: "rgba(255, 255, 255, 0.2)",
         },

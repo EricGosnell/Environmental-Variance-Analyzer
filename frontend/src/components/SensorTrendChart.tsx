@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 import Plot from "react-plotly.js";
 import type { PodDataEntry } from "../utils/apiTypes";
-import { getSensorColor } from "../utils/sensorColors";
+import { getSensorColor, buildUnitsMap } from "../utils/sensorColors";
 
 type Props = {
   data: PodDataEntry[];
@@ -66,14 +66,7 @@ export default function SensorTrendChart({ data, sensorTypes, dateRange }: Props
     };
   }, [data, sensorTypes, dateRange]);
 
-  const unitsMap = useMemo(() => {
-    const map = new Map<string, string>();
-    for (const st of sensorTypes) {
-      const entry = data.find((e) => e?.data?.sensor_type === st);
-      map.set(st, entry?.data?.reading_units || "");
-    }
-    return map;
-  }, [data, sensorTypes]);
+  const unitsMap = useMemo(() => buildUnitsMap(data, sensorTypes), [data, sensorTypes]);
 
   const tracesAndLabels = useMemo(() => {
     if (!chartData) return null;
@@ -172,7 +165,9 @@ export default function SensorTrendChart({ data, sensorTypes, dateRange }: Props
     );
   }
 
-  if (!tracesAndLabels) return null;
+  const uniqueUnits = [...new Set(sensorTypes.map((st) => unitsMap.get(st) || ""))].filter(Boolean);
+  const yAxisTitle =
+    uniqueUnits.length > 1 ? "Value (mixed units)" : uniqueUnits.length === 1 ? `Value (${uniqueUnits[0]})` : "Value";
 
   return (
     <Plot
@@ -196,7 +191,7 @@ export default function SensorTrendChart({ data, sensorTypes, dateRange }: Props
           ticktext: tracesAndLabels.xLabels,
         },
         yaxis: {
-          title: { text: "Value" },
+          title: { text: yAxisTitle },
           gridcolor: "rgba(255, 255, 255, 0.1)",
           zerolinecolor: "rgba(255, 255, 255, 0.2)",
         },

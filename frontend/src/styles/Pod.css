@@ -146,6 +146,7 @@
 }
 
 .pod-chart--empty {
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -156,6 +157,7 @@
 }
 
 .pod-chart--single-point {
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: flex-start;
