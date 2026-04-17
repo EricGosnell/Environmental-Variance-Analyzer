@@ -1,20 +1,10 @@
 .filters-container {
-    background-color: var(--secondary-green);
-    padding: 24px 32px;
-    border-radius: 16px;
-    color: #ffffff;
     display: flex;
     flex-direction: column;
     gap: 16px;
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-}
-
-.filters-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
 }
 
 .filters-heading {
@@ -67,7 +57,7 @@
 
 .filter-chip {
     background: transparent;
-    border: 1px solid var(--primary-green);
+    border: 1px solid var(--primary);
     border-radius: 20px;
     color: #fff;
     padding: 5px 12px;
@@ -83,13 +73,13 @@
 }
 
 .filter-chip.active {
-    background: var(--primary-green);
+    background: var(--primary);
     opacity: 1;
 }
 
 .filter-text-input {
     background: transparent;
-    border: 1px solid var(--primary-green);
+    border: 1px solid var(--primary);
     border-radius: 8px;
     color: #fff;
     font-size: 0.85rem;
@@ -133,7 +123,7 @@
 }
 
 .filter-date-input {
-    border: 1px solid var(--primary-green);
+    border: 1px solid var(--primary);
     background: transparent;
 
     border-radius: 8px;
@@ -163,7 +153,7 @@
 }
 
 .filter-date-input.active {
-    background: var(--primary-green);
+    background: var(--primary);
     opacity: 1;
     color: white;
 }
@@ -174,7 +164,7 @@
     align-items: center;
     width: 100%;
     background: transparent;
-    border: 1px solid var(--primary-green);
+    border: 1px solid var(--primary);
     border-radius: 8px;
     color: #fff;
     padding: 7px 12px;
@@ -191,7 +181,7 @@
 }
 
 .filter-dropdown-toggle.active {
-    background: var(--primary-green);
+    background: var(--primary);
     opacity: 1;
 }
 
@@ -208,7 +198,7 @@
 .filter-dropdown {
     display: flex;
     flex-direction: column;
-    border: 1px solid var(--primary-green);
+    border: 1px solid var(--primary);
     border-radius: 8px;
     overflow: hidden;
     margin-top: 4px;
@@ -225,7 +215,7 @@
 }
 
 .filter-dropdown-option:not(:last-child) {
-    border-bottom: 1px solid var(--primary-green);
+    border-bottom: 1px solid var(--primary);
 }
 
 .filter-dropdown-option:hover {
@@ -246,8 +236,8 @@
 }
 
 .filter-dropdown-checkbox:checked {
-    background: var(--primary-green);
-    border-color: var(--primary-green);
+    background: var(--primary);
+    border-color: var(--primary);
 }
 
 .filter-dropdown-checkbox:checked::after {

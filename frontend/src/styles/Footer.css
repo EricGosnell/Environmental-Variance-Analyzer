@@ -1,7 +1,7 @@
 .footer {
     width: 100%;
     padding: 32px 0;
-    background-color: #1f1f1f;
+    background-color: var(--panel-bg-dark);
     color: white;
 }
 

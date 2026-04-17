@@ -87,8 +87,8 @@ export default function Filters({ filters, onChange, availableSensorTypes, isAut
         onChange({ uploadTimeframe: "any", customFrom: "", customTo: "", sensorTypes: [], ownerFilter: "all", nameSearch: "" });
 
     return (
-        <div className="filters-container">
-            <div className="filters-header">
+        <div className="card card--compact card--no-border filters-container">
+            <div className="section-header">
                 <p className="filters-heading">Filters</p>
                 <button className="filters-clear-btn" onClick={handleClear} disabled={isDefault}>
                     Clear

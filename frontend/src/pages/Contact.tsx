@@ -7,7 +7,7 @@ export default function Contact() {
                 <div className="info-header">
                     <h1 className="info-title">Contact Us</h1>
                 </div>
-                <div className="info-body">
+                <div className="card info-body">
                     <p className="info-content">
                         For any inquiries, please email{" "}
                         <a href="mailto:cospacegrant@colorado.edu" className="info-link">

@@ -5,13 +5,6 @@
   gap: 20px;
 }
 
-.pod-panel {
-  background-color: var(--secondary-green);
-  border-radius: 16px;
-  padding: 18px 22px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-}
-
 .pod-header {
   display: flex;
   align-items: stretch;
@@ -57,15 +50,15 @@
   width: 72px;
   min-width: 72px;
   height: 72px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: var(--radius-lg);
+  border: var(--border-width) solid var(--border-light);
   background: rgba(255, 255, 255, 0.08);
   color: white;
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: opacity 0.15s ease, background 0.15s ease;
+  transition: opacity var(--transition-fast), background var(--transition-fast);
 }
 
 .pod-action:hover {
@@ -83,11 +76,8 @@
 .pod-stat {
   flex: 0 0 auto;
   min-width: 240px;
-  background: var(--secondary-green);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
-  padding: 14px 12px;
   text-align: center;
+  padding: 14px 12px;
 }
 
 .pod-stat-label {
@@ -100,14 +90,6 @@
   font-weight: 800;
   font-size: 1.8rem;
   line-height: 1.1;
-}
-
-.pod-section-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 12px;
 }
 
 .pod-section-title {
@@ -123,12 +105,6 @@
 }
 
 .pod-filters select {
-  background: rgba(0, 0, 0, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  color: white;
-  padding: 8px 32px 8px 12px;
-  border-radius: 10px;
-  font-size: 1rem;
   appearance: none;
   -webkit-appearance: none;
   -moz-appearance: none;
@@ -138,9 +114,9 @@
 }
 
 .pod-chart {
-  background: rgba(0, 0, 0, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 12px;
+  background: var(--surface-input);
+  border: var(--border-width) solid var(--border-light);
+  border-radius: var(--radius-lg);
   height: 400px;
   padding: 20px;
 }
@@ -212,14 +188,14 @@
   min-width: 160px;
   text-align: center;
   padding: 18px 16px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  background: var(--secondary-green);
+  border-radius: var(--radius-lg);
+  border: var(--border-width) solid var(--border-medium);
+  background: var(--secondary);
   color: white;
   font-size: 1.35rem;
   font-weight: 700;
   cursor: pointer;
-  transition: opacity 0.15s ease, background 0.15s ease;
+  transition: opacity var(--transition-fast), background var(--transition-fast);
 }
 
 .pod-day-tab:hover {
@@ -227,7 +203,7 @@
 }
 
 .pod-day-tab--active {
-  background: var(--primary-green);
+  background: var(--primary);
 }
 
 .pod-loading,
@@ -243,12 +219,6 @@
 }
 
 .multi-sensor-toggle {
-  background: rgba(0, 0, 0, 0.18);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  color: white;
-  padding: 8px 32px 8px 12px;
-  border-radius: 10px;
-  font-size: 1rem;
   cursor: pointer;
   display: flex;
   align-items: center;
@@ -274,9 +244,9 @@
   top: calc(100% + 4px);
   left: 0;
   right: 0;
-  background: var(--secondary-green);
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  border-radius: 10px;
+  background: var(--secondary);
+  border: var(--border-width) solid var(--border-medium);
+  border-radius: var(--radius-input);
   padding: 8px 0;
   z-index: 100;
   max-height: 280px;
@@ -340,7 +310,7 @@
 }
 
 .pod-filters .sensor-trend-date-dropdown option {
-  background: var(--secondary-green);
+  background: var(--secondary);
 }
 
 .pod-filters .sensor-trend-date-dropdown option:hover {

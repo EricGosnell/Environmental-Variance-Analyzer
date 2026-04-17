@@ -164,7 +164,7 @@ export default function FAQs() {
                         const uniqueId = `${sectionIndex}-${questionIndex}`;
                         const answerId = `faq-answer-${uniqueId}`;
                         return (
-                            <div key={uniqueId} className={`faq-item ${openIndex === uniqueId ? "open" : ""}`}>
+                            <div key={uniqueId} className={`card faq-item ${openIndex === uniqueId ? "open" : ""}`}>
                                 <button
                                     id={`faq-button-${uniqueId}`}
                                     className="faq-question"

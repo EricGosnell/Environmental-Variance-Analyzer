@@ -174,12 +174,12 @@ export default function PodTable({ isOpen, onClose, onHeightChange, visiblePodId
                     {selectedPods.length > 0 && (
                         <>
                             <span>{selectedPods.length} Selected</span>
-                            <button className="btn primary-btn pod-table-selection-btn" onClick={zoomToSelection}>Zoom
+                            <button className="btn primary-btn btn--full pod-table-selection-btn" onClick={zoomToSelection}>Zoom
                                 to
                             </button>
-                            <button className="btn primary-btn pod-table-selection-btn" onClick={clearSelection}>Clear
+                            <button className="btn primary-btn btn--full pod-table-selection-btn" onClick={clearSelection}>Clear
                             </button>
-                            <button className="btn primary-btn pod-table-selection-btn"
+                            <button className="btn primary-btn btn--full pod-table-selection-btn"
                                     onClick={invertSelection}>Invert
                             </button>
                         </>
@@ -194,7 +194,7 @@ export default function PodTable({ isOpen, onClose, onHeightChange, visiblePodId
                     {/*    Noting on the right side, just for spacing */}
                 </div>
 
-                <button className="pod-table-drawer-close-btn" onClick={handleClose} aria-label="Close drawer">
+                <button className="icon-btn pod-table-drawer-close-btn" onClick={handleClose} aria-label="Close drawer">
                     ×
                 </button>
             </div>

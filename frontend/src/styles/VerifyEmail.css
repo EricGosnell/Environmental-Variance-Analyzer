@@ -6,9 +6,10 @@
 
 .verify-email-card {
   width: min(520px, 100%);
-  background: var(--secondary-green);
-  border-radius: 16px;
+  background: var(--secondary);
+  border-radius: var(--radius-xl);
   padding: 24px;
+  border: var(--border-width) solid var(--border-light);
   display: flex;
   flex-direction: column;
   gap: 12px;
@@ -16,20 +17,6 @@
 
 .verify-email-card h1 {
   margin: 0;
-}
-
-.verify-email-back-link {
-  align-self: flex-start;
-  color: #fff;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  opacity: 0.9;
-  text-decoration: none;
-}
-
-.verify-email-back-link:hover {
-  opacity: 1;
 }
 
 .verify-email-copy {
@@ -42,30 +29,15 @@
   font-weight: 700;
 }
 
+.verify-email-back-link {
+  align-self: flex-start;
+  text-decoration: none;
+}
+
 .verify-email-form {
   display: flex;
   flex-direction: column;
   gap: 10px;
-}
-
-.verify-email-label {
-  font-weight: 600;
-}
-
-.verify-email-input {
-  border-radius: 10px;
-  border: 1px solid rgba(255, 255, 255, 0.25);
-  padding: 10px 12px;
-  background: rgba(0, 0, 0, 0.15);
-  color: white;
-  outline: none;
-}
-
-.verify-email-submit,
-.verify-email-resend,
-.verify-email-home-link {
-  width: 100%;
-  margin-bottom: 0;
 }
 
 .verify-email-home-text {
@@ -75,28 +47,6 @@
   color: #fff;
 }
 
-/* .verify-email-home-text::before {
-  content: "\2190 ";
-} */
-
 .verify-email-home-text:hover {
   opacity: 1;
-}
-
-.verify-email-info,
-.verify-email-error {
-  border-radius: 10px;
-  padding: 10px 12px;
-  font-weight: 600;
-}
-
-.verify-email-info {
-  background: rgba(48, 164, 108, 0.18);
-  border: 1px solid rgba(48, 164, 108, 0.6);
-}
-
-.verify-email-error {
-  background: rgba(255, 118, 101, 0.15);
-  border: 1px solid rgba(255, 118, 101, 0.5);
-  color: var(--warning-red);
 }

@@ -3,13 +3,12 @@
 }
 
 .info-card {
-    border-radius: 16px;
     overflow: hidden;
     width: 100%;
 }
 
 .info-header {
-    background-color: var(--primary-green);
+    background-color: var(--primary);
     padding: 5px 30px;
 }
 
@@ -20,11 +19,10 @@
 }
 
 .info-body {
-    background-color: var(--secondary-green);
     padding: 10px 30px;
     color: white;
     line-height: 1.6;
-    min-height:60vh;
+    min-height: 60vh;
 }
 
 .info-subheader {
@@ -32,7 +30,7 @@
     font-weight: 700;
     margin-top: 15px;
     margin-bottom: 10px;
-    color: var(--primary-green);
+    color: var(--primary);
 }
 
 .info-content {
@@ -40,7 +38,7 @@
 }
 
 .info-link {
-    color: var(--primary-green);
+    color: var(--primary);
 }
 
 .info-link:hover {
@@ -109,7 +107,7 @@
 .members-image {
     width: 80px;
     height: auto;
-    border-radius: 16px;
+    border-radius: var(--radius-xl);
 }
 
 .members-content h3 {

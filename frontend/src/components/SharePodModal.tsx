@@ -109,9 +109,9 @@ export default function SharePodModal({ show, podId, onClose, currentOwnerIds = 
   if (!show) return null;
 
   return (
-    <div className="share-modal-overlay" role="presentation" onClick={onClose}>
+    <div className="modal-overlay modal-overlay--top share-modal-overlay" role="presentation" onClick={onClose}>
       <div
-        className="share-modal"
+        className="card card--sm share-modal"
         role="dialog"
         aria-modal="true"
         aria-label="Add collaborators"
@@ -122,7 +122,7 @@ export default function SharePodModal({ show, podId, onClose, currentOwnerIds = 
             <h2 className="share-modal-title">Add collaborators</h2>
             <p className="share-modal-subtitle">Search by username</p>
           </div>
-          <button type="button" className="share-modal-close" aria-label="Close" onClick={onClose}>
+          <button type="button" className="icon-btn share-modal-close" aria-label="Close" onClick={onClose}>
             <FiX size={18} />
           </button>
         </header>
@@ -131,7 +131,7 @@ export default function SharePodModal({ show, podId, onClose, currentOwnerIds = 
           <FiSearch size={16} className="share-modal-search-icon" aria-hidden="true" />
           <input
             type="text"
-            className="share-modal-search-input"
+            className="form-input share-modal-search-input"
             placeholder="Search people..."
             value={query}
             onChange={(event) => setQuery(event.target.value)}
@@ -139,8 +139,8 @@ export default function SharePodModal({ show, podId, onClose, currentOwnerIds = 
           />
         </div>
 
-        {feedback ? <div className="share-modal-feedback">{feedback}</div> : null}
-        {searchError ? <div className="share-modal-error">{searchError}</div> : null}
+        {feedback ? <div className="alert alert--info share-modal-feedback">{feedback}</div> : null}
+        {searchError ? <div className="alert alert--error share-modal-error">{searchError}</div> : null}
 
         <div className="share-modal-results">
           {trimmedQuery.length < 2 ? (
