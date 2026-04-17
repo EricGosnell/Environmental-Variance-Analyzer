@@ -15,9 +15,10 @@ module.exports = (db) => {
         async (req, res) => {
             try {
                 const userId = req.user.id;
+
                 const orgs = await db.all(
                     `
-                        SELECT o.*, uo.role, uo.status
+                        SELECT o.*
                         FROM org o
                         JOIN user_org uo ON o.org_id = uo.org_id
                         WHERE uo.user_id = ?
@@ -38,21 +39,19 @@ module.exports = (db) => {
         }
     );
 
-
     // -------------------------
     // GET /orgs/all
     // -------------------------
     // returns all organizations
-    router.get(
-        "/all",
+    router.get("/all",
         authenticateToken,
         async (req, res) => {
             try {
                 const orgs = await db.all(
                     `
-                      SELECT *
-                      FROM org
-                      ORDER BY created_at DESC
+                        SELECT *
+                        FROM org
+                        ORDER BY LOWER(o.org_name) ASC
                     `
                 );
 
@@ -68,15 +67,13 @@ module.exports = (db) => {
         }
     );
 
-
     // -------------------------
     // GET /orgs/:orgId
     // -------------------------
     // returns org details
-    router.get(
-        "/:orgId",
+    router.get("/:orgId",
         authenticateToken,
-        [param("orgId").isInt({ gt: 0 }).withMessage("Org id must be a positive integer"),],
+        [param("orgId").isInt({ gt: 0 }).withMessage("Org id must be a positive integer")],
         async (req, res) => {
             try {
                 const errors = validationResult(req);
@@ -91,34 +88,14 @@ module.exports = (db) => {
                 }
 
                 const orgId = Number(req.params.orgId);
-                const userId = req.user.id;
 
                 const org = await db.get(
                     `SELECT * FROM org WHERE org_id = ?`,
                     [orgId]
                 );
+                if (!org) return res.status(404).json({ error: "Org not found" });
 
-                if (!org) {
-                    return res.status(404).json({ error: "Org not found" });
-                }
-
-                const membership = await db.get(
-                    `
-                      SELECT role, status
-                      FROM user_org
-                      WHERE user_id = ? AND org_id = ?
-                    `,
-                    [userId, orgId]
-                );
-
-                if (!membership) {
-                    return res.status(403).json({ error: "Not a member of this org" });
-                }
-
-                return res.status(200).json({
-                    org,
-                    membership,
-                });
+                return res.status(200).json({ org });
             } catch (error) {
                 return res.status(500).json({
                     error: "Internal server error",
@@ -131,9 +108,46 @@ module.exports = (db) => {
     );
 
     // -------------------------
+    // GET /orgs/:orgId/status
+    // -------------------------
+    // returns a user status for joining an org
+    router.get(
+        "/:orgId/status",
+        authenticateToken,
+        [param("orgId").isInt({ gt: 0 }).withMessage("Org id must be a positive integer")],
+        async (req, res) => {
+            try {
+                const userId = req.user.id;
+                const orgId = Number(req.params.orgId);
+
+                const membership = await db.get(
+                    `SELECT status FROM user_org WHERE user_id = ? AND org_id = ?`,
+                    [userId, orgId]
+                );
+
+                if (!membership) return res.json({ status: "none" });
+
+                if (membership.status === "active") return res.json({ status: "joined" });
+                if (membership.status === "requested") return res.json({ status: "requested" });
+                if (membership.status === "invited") return res.json({ status: "pending" });
+
+                return res.json({ status: "none" });
+
+            } catch (error) {
+                return res.status(500).json({
+                    error: "Internal server error",
+                    where: "/orgs/:orgId/status",
+                    message: error?.message,
+                    code: error?.code
+                });
+            }
+        }
+    );
+
+    // -------------------------
     // POST /orgs
     // -------------------------
-    // create a new organization and makes the user an org owner
+    // create a new organization and makes the user an org admin
     router.post(
         "/",
         authenticateToken,
@@ -185,11 +199,6 @@ module.exports = (db) => {
             }
         }
     );
-
-    // -------------------------
-    // POST /orgs/:orgId/add-member
-    // -------------------------
-    // add user to org
 
     // -------------------------
     // POST /orgs/:orgId/invite
