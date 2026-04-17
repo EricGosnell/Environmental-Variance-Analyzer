@@ -100,9 +100,10 @@ export default function Pod() {
         });
         setViewer(res.viewer ?? null);
         setData(Array.isArray(res.data) ? res.data : []);
-      } catch (e: any) {
-        if (e?.name === "AbortError") return;
-        setError(e?.message ? String(e.message) : "Failed to load pod data.");
+      } catch (e: unknown) {
+        if ((e as { name?: string })?.name === "AbortError") return;
+        const message = e instanceof Error ? e.message : "Failed to load pod data.";
+        setError(message);
         setData([]);
         setPodMeta(null);
         setViewer(null);
@@ -328,10 +329,10 @@ export default function Pod() {
               {/* <div className="pod-chart">Insert trendline/scatterplot of data over 24 hours</div> */}
               <div className="pod-chart">
                 <DailySensorChart
-                data={data}
-                sensorTypes={selectedSensorsDaily}
-                day={selectedDay}
-              />
+                  data={data}
+                  sensorTypes={selectedSensorsDaily}
+                  day={selectedDay}
+                />
               </div>
             </section>
           ) : null}

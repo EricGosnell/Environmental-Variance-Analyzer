@@ -73,6 +73,27 @@ export default function DailySensorChart({ data, sensorTypes, day }: Props) {
     );
   }
 
+  const totalPoints = chartData.sensorData.reduce((sum, sd) => sum + sd.points.length, 0);
+  if (totalPoints === 1) {
+    const sensorWithPoint = chartData.sensorData.find((sd) => sd.points.length === 1)!;
+    const point = sensorWithPoint.points[0];
+    const units = unitsMap.get(sensorWithPoint.sensorType) || "";
+    return (
+      <div className="pod-chart--single-point">
+        <div className="single-point-card">
+          <div className="single-point-value">
+            {point.value}{units ? ` ${units}` : ""}
+          </div>
+          <div className="single-point-date">{sensorWithPoint.sensorType}</div>
+          <div className="single-point-time">{formatTimeLabel(point.time)}</div>
+          <div className="single-point-disclaimer">
+            Only one reading available for this day. More data is needed to display a chart.
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   const traces: Plotly.Data[] = chartData.sensorData.map(({ sensorType, points }) => {
     const color = getSensorColor(sensorType);
     const units = unitsMap.get(sensorType) || "";
@@ -81,7 +102,7 @@ export default function DailySensorChart({ data, sensorTypes, day }: Props) {
       type: "scatter",
       mode: "lines+markers",
       name: sensorType,
-      x: points.map((p) => formatTimeLabel(p.time)),
+      x: points.map((p) => p.time.toISOString()),
       y: points.map((p) => p.value),
       marker: {
         color: color,
@@ -111,10 +132,12 @@ export default function DailySensorChart({ data, sensorTypes, day }: Props) {
           bgcolor: "transparent",
         },
         xaxis: {
+          type: "date",
           title: { text: "Time", standoff: 10 },
           gridcolor: "rgba(255, 255, 255, 0.1)",
           zerolinecolor: "rgba(255, 255, 255, 0.2)",
           tickangle: -45,
+          tickformat: "%I:%M %p",
         },
         yaxis: {
           title: { text: "Value" },

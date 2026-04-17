@@ -94,7 +94,7 @@ export default function SharePodModal({ show, podId, onClose, currentOwnerIds = 
     try {
       await addPodOwner(podId, { userId: candidate.id });
       setLocalOwnerIds((prev) => [...prev, candidate.id]);
-    } catch (e: any) {
+    } catch (e: unknown) {
       if (e instanceof ApiError && e.status === 409) {
         setFeedback(`${candidate.username} is already an owner.`);
       } else {
