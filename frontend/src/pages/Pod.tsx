@@ -284,7 +284,7 @@ export default function Pod() {
                   onChange={setSelectedSensorsOverall}
                   placeholder="Select sensors"
                 />
-                <select value={selectedRange} onChange={(e) => setSelectedRange(e.target.value)}>
+                <select value={selectedRange} className="sensor-trend-date-dropdown" onChange={(e) => setSelectedRange(e.target.value)}>
                   <option value="Last 7 Days">Last 7 Days</option>
                   <option value="Last 30 Days">Last 30 Days</option>
                   <option value="All Time">All Time</option>
@@ -353,4 +353,3 @@ export default function Pod() {
     </div>
   );
 }
-

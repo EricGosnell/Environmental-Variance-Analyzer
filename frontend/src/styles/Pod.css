@@ -339,4 +339,10 @@
   font-size: 0.95rem;
 }
 
+.pod-filters .sensor-trend-date-dropdown option {
+  background: var(--secondary-green);
+}
 
+.pod-filters .sensor-trend-date-dropdown option:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
