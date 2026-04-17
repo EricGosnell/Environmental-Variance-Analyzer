@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import "../styles/Filters.css";
+import { useGlobalError } from "./GlobalErrorContext";
 
 export type UploadTimeframe = "24h" | "7d" | "30d" | "any";
 
@@ -14,18 +15,20 @@ export interface FiltersState {
     nameSearch: string;
 }
 
+// All date boundaries are sent as UTC ISO strings. This is correct because the backend
+// stores all pod timestamps in UTC (via JS toISOString()), so filtering in UTC matches stored data.
 export function uploadTimeframeToFromDate(filters: FiltersState): string | undefined {
-    if (filters.customFrom) return new Date(filters.customFrom).toISOString();
+    if (filters.customFrom) return new Date(filters.customFrom + "T00:00:00.000Z").toISOString();
     if (filters.uploadTimeframe === "any") return undefined;
     const now = new Date();
-    if (filters.uploadTimeframe === "24h") now.setHours(now.getHours() - 24);
+    if (filters.uploadTimeframe === "24h") now.setTime(now.getTime() - 24 * 60 * 60 * 1000);
     else if (filters.uploadTimeframe === "7d") now.setDate(now.getDate() - 7);
     else if (filters.uploadTimeframe === "30d") now.setDate(now.getDate() - 30);
     return now.toISOString();
 }
 
 export function uploadTimeframeToToDate(filters: FiltersState): string | undefined {
-    if (filters.customTo) return new Date(filters.customTo).toISOString();
+    if (filters.customTo) return new Date(filters.customTo + "T23:59:59.999Z").toISOString();
     return undefined;
 }
 
@@ -39,15 +42,29 @@ interface FiltersProps {
 export default function Filters({ filters, onChange, availableSensorTypes, isAuthenticated }: FiltersProps) {
     const { uploadTimeframe, customFrom, customTo, sensorTypes, ownerFilter, nameSearch } = filters;
     const [sensorDropdownOpen, setSensorDropdownOpen] = useState(false);
+    const { showError } = useGlobalError();
 
     const setUploadTimeframe = (value: UploadTimeframe) =>
         onChange({ ...filters, uploadTimeframe: value, customFrom: "", customTo: "" });
 
+    const today = useMemo(() => {
+        const d = new Date();
+        return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+    }, []);
+
     const handleCustomFrom = (value: string) => {
+        if (customTo && value > customTo) {
+            showError("From date cannot be after To date.");
+            return;
+        }
         onChange({ ...filters, uploadTimeframe: "any", customFrom: value });
     };
 
     const handleCustomTo = (value: string) => {
+        if (customFrom && value < customFrom) {
+            showError("To date cannot be before From date.");
+            return;
+        }
         onChange({ ...filters, uploadTimeframe: "any", customTo: value });
     };
 
@@ -58,9 +75,25 @@ export default function Filters({ filters, onChange, availableSensorTypes, isAut
         onChange({ ...filters, sensorTypes: next });
     };
 
+    const isDefault =
+        uploadTimeframe === "any" &&
+        customFrom === "" &&
+        customTo === "" &&
+        sensorTypes.length === 0 &&
+        ownerFilter === "all" &&
+        nameSearch === "";
+
+    const handleClear = () =>
+        onChange({ uploadTimeframe: "any", customFrom: "", customTo: "", sensorTypes: [], ownerFilter: "all", nameSearch: "" });
+
     return (
         <div className="filters-container">
-            <p className="filters-heading">Filters</p>
+            <div className="filters-header">
+                <p className="filters-heading">Filters</p>
+                <button className="filters-clear-btn" onClick={handleClear} disabled={isDefault}>
+                    Clear
+                </button>
+            </div>
 
             <div className="filter-group">
                 <p className="filter-group-label">Pod Name</p>
@@ -110,6 +143,7 @@ export default function Filters({ filters, onChange, availableSensorTypes, isAut
                             type="date"
                             className={`filter-date-input ${customFrom ? "active" : ""}`}
                             value={customFrom}
+                            max={customTo || today}
                             onChange={(e) => handleCustomFrom(e.target.value)}
                         />
                     </div>
@@ -119,6 +153,8 @@ export default function Filters({ filters, onChange, availableSensorTypes, isAut
                             type="date"
                             className={`filter-date-input ${customTo ? "active" : ""}`}
                             value={customTo}
+                            min={customFrom}
+                            max={today}
                             onChange={(e) => handleCustomTo(e.target.value)}
                         />
                     </div>

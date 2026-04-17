@@ -7,7 +7,7 @@ interface PodTableProps {
     isOpen: boolean;
     onClose: () => void;
     onHeightChange: (height: number) => void;
-    visiblePodIds?: number[];
+    visiblePodIds?: string[];
     selectedPods: string[];
     onSelectionChange: (selectedPods: string[]) => void;
     onZoomTo: (pods: { lat: number; lon: number }[]) => void;
@@ -24,7 +24,7 @@ export default function PodTable({ isOpen, onClose, onHeightChange, visiblePodId
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const fetchPodData = useCallback(async (podIds: number[], signal: AbortSignal) => {
+    const fetchPodData = useCallback(async (podIds: string[], signal: AbortSignal) => {
         if (!podIds?.length) {
             setPods([]);
             setSensorTypes([]);
@@ -53,9 +53,9 @@ export default function PodTable({ isOpen, onClose, onHeightChange, visiblePodId
         }
     }, []);
 
-    // Get pod data for visible pods, but not while dragging
+    // Get pod data for visible pods, but not while dragging or when the table is closed
     useEffect(() => {
-        if (isDragging) return;
+        if (!isOpen || isDragging) return;
         const controller = new AbortController();
         fetchPodData(visiblePodIds, controller.signal);
         return () => controller.abort();

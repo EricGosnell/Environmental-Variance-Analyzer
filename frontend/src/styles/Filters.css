@@ -11,10 +11,37 @@
     overflow-y: auto;
 }
 
+.filters-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
 .filters-heading {
     margin: 0;
     font-weight: 700;
     font-size: 1.25rem;
+}
+
+.filters-clear-btn {
+    background: transparent;
+    border: 1px solid rgba(255, 255, 255, 0.4);
+    border-radius: 12px;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 0.75rem;
+    padding: 3px 10px;
+    cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+}
+
+.filters-clear-btn:hover:not(:disabled) {
+    border-color: rgba(255, 255, 255, 0.8);
+    color: #fff;
+}
+
+.filters-clear-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
 }
 
 .filter-group {

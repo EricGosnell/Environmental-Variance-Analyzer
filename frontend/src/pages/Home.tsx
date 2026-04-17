@@ -85,7 +85,7 @@ export default function Home() {
 
         (async () => {
             try {
-                const res = await getPodsLatestReadings(visiblePods.map((p) => Number(p.id)), ac.signal);
+                const res = await getPodsLatestReadings(visiblePods.map((p) => p.id), ac.signal);
                 const types = new Set<string>();
                 for (const pod of res.pods) {
                     for (const key of Object.keys(pod.latestReadings)) {
@@ -219,7 +219,7 @@ export default function Home() {
                     isOpen={isPodTableOpen}
                     onClose={() => setIsPodTableOpen(false)}
                     onHeightChange={setPodTableHeight}
-                    visiblePodIds={visiblePods.map(p => Number(p.id))}
+                    visiblePodIds={visiblePods.map(p => p.id)}
                     selectedPods={selectedPods}
                     onSelectionChange={setSelectedPods}
                     onZoomTo={handleZoomTo}

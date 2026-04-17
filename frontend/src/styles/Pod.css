@@ -141,15 +141,57 @@
   background: rgba(0, 0, 0, 0.18);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 12px;
-  min-height: 260px;
+  height: 400px;
+  padding: 20px;
+}
+
+.pod-chart--empty {
+  height: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   text-align: center;
-  padding: 20px;
-  font-size: 1.8rem;
-  font-weight: 700;
+  font-size: 1.2rem;
+  font-weight: 600;
   opacity: 0.85;
+}
+
+.pod-chart--single-point {
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.single-point-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: flex-start;
+  gap: 8px;
+  text-align: left;
+  height: 100%;
+}
+
+.single-point-value {
+  font-size: 2.4rem;
+  font-weight: 800;
+  color: white;
+}
+
+.single-point-date,
+.single-point-time {
+  font-size: 1.1rem;
+  font-weight: 600;
+  opacity: 0.85;
+  color: white;
+}
+
+.single-point-disclaimer {
+  font-size: 0.9rem;
+  opacity: 0.7;
+  color: white;
+  max-width: 320px;
 }
 
 .pod-daily-title {
@@ -195,4 +237,112 @@
   opacity: 0.9;
 }
 
+.multi-sensor-dropdown {
+  position: relative;
+  min-width: 200px;
+}
 
+.multi-sensor-toggle {
+  background: rgba(0, 0, 0, 0.18);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: white;
+  padding: 8px 32px 8px 12px;
+  border-radius: 10px;
+  font-size: 1rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-width: 100%;
+  position: relative;
+}
+
+.multi-sensor-toggle:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.multi-sensor-arrow {
+  position: absolute;
+  right: 12px;
+  font-size: 0.7rem;
+  opacity: 0.7;
+}
+
+.multi-sensor-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: var(--secondary-green);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  padding: 8px 0;
+  z-index: 100;
+  max-height: 280px;
+  overflow-y: auto;
+  overflow-x: hidden;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+}
+
+.multi-sensor-menu::-webkit-scrollbar {
+  width: 4px;
+}
+
+.multi-sensor-menu::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.multi-sensor-menu::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+}
+
+.multi-sensor-menu::-webkit-scrollbar-thumb:hover {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.multi-sensor-option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.multi-sensor-option:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.multi-sensor-option.selected {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.multi-sensor-option input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  accent-color: white;
+  cursor: pointer;
+}
+
+.sensor-color-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.sensor-label {
+  color: white;
+  font-size: 0.95rem;
+}
+
+.pod-filters .sensor-trend-date-dropdown option {
+  background: var(--secondary-green);
+}
+
+.pod-filters .sensor-trend-date-dropdown option:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
