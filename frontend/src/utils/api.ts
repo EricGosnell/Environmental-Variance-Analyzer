@@ -507,7 +507,7 @@ export async function unregisterPod(payload: UnregisterPodRequest, signal?: Abor
 }
 
 export async function getPodsLatestReadings(
-  podIds: number[],
+  podIds: string[],
   signal?: AbortSignal,
 ): Promise<{ pods: PodLatestReadings[] }> {
 
