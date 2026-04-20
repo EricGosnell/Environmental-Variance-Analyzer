@@ -38,6 +38,23 @@ This document outlines the API routes for the project.
   - [Add Pod Owner: `/pods/{id}/owners`](#add-pod-owner)
   - [Get Pod Owners: `/pods/{id}/owners`](#get-pod-owners)
   - [Delete Pod Data: `/pods/delete-pod-data`](#delete-pod-data)
+- [Organizations](#organizations)
+  - [Get User Orgs: `/orgs`](#user-orgs)
+  - [Get All Orgs: `/orgs/all`](#all-orgs)
+  - [Get Org Info: `/orgs/:orgId`](#org-info)
+  - [Get User Join Status: `/orgs/:orgId/status`](#user-join-status)
+  - [Create Org: `/orgs/create-org`](#create-org)
+  - [Create Invite: `/orgs/:orgId/invite`](#create-invite)
+  - [Create Request: `/orgs/:orgId/request`](#create-request)
+  - [Update Org: `/orgs/change-org`](#change-org)
+  - [Change Org Role: `/orgs/:orgId/members/:userId/change-role`](#change-org-role)
+  - [Leave Org: `/orgs/:orgId/leave`](#leave-org)
+  - [Remove Member: `/orgs/:orgId/members/:userId`](#remove-member)
+  - [Delete Org: `/orgs:orgId/delete-org`](#delete-org)
+- [Messages](#messages)
+  - [Get All Messages: `/messages`](#all-messages)
+  - [Respond to Message: `/messages/:messageId/respond`](#message-response)
+  - [Delete Message: `/messages/:messageId`](#delete-message)
 
 ## Authentication
 
@@ -1487,3 +1504,161 @@ Response (400 Bad Request):
 ```
 
 This endpoint deletes a specific pod data entry from the database.
+
+## Organizations
+
+Organizations should only be visible to users who have logged in.
+
+### Get User Orgs
+
+```
+GET /orgs
+```
+
+Authentication:
+
+- Bearer token required.
+
+### Get All Orgs
+
+```
+GET /orgs/all
+```
+
+Authentication:
+
+- Bearer token required.
+
+### Get Org Info
+
+```
+GET /orgs:orgId
+```
+
+Authentication:
+
+- Bearer token required.
+
+### Get User Join Status
+
+```
+GET /orgs/:orgId/status
+```
+
+Authentication:
+
+- Bearer token required.
+
+### Create Org
+
+```
+POST /orgs/create-org
+```
+
+Authentication:
+
+- Bearer token required.
+
+### Create Invite
+
+```
+POST /orgs/:orgId/invite
+```
+
+Authentication:
+
+- Bearer token required. User must be an org admin.
+
+### Create Request
+
+```
+POST /orgs/:orgId/request
+```
+
+Authentication:
+
+- Bearer token required.
+
+### Change Org
+
+```
+PUT /orgs/:orgId/change-org
+```
+
+Authentication:
+
+- Bearer token required. User must be an org admin.
+
+### Change Org Role
+
+```
+PUT /orgs/:orgId/members/:userId/change-role
+```
+
+Authentication:
+
+- Bearer token required. User must be an org admin.
+
+### Leave Org
+
+```
+DELETE /orgs/:orgId/leave
+```
+
+Authentication:
+
+- Bearer token required.
+
+### Remove Member
+
+```
+DELETE /orgs/:orgId/members/:userId
+```
+
+Authentication:
+
+- Bearer token required. User must be an org admin.
+
+### Delete Org
+
+```
+DELETE /orgs/:orgId/delete-org
+```
+
+Authentication:
+
+- Bearer token required. User must be an org admin.
+
+## Messages
+
+Users should only be able to view and interact with their own messages.
+
+### Get All Messages
+
+```
+GET /messages
+```
+
+Authentication:
+
+- Bearer token required.
+
+### Respond to Message
+
+```
+PUT /messages/:messageId/respond
+```
+
+Authentication:
+
+- Bearer token required.
+
+### Delete Message
+
+```
+DELETE /messages/:messageId
+```
+
+Authentication:
+
+- Bearer token required.

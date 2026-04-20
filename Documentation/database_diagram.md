@@ -84,7 +84,7 @@ erDiagram
     user_org {
         INT user_id FK
         INT org_id FK
-        TEXT role
+        BOOLEAN admin
         TEXT status
         TIMESTAMP created_at
     }

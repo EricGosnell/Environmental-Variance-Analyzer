@@ -5,7 +5,7 @@ This document outlines the design, current implementation, and remaining work fo
 The Connections tab in the profile page should contain the following:
 
 ### Organization Discovery
-Users should be able to
+After they are signed in, users should be able to
 * Browse all organizations on the platform
 * View all the organizations that are currently a part of
 * View details about each organization - name, email, biography (100 characters max)
@@ -53,6 +53,14 @@ For the frontend:
 * `frontend/src/pages/Friends.tsx` 
   * Demo page to visualize components to be used in the Connections tab
   * Uses mock data for organizations and messages
+* `frontend/src/utils/api.ts`
+  * added functions for API routes to use in frontend
+  * for organizations: `getAllOrgs`, `getUserOrgs`, `getOrgById`, `getOrgStatus`. `requestToJoinOrg`
+  * for messages: `getMessages`, `respondToMessage`, `deleteMessage`
+* `frontend/src/utils/apiTypes.ts`
+  * added shared types used by APIs to use in frontend
+  * for organizations: `Org`, `OrgResponse`, `OrgStatus`, `OrgStatusResponse`
+  * for messages: `MessageType`, `MessageStatus`, `Message`, `MessagesResponse`
 * `frontend/src/styles/connections/ConnectionsCard.css`
   * Styling for all the cards to be used in the Connection tab
 * `frontend/src/styles/connections/InboxCard.css`
@@ -64,15 +72,16 @@ Some APIs are implemented, none are tested.
 * `backend/API/org.js`
   * `GET /orgs` - returns all organizations the user is a part of
   * `GET /orgs/all` - returns all organizations
-  * `GET /orgs/:orgId` - returns organization details
-  * `GET /orgs/:orgId/status` - returns a user status for joining an org
-  * `POST /orgs` - create a new organization and assigns creator as admin
+  * `GET /orgs/:orgId` - returns organization information
+  * `GET /orgs/:orgId/status` - returns a user's status for joining an org
+  * `POST /orgs/create-org` - create a new organization and makes the user an org admin
   * `POST /orgs/:orgId/invite` - creates an invitation from organization to user
   * `POST /orgs/:orgId/request` - creates a request from the user to join an organization
-  * `PUT /orgs/:orgId/update-org` - update organization details
-  * `PUT /orgs:orgID/members/:userId/role` - change organization member role to admin and grants permissions
-  * `DELETE /orgs/:orgId/delete-member/:userId` - removes a user from organization
-  * `DELETE /orgs/:orgId` - deletes organization
+  * `PUT /orgs/:orgId/change-org` - change organization details
+  * `PUT /orgs/:orgID/members/:userId/change-role` - change organization member role to admin and grants permissions
+  * `DELETE /orgs/:orgId/leave` - removes a user from organization when they leave
+  * `DELETE /orgs/:orgId/members/:userId` - admin removes a user from organization
+  * `DELETE /orgs/:orgId/delete-org` - deletes organization
 * `backend/API/message.js`
   * `GET /messages` - returns all messages for the user
   * `PUT /messages/:messageId/respond` - accept or deny invites/requests
@@ -93,12 +102,20 @@ Other:
   * Provides details on added API routes
 
 ## What Needs to Be Done
+* Add permissions to website admins to manage organizations and messages
 * Add feature where users click on a shared pod message to navigate to the associated pod info page
+* Add email validation to create org
+* Add middleware for create org validation
+* Add test data to backend
+* Add `orgQueries.js` to use for repeating queries in `org.js` (ex: `isAdmin`, `isMember`)
+* Add frontend for org admin features (create, edit, delete org)
+* Add frontend for shared org pods features (share pod with org, profile filters, etc)
 * Define organization pod permissions (who can add, edit, and delete pods)
 * Revise APIs to handle edge cases
 * Write additional APIs for shared organization pods
+* Update `API_routes.md` for any new/changed APIs
 * Test all routes
 * Remove mock data in frontend
-* Integrate APIs into frontend
+* Finish integrating APIs into frontend
 * Incorporate organizations to the rest of profile
 * Match styling to the rest of the website
