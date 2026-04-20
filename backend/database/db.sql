@@ -120,8 +120,8 @@ CREATE TABLE IF NOT EXISTS org (
 CREATE TABLE IF NOT EXISTS user_org (
     user_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE CASCADE,
     org_id INTEGER NOT NULL REFERENCES org(org_id) ON DELETE CASCADE,
-    role TEXT NOT NULL CHECK (role IN ('owner', 'member')),
-    status TEXT NOT NULL CHECK (status IN ('invited', 'requested', 'active')),
+    admin BOOLEAN DEFAULT FALSE,
+    status TEXT NOT NULL CHECK (status IN ('invited', 'requested', 'joined')),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id, org_id)
 );
