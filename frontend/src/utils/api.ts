@@ -41,7 +41,11 @@ import type {
   UsersResponse,
   VerifyAndUpdateEmailRequest,
   VerifyAndUpdateEmailResponse,
-  PodLatestReadings
+  PodLatestReadings,
+  Org,
+  OrgResponse,
+  OrgStatusResponse,
+  MessagesResponse
 } from "./apiTypes";
 
 // ----------------------------
@@ -648,6 +652,98 @@ export async function getPodOwners(
   return await request<GetPodOwnersResponse>({
     method: "GET",
     path: `/pods/${encodeURIComponent(podId)}/owners`,
+    auth: true,
+    signal,
+  });
+}
+
+// ----------------------------
+// Organizations
+// ----------------------------
+
+export async function getAllOrgs(signal?: AbortSignal) {
+  return await request<{ orgs: Org[] }>({
+    method: "GET",
+    path: "/orgs/all",
+    auth: true,
+    signal,
+  });
+}
+
+export async function getUserOrgs(signal?: AbortSignal) {
+  return await request<{ orgs: Org[] }>({
+    method: "GET",
+    path: "/orgs",
+    auth: true,
+    signal,
+  });
+}
+
+export async function getOrgById(orgId: number, signal?: AbortSignal) {
+  return await request<OrgResponse>({
+    method: "GET",
+    path: `/orgs/${orgId}`,
+    auth: true,
+    signal,
+  });
+}
+
+export async function getOrgStatus(orgId: number, signal?: AbortSignal) {
+  try {
+    return await request<OrgStatusResponse>({
+      method: "GET",
+      path: `/orgs/${orgId}/status`,
+      auth: true,
+      signal,
+    });
+  } catch (err: any) {
+    if (err?.status === 404) {
+      return { status: "none" as const };
+    }
+    throw err;
+  }
+}
+
+export async function requestToJoinOrg(orgId: number, signal?: AbortSignal) {
+  return await request<MessageResponse>({
+    method: "POST",
+    path: `/orgs/${orgId}/request`,
+    auth: true,
+    signal,
+  });
+}
+
+// ----------------------------
+// Messages
+// ----------------------------
+
+export async function getMessages(signal?: AbortSignal) {
+  return await request<MessagesResponse>({
+    method: "GET",
+    path: "/messages",
+    auth: true,
+    signal,
+  });
+}
+
+export async function respondToMessage(
+    messageId: number,
+    action: "accepted" | "denied",
+    signal?: AbortSignal
+) {
+  return await request<MessageResponse>({
+    method: "PUT",
+    path: `/messages/${messageId}/respond`,
+    body: { action },
+    auth: true,
+    signal,
+  });
+}
+
+export async function deleteMessage(messageId: number, signal?: AbortSignal) {
+  return await request<MessageResponse>({
+    method: "DELETE",
+    path: `/messages/${messageId}`,
     auth: true,
     signal,
   });

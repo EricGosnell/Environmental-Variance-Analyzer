@@ -2,13 +2,7 @@ import React, { useState } from "react";
 import {FiSearch} from "react-icons/fi";
 import "../../../styles/connections/ConnectionsCard.css";
 import "../../../styles/connections/OrgCard.css";
-
-export type Org = {
-    id: string;
-    name: string;
-    contact: string;
-    bio: string;
-};
+import type {Org} from "../../../utils/apiTypes.ts";
 
 type OrgCardProps = {
     orgs: Org[];
@@ -36,9 +30,9 @@ const OrgCard: React.FC<OrgCardProps>  = ({ orgs, onSelect }) => {
             </div>
             <div className="connections-list medium">
                 {filteredOrgs.length > 0 ? (
-                    filteredOrgs.map((org, index) => (
+                    filteredOrgs.map((org) => (
                         <div
-                            key={index}
+                            key={org.id}
                             className="connections-item"
                             onClick={() => onSelect(org)}
                         >

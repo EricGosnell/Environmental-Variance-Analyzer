@@ -1,27 +1,27 @@
 import React, {useState} from "react";
-import type { Org } from "./OrgCard"
 import "../../../styles/connections/ConnectionsCard.css";
 import "../../../styles/connections/InboxCard.css";
+import type {Org} from "../../../utils/apiTypes.ts";
 
 export type InboxItem = {
-    id: string;
-    type: "invite" | "notification";
+    id: number;
+    type: "invite" | "request" | "shared_pod";
     title: string;
     message: string;
     org?: Org;
-    status?: "pending" | "accepted" | "declined";
+    status?: "pending" | "accepted" | "denied";
 };
 
 type InboxCardProps = {
     items: InboxItem[];
     onSelect?: (item: InboxItem) => void;
-    onAccept?: (item: InboxItem) => void;
-    onDecline?: (item: InboxItem) => void;
-    onDelete?: (id: string) => void;
+    onAccept?: (id: InboxItem) => void;
+    onDecline?: (id: InboxItem) => void;
+    onDelete?: (id: number) => void;
 };
 
 const InboxCard: React.FC<InboxCardProps> = ({items, onSelect, onAccept, onDecline, onDelete,}) => {
-    const [deleteId, setDeleteId] = useState<string | null>(null);
+    const [deleteId, setDeleteId] = useState<number | null>(null);
 
     return (
         <div className="connections-card small">
@@ -75,7 +75,7 @@ const InboxCard: React.FC<InboxCardProps> = ({items, onSelect, onAccept, onDecli
                                 <p>{item.message}</p>
 
                                 <div className="inbox-buttons">
-                                    {item.type === "invite" && item.status === "pending" && (
+                                    {!(item.type === "shared_pod") && item.status === "pending" && (
                                         <>
                                             <button
                                                 className="btn primary-btn"
@@ -103,7 +103,7 @@ const InboxCard: React.FC<InboxCardProps> = ({items, onSelect, onAccept, onDecli
                                     <span className="status">
                                     {item.status === "accepted"
                                         ? "Accepted"
-                                        : item.status === "declined"
+                                        : item.status === "denied"
                                             ? "Declined"
                                             : ""}
                                 </span>

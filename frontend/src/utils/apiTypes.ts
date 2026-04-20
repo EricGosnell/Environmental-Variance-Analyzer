@@ -199,3 +199,50 @@ export type AddPodOwnerResponse = MessageResponse & {
 export type GetPodOwnersResponse = {
   owners: PodOwnerCandidate[];
 };
+
+// ----------------------------
+// Organizations
+// ----------------------------
+
+export type Org = {
+  id: number;
+  name: string;
+  contact: string;
+  bio: string;
+};
+
+export type OrgResponse = {
+  org: Org;
+};
+
+export type OrgStatus = "none" | "requested" | "joined" | "invited";
+
+export type OrgStatusResponse = {
+  status: OrgStatus;
+};
+
+// ----------------------------
+// Messages
+// ----------------------------
+
+export type MessageType = "invite" | "request" | "pod_share";
+
+export type MessageStatus = "pending" | "accepted" | "denied";
+
+export type Message = {
+  message_id: number;
+  sender_id: number;
+  receiver_id: number;
+  org_id: number | null;
+  type: MessageType;
+  status: MessageStatus;
+  created_at: string;
+
+  org_name?: string;
+  org_email?: string;
+  org_bio?: string;
+};
+
+export type MessagesResponse = {
+  messages: Message[];
+};

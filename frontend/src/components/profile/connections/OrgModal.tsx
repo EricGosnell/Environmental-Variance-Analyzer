@@ -1,6 +1,7 @@
 import React, {useEffect, useState} from "react";
-import type { Org } from "./OrgCard.tsx"
 import "../../../styles/connections/OrgModal.css";
+import type {Org, OrgStatus} from "../../../utils/apiTypes.ts";
+import {getOrgStatus, requestToJoinOrg} from "../../../utils/api.ts";
 
 type OrgModalProps = {
     show: boolean;
@@ -8,32 +9,62 @@ type OrgModalProps = {
     org: Org;
 }
 
-const OrgModal: React.FC<OrgModalProps> = ({ show, onCancel,org }) => {
-    const [status, setStatus] = useState<"none" | "requested" | "joined">("none");
-
-    // api handling - fix when apis are implemented
-    const handleRequest = async () => {
-        try {
-            await fetch(`/api/orgs/${org.id}/request`, {
-                method: "POST",
-            });
-            setStatus("requested");
-        } catch (err) {
-            console.error(err);
-        }
-    };
+const OrgModal: React.FC<OrgModalProps> = ({ show, onCancel, org }) => {
+    const [status, setStatus] = useState<OrgStatus>("none");
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
         if (!show) return;
         const fetchStatus = async () => {
-            const res = await fetch(`/api/orgs/${org.id}/status`);
-            const data = await res.json();
-            setStatus(data.status);
+            try {
+                const res = await getOrgStatus(org.id);
+                setStatus(res.status);
+            } catch (err) {
+                console.error(err);
+                setStatus("none");
+            }
         };
         fetchStatus();
     }, [show, org.id]);
 
+    const handleRequest = async () => {
+        if (loading) return;
+
+        try {
+            setLoading(true);
+            await requestToJoinOrg(org.id);
+            setStatus("requested");
+        } catch (err) {
+            console.error(err);
+        } finally {
+            setLoading(false);
+        }
+    };
+
     if (!show) return null;
+
+    const getButtonText = () => {
+        if (loading) return "Loading...";
+
+        switch (status) {
+            case "none":
+                return "Request to Join";
+            case "requested":
+                return "Requested";
+            case "joined":
+                return "Joined";
+            case "invited":
+                return "Invited";
+            default:
+                return "Request to Join";
+        }
+    };
+
+    const isDisabled =
+        loading ||
+        status === "requested" ||
+        status === "joined" ||
+        status === "invited";
 
     return (
         <div className="modal-overlay" onClick={onCancel}>
@@ -47,14 +78,10 @@ const OrgModal: React.FC<OrgModalProps> = ({ show, onCancel,org }) => {
                 <footer className="modal-footer">
                     <button
                         className="btn primary-btn"
-                        onClick={() => handleRequest()}
-                        disabled={status === "requested" || status === "joined"}
+                        onClick={handleRequest}
+                        disabled={isDisabled}
                     >
-                        {status === "none"
-                            ? "Request to Join"
-                            : status === "requested"
-                                ? "Requested"
-                                : "Joined"}
+                        {getButtonText()}
                     </button>
                 </footer>
             </div>
