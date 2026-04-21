@@ -1,5 +1,5 @@
 # Organizations Documentation
-This document outlines the design, current implementation, and remaining work for the organizations/connections feature in the user profile.
+This document outlines the design, current implementation, and remaining work for the organizations/connections feature in the user profile. All current implementations are found in the `feat/orgs` branch.
 
 ## End Goal
 The Connections tab in the profile page should contain the following:
