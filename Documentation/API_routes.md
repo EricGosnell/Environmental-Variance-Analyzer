@@ -1584,9 +1584,9 @@ Authentication:
 
 Request Parameters:
 
-| Parameter | Type    | Required | Description     |
-|-----------|---------| -------- |-----------------|
-| orgId     | integer | Yes      | Organization ID |
+| Parameter | Type    | Required | Description           |
+|-----------|---------| -------- |-----------------------|
+| orgId     | integer | Yes      | The organization's ID |
 
 Response (200 OK)
 
@@ -1631,9 +1631,9 @@ Authentication:
 
 Request Parameters:
 
-| Parameter | Type    | Required | Description     |
-|-----------|---------| -------- |-----------------|
-| orgId     | integer | Yes      | Organization ID |
+| Parameter | Type    | Required | Description                                       |
+|-----------|---------| -------- |---------------------------------------------------|
+| orgId     | integer | Yes      | ID of the organization the user is trying to join |
 
 Response (200 OK)
 
@@ -1710,9 +1710,9 @@ Authentication:
 
 Request Parameters:
 
-| Parameter | Type    | Required | Description     |
-|-----------|---------| -------- |-----------------|
-| orgId     | integer | Yes      | Organization ID |
+| Parameter | Type    | Required | Description                                         |
+|-----------|---------| -------- |-----------------------------------------------------|
+| orgId     | integer | Yes      | ID of the organization the user is being invited to |
 
 Request Body:
 
@@ -1760,9 +1760,9 @@ Authentication:
 
 Request Parameters:
 
-| Parameter | Type    | Required | Description     |
-|-----------|---------| -------- |-----------------|
-| orgId     | integer | Yes      | Organization ID |
+| Parameter | Type    | Required | Description                                           |
+|-----------|---------| -------- |-------------------------------------------------------|
+| orgId     | integer | Yes      | ID of the organization the user is requesting to join |
 
 Response (200 OK)
 
@@ -1794,9 +1794,9 @@ Authentication:
 
 Request Parameters:
 
-| Parameter | Type    | Required | Description     |
-|-----------|---------| -------- |-----------------|
-| orgId     | integer | Yes      | Organization ID |
+| Parameter | Type    | Required | Description                         |
+|-----------|---------| -------- |-------------------------------------|
+| orgId     | integer | Yes      | ID of the organization being edited |
 
 Request Body:
 
@@ -1846,10 +1846,10 @@ Authentication:
 
 Request Parameters:
 
-| Parameter | Type    | Required | Description     |
-|-----------| ------- | -------- |-----------------|
-| orgId     | integer | Yes      | Organization ID |
-| userId    | integer | Yes      | User ID         |
+| Parameter | Type    | Required | Description                            |
+|-----------| ------- | -------- |----------------------------------------|
+| orgId     | integer | Yes      | ID of the user's organization          |
+| userId    | integer | Yes      | ID of the user being promoted to admin |
 
 Response (200 OK)
 
@@ -1889,9 +1889,9 @@ Authentication:
 
 Request Parameters:
 
-| Parameter | Type    | Required | Description     |
-|-----------|---------| -------- |-----------------|
-| orgId     | integer | Yes      | Organization ID |
+| Parameter | Type    | Required | Description                                |
+|-----------|---------| -------- |--------------------------------------------|
+| orgId     | integer | Yes      | ID of the organization the user is leaving |
 
 Response (200 OK)
 
@@ -1931,10 +1931,10 @@ Authentication:
 
 Request Parameters:
 
-| Parameter | Type    | Required | Description     |
-|-----------| ------- | -------- |-----------------|
-| orgId     | integer | Yes      | Organization ID |
-| userId    | integer | Yes      | User ID         |
+| Parameter | Type    | Required | Description                   |
+|-----------| ------- | -------- |-------------------------------|
+| orgId     | integer | Yes      | ID of the user's organization |
+| userId    | integer | Yes      | ID of the user being removed  |
 
 Response (200 OK)
 
@@ -1981,9 +1981,9 @@ Authentication:
 
 Request Parameters:
 
-| Parameter | Type    | Required | Description     |
-|-----------|---------| -------- |-----------------|
-| orgId     | integer | Yes      | Organization ID |
+| Parameter | Type    | Required | Description                      |
+|-----------|---------| -------- |----------------------------------|
+| orgId     | integer | Yes      | ID of organization being deleted |
 
 Response (200 OK)
 
@@ -2068,9 +2068,9 @@ Authentication:
 
 Request Parameters:
 
-| Parameter | Type    | Required | Description |
-|-----------|---------| -------- |-------------|
-| messageID | integer | Yes      | Message ID  |
+| Parameter | Type    | Required | Description                                                   |
+|-----------|---------| -------- |---------------------------------------------------------------|
+| messageID | integer | Yes      | ID of the invite/request message that is user is responding to |
 
 Request Body:
 
@@ -2125,9 +2125,9 @@ Authentication:
 
 Request Parameters:
 
-| Parameter | Type    | Required | Description |
-|-----------|---------| -------- |-------------|
-| messageID | integer | Yes      | Message ID  |
+| Parameter | Type    | Required | Description                     |
+|-----------|---------| -------- |---------------------------------|
+| messageID | integer | Yes      | ID of the message being deleted |
 
 Response (200 OK)
 
