@@ -1519,6 +1519,31 @@ Authentication:
 
 - Bearer token required.
 
+Response (200 OK)
+
+```json
+{
+  "orgs": [
+    {
+      "org_id": "1",
+      "org_name": "Example Org",
+      "org_email": "org@example.com",
+      "org_bio": "Org Biography"
+    }
+  ]
+}
+```
+
+Response (400 Bad Request):
+
+```json
+{
+  "error": "Validation failed"
+}
+```
+
+This endpoint returns all organizations the authenticated user is a member of.
+
 ### Get All Orgs
 
 ```
@@ -1528,6 +1553,24 @@ GET /orgs/all
 Authentication:
 
 - Bearer token required.
+
+Response (200 OK)
+
+```json
+{
+  "orgs": []
+}
+```
+
+Response (400 Bad Request):
+
+```json
+{
+  "error": "Validation failed"
+}
+```
+
+This endpoint returns all organizations in the system.
 
 ### Get Org Info
 
@@ -1539,6 +1582,43 @@ Authentication:
 
 - Bearer token required.
 
+Request Parameters:
+
+| Parameter | Type    | Required | Description     |
+|-----------|---------| -------- |-----------------|
+| orgId     | integer | Yes      | Organization ID |
+
+Response (200 OK)
+
+```json
+{
+  "org": {
+    "org_id": "1",
+    "org_name": "Example Org",
+    "org_email": "org@example.com",
+    "org_bio": "Org Biography"
+  }
+}
+```
+
+Response (400 Bad Request):
+
+```json
+{
+  "error": "Validation failed"
+}
+```
+
+Response (404 Not Found):
+
+```json
+{
+  "error": "Org not found"
+}
+```
+
+This endpoint returns details for a specific organization.
+
 ### Get User Join Status
 
 ```
@@ -1548,6 +1628,38 @@ GET /orgs/:orgId/status
 Authentication:
 
 - Bearer token required.
+
+Request Parameters:
+
+| Parameter | Type    | Required | Description     |
+|-----------|---------| -------- |-----------------|
+| orgId     | integer | Yes      | Organization ID |
+
+Response (200 OK)
+
+```json
+{
+  "status": "joined"
+}
+```
+
+Response (400 Bad Request):
+
+```json
+{
+  "error": "Validation failed"
+}
+```
+
+Response (404 Not Found):
+
+```json
+{
+  "error": "Status not found"
+}
+```
+
+This endpoint returns a user's status for joining an organization.
 
 ### Create Org
 
@@ -1559,6 +1671,33 @@ Authentication:
 
 - Bearer token required.
 
+Request Body:
+
+```json
+{
+  "name": "Org Name", // Required
+  "email": "org@example.com", // Required
+  "bio": "Org Biography"
+}
+```
+Response (201 Created):
+
+```json
+{
+  "orgId": 1
+}
+```
+
+Response (400 Bad Request):
+
+```json
+{
+  "error": "Validation failed"
+}
+```
+
+This endpoint creates a new organization and assigns the creator as admin.
+
 ### Create Invite
 
 ```
@@ -1568,6 +1707,46 @@ POST /orgs/:orgId/invite
 Authentication:
 
 - Bearer token required. User must be an org admin.
+
+Request Parameters:
+
+| Parameter | Type    | Required | Description     |
+|-----------|---------| -------- |-----------------|
+| orgId     | integer | Yes      | Organization ID |
+
+Request Body:
+
+```json
+{
+  "userId": 123 // Required
+}
+```
+
+Response (200 OK)
+
+```json
+{
+  "success": true
+}
+```
+
+Response (400 Bad Request):
+
+```json
+{
+  "error": "Invite already exists"
+}
+```
+
+Response (403 Forbidden):
+
+```json
+{
+  "error": "Invites can be sent by admins only"
+}
+```
+
+This endpoint sends an invitation to a user to join an organization.
 
 ### Create Request
 
@@ -1579,6 +1758,30 @@ Authentication:
 
 - Bearer token required.
 
+Request Parameters:
+
+| Parameter | Type    | Required | Description     |
+|-----------|---------| -------- |-----------------|
+| orgId     | integer | Yes      | Organization ID |
+
+Response (200 OK)
+
+```json
+{
+  "success": true
+}
+```
+
+Response (400 Bad Request):
+
+```json
+{
+  "error": "Request already exists"
+}
+```
+
+This endpoint creates a request from a user to join an organization.
+
 ### Change Org
 
 ```
@@ -1588,6 +1791,48 @@ PUT /orgs/:orgId/change-org
 Authentication:
 
 - Bearer token required. User must be an org admin.
+
+Request Parameters:
+
+| Parameter | Type    | Required | Description     |
+|-----------|---------| -------- |-----------------|
+| orgId     | integer | Yes      | Organization ID |
+
+Request Body:
+
+```json
+{
+  "name": "New Name",
+  "email": "new@email.com",
+  "bio": "Updated Biography"
+}
+```
+
+Response (200 OK)
+
+```json
+{
+  "success": true
+}
+```
+
+Response (400 Bad Request):
+
+```json
+{
+  "error": "Validation failed"
+}
+```
+
+Response (403 Forbidden):
+
+```json
+{
+  "error": "Only admin can update org"
+}
+```
+
+This endpoint updates organization details.
 
 ### Change Org Role
 
@@ -1599,6 +1844,39 @@ Authentication:
 
 - Bearer token required. User must be an org admin.
 
+Request Parameters:
+
+| Parameter | Type    | Required | Description     |
+|-----------| ------- | -------- |-----------------|
+| orgId     | integer | Yes      | Organization ID |
+| userId    | integer | Yes      | User ID         |
+
+Response (200 OK)
+
+```json
+{
+  "success": true
+}
+```
+
+Response (400 Bad Request):
+
+```json
+{
+  "error": "User is not a member"
+}
+```
+
+Response (403 Forbidden):
+
+```json
+{
+  "error": "Only admin can change member roles"
+}
+```
+
+This endpoint promotes an organization member to admin.
+
 ### Leave Org
 
 ```
@@ -1608,6 +1886,38 @@ DELETE /orgs/:orgId/leave
 Authentication:
 
 - Bearer token required.
+
+Request Parameters:
+
+| Parameter | Type    | Required | Description     |
+|-----------|---------| -------- |-----------------|
+| orgId     | integer | Yes      | Organization ID |
+
+Response (200 OK)
+
+```json
+{
+  "success": true
+}
+```
+
+Response (400 Bad Request):
+
+```json
+{
+  "error": "Cannot leave as the only admin"
+}
+```
+
+Response (403 Forbidden):
+
+```json
+{
+  "error": "User is not a member"
+}
+```
+
+This endpoint removes a user from the organization when they leave.
 
 ### Remove Member
 
@@ -1619,6 +1929,46 @@ Authentication:
 
 - Bearer token required. User must be an org admin.
 
+Request Parameters:
+
+| Parameter | Type    | Required | Description     |
+|-----------| ------- | -------- |-----------------|
+| orgId     | integer | Yes      | Organization ID |
+| userId    | integer | Yes      | User ID         |
+
+Response (200 OK)
+
+```json
+{
+  "success": true
+}
+```
+
+Response (400 Bad Request):
+
+```json
+{
+  "error": "Validation failed"
+}
+```
+
+Response (403 Forbidden):
+
+```json
+{
+  "error": "Only admins can remove members"
+}
+```
+
+Response (404 Not Found):
+```json
+{
+  "error": "User is not a member"
+}
+```
+
+This endpoint removes a user from the organization by an admin.
+
 ### Delete Org
 
 ```
@@ -1628,6 +1978,38 @@ DELETE /orgs/:orgId/delete-org
 Authentication:
 
 - Bearer token required. User must be an org admin.
+
+Request Parameters:
+
+| Parameter | Type    | Required | Description     |
+|-----------|---------| -------- |-----------------|
+| orgId     | integer | Yes      | Organization ID |
+
+Response (200 OK)
+
+```json
+{
+  "success": true
+}
+```
+
+Response (400 Bad Request):
+
+```json
+{
+  "error": "Validation failed"
+}
+```
+
+Response (403 Forbidden):
+
+```json
+{
+  "error": "Only admin can delete org"
+}
+```
+
+This endpoint deletes an organization.
 
 ## Messages
 
@@ -1643,6 +2025,37 @@ Authentication:
 
 - Bearer token required.
 
+Response (200 OK)
+
+```json
+{
+  "messages": [
+    {
+      "message_id": 1,
+      "sender_id": 2,
+      "receiver_id": 3,
+      "type": "invite",
+      "org_id": 1,
+      "status": "pending",
+      "created_at": "timestamp",
+      "org_name": "Example Org",
+      "org_email": "org@example.com",
+      "org_bio": "Org Biography"
+    }
+  ]
+}
+```
+
+Response (400 Bad Request):
+
+```json
+{
+  "error": "Validation failed"
+}
+```
+
+This endpoint returns all messages for the user.
+
 ### Respond to Message
 
 ```
@@ -1653,6 +2066,53 @@ Authentication:
 
 - Bearer token required.
 
+Request Parameters:
+
+| Parameter | Type    | Required | Description |
+|-----------|---------| -------- |-------------|
+| messageID | integer | Yes      | Message ID  |
+
+Request Body:
+
+```json
+{
+  "action": "accepted"
+}
+```
+
+Response (200 OK)
+
+```json
+{
+  "success": true
+}
+```
+
+Response (400 Bad Request):
+
+```json
+{
+  "error": "Message already handled"
+}
+```
+
+Response (403 Forbidden):
+
+```json
+{
+  "error": "Message does not belong to user"
+}
+```
+
+Response (404 Not Found):
+```json
+{
+  "error": "Message not found"
+}
+```
+
+This endpoint accepts or denies an invitation or join request.
+
 ### Delete Message
 
 ```
@@ -1662,3 +2122,42 @@ DELETE /messages/:messageId
 Authentication:
 
 - Bearer token required.
+
+Request Parameters:
+
+| Parameter | Type    | Required | Description |
+|-----------|---------| -------- |-------------|
+| messageID | integer | Yes      | Message ID  |
+
+Response (200 OK)
+
+```json
+{
+  "success": true
+}
+```
+
+Response (400 Bad Request):
+
+```json
+{
+  "error": "Validation failed"
+}
+```
+
+Response (403 Forbidden):
+
+```json
+{
+  "error": "Message does not belong to user"
+}
+```
+
+Response (404 Not Found):
+```json
+{
+  "error": "Message not found"
+}
+```
+
+This endpoint deletes a user's message.
