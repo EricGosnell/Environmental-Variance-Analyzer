@@ -54,13 +54,13 @@ For the frontend:
     * Demo page to visualize components to be used in the Connections tab
     * Uses mock data for organizations and messages
 * `frontend/src/utils/api.ts`
-    * added functions for API routes to use in frontend
-    * for organizations: `getAllOrgs`, `getUserOrgs`, `getOrgById`, `getOrgStatus`. `requestToJoinOrg`
-    * for messages: `getMessages`, `respondToMessage`, `deleteMessage`
+    * Added functions for API routes to use in frontend
+    * For organizations: `getAllOrgs`, `getUserOrgs`, `getOrgById`, `getOrgStatus`. `requestToJoinOrg`
+    * For messages: `getMessages`, `respondToMessage`, `deleteMessage`
 * `frontend/src/utils/apiTypes.ts`
-    * added shared types used by APIs to use in frontend
-    * for organizations: `Org`, `OrgResponse`, `OrgStatus`, `OrgStatusResponse`
-    * for messages: `MessageType`, `MessageStatus`, `Message`, `MessagesResponse`
+    * Added shared types used by APIs to use in frontend
+    * For organizations: `Org`, `OrgResponse`, `OrgStatus`, `OrgStatusResponse`
+    * For messages: `MessageType`, `MessageStatus`, `Message`, `MessagesResponse`
 * `frontend/src/styles/connections/ConnectionsCard.css`
     * Styling for all the cards to be used in the Connection tab
 * `frontend/src/styles/connections/InboxCard.css`

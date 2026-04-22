@@ -10,7 +10,7 @@ Pages
 * `About-theEVAPod.tsx`
 * `Contact.tsx`
 * `FAQs.tsx`
-  * FAQs were based on the project outline. As the project progressed, features were added, deleted, and changed. The FAQs are no long accurate and need to be update once all features (including profile, organizations, and pod upload) are merged into main.
+  * FAQs were based on the project outline. As the project progressed, features were added, deleted, and changed. The FAQs are no long accurate and need to be updated once all features (including profile, organizations, and pod upload) are merged into main.
 * `Privacy.tsx`
   * Current empty.
 
