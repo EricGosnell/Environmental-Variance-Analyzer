@@ -3,6 +3,9 @@
 }
 
 .info-card {
+    background: var(--secondary);
+    border: var(--border-width) solid var(--border-light);
+    border-radius: var(--radius-xl);
     overflow: hidden;
     width: 100%;
 }

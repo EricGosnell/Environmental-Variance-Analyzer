@@ -7,7 +7,7 @@ export default function About_NASASTELLA() {
                 <div className="info-header">
                     <h1 className="info-title">The NASA STELLA Device</h1>
                 </div>
-                <div className="card info-body">
+                <div className="info-body">
                     <h2 className="info-subheader">What Is STELLA?</h2>
                     <p className="info-content">
                         STELLA (Science and Technology Education for Land/Life Assessment) are open-source spectroscopic instruments designed to make remote sensing technology accessible to enthusiasts of all ages and backgrounds. Composed of commercial off-the-shelf components, STELLA measures a diverse set of environmental variables that any user can build and tailor to match their own needs. With beginner friendly software, customizable interfaces, detailed documentation, and an open forum with the STELLA team, the STELLA units allow users to gain deeper understandings of Earth science through exploration of ecosystems around the world.

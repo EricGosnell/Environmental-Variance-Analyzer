@@ -20,6 +20,9 @@
 }
 
 .faq-item {
+    background: var(--secondary);
+    border: var(--border-width) solid var(--border-light);
+    border-radius: var(--radius-xl);
     overflow: hidden;
     margin-bottom: 15px;
 }

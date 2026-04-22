@@ -51,7 +51,7 @@ export default function About_MeetCarma() {
                 <div className="info-header">
                     <h1 className="info-title">Meet the CARMA Team</h1>
                 </div>
-                <div className="card info-body">
+                <div className="info-body">
                     <div className="info-text-with-image">
                         <div>
                             <h2 className="info-subheader">What is CARMA?</h2>

@@ -7,7 +7,7 @@ export default function About_AssemblyInstructions() {
                 <div className="info-header">
                     <h1 className="info-title">Assembly Instructions</h1>
                 </div>
-                <div className="card info-body">
+                <div className="info-body">
                     {/*add assembly instructions when available*/}
                 </div>
             </div>
