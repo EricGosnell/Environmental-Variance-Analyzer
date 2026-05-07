@@ -53,7 +53,7 @@ export default function MultiSensorDropdown({
     <div className="multi-sensor-dropdown" ref={containerRef}>
       <button
         type="button"
-        className="multi-sensor-toggle"
+        className="select-control multi-sensor-toggle"
         onClick={() => setIsOpen(!isOpen)}
         aria-expanded={isOpen}
         aria-haspopup="listbox"

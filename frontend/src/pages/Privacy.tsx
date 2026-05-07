@@ -7,7 +7,7 @@ export default function Privacy() {
                 <div className="info-header">
                     <h1 className="info-title">Privacy Statement</h1>
                 </div>
-                <div className="info-body">
+                <div className="card info-body">
 
                 </div>
             </div>

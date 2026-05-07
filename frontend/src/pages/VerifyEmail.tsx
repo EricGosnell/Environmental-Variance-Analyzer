@@ -108,9 +108,9 @@ export default function VerifyEmail() {
   return (
     <div className="verify-email-page">
       <section className="verify-email-card" aria-labelledby="verify-email-title">
-        <Link
+<Link
           to="/"
-          className="verify-email-back-link"
+          className="ghost-link verify-email-back-link"
         >
           <FiArrowLeft aria-hidden="true" focusable="false" />
           <span>Back to home</span>
@@ -122,7 +122,7 @@ export default function VerifyEmail() {
             <p className="verify-email-copy">
               This verification link is missing a valid email address. Start again from the previous step.
             </p>
-            <Link className="btn primary-btn verify-email-home-link" to="/">
+            <Link className="btn primary-btn btn--full verify-email-home-link" to="/">
               Return home
             </Link>
           </>
@@ -131,16 +131,16 @@ export default function VerifyEmail() {
             <p className="verify-email-copy">{getReasonMessage(reason)}</p>
             <p className="verify-email-address">{email}</p>
 
-            {info && <div className="verify-email-info" role="status">{info}</div>}
-            {error && <div className="verify-email-error" role="alert">{error}</div>}
+            {info && <div className="alert alert--info" role="status">{info}</div>}
+            {error && <div className="alert alert--error" role="alert">{error}</div>}
 
             <form className="verify-email-form" onSubmit={handleVerifySubmit}>
-              <label className="verify-email-label" htmlFor="verification-code">
+              <label className="form-label" htmlFor="verification-code">
                 Verification code
               </label>
               <input
                 id="verification-code"
-                className="verify-email-input"
+                className="form-input"
                 type="text"
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, VERIFICATION_CODE_LENGTH))}
@@ -152,13 +152,13 @@ export default function VerifyEmail() {
                 disabled={loading}
               />
 
-              <button className="btn primary-btn verify-email-submit" type="submit" disabled={loading}>
+              <button className="btn primary-btn btn--full verify-email-submit" type="submit" disabled={loading}>
                 {loading ? "Verifying..." : "Verify email"}
               </button>
             </form>
 
             <button
-              className="btn secondary-btn verify-email-resend"
+              className="btn secondary-btn btn--full verify-email-resend"
               type="button"
               disabled={resendLoading || cooldownSeconds > 0}
               onClick={handleResend}

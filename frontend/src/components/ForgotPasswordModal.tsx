@@ -158,7 +158,7 @@ export default function ForgotPasswordModal({
               <h3 id="forgot-password-title" className="forgot-password-title">Reset password</h3>
               <button
                 type="button"
-                className="forgot-password-close"
+                className="dismiss-btn"
                 onClick={handleClose}
                 disabled={sendLoading || submitLoading}
               >
@@ -167,10 +167,10 @@ export default function ForgotPasswordModal({
             </div>
 
             <form className="forgot-password-form" onSubmit={handleSendCode}>
-              <label className="forgot-password-label">
+              <label className="form-label">
                 Email
                 <input
-                  className="forgot-password-input"
+                  className="form-input"
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -181,13 +181,13 @@ export default function ForgotPasswordModal({
               </label>
 
               {error && (
-                <div className="forgot-password-error" role="alert">
+                <div className="alert alert--error" role="alert">
                   {error}
                 </div>
               )}
 
               <button
-                className="btn primary-btn forgot-password-submit"
+                className="btn primary-btn btn--full"
                 type="submit"
                 disabled={sendLoading || submitLoading || cooldownSeconds > 0}
               >
@@ -204,7 +204,7 @@ export default function ForgotPasswordModal({
             <div className="forgot-password-header forgot-password-header--reset">
               <button
                 type="button"
-                className="forgot-password-back-link"
+                className="ghost-link"
                 onClick={goBackToEmailStep}
                 disabled={sendLoading || submitLoading}
               >
@@ -215,10 +215,10 @@ export default function ForgotPasswordModal({
             </div>
 
             <form className="forgot-password-form" onSubmit={handleResetPassword}>
-              <label className="forgot-password-label">
+              <label className="form-label">
                 6-digit reset code
                 <input
-                  className="forgot-password-input"
+                  className="form-input"
                   type="text"
                   value={code}
                   onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, RESET_CODE_LENGTH))}
@@ -231,10 +231,10 @@ export default function ForgotPasswordModal({
                 />
               </label>
 
-              <label className="forgot-password-label">
+              <label className="form-label">
                 New password
                 <input
-                  className="forgot-password-input"
+                  className="form-input"
                   type="password"
                   value={newPassword}
                   onChange={(e) => setNewPassword(e.target.value)}
@@ -244,10 +244,10 @@ export default function ForgotPasswordModal({
                 />
               </label>
 
-              <label className="forgot-password-label">
+              <label className="form-label">
                 Confirm new password
                 <input
-                  className="forgot-password-input"
+                  className="form-input"
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
@@ -258,19 +258,19 @@ export default function ForgotPasswordModal({
               </label>
 
               {info && (
-                <div className="forgot-password-info" role="status">
+                <div className="alert alert--info" role="status">
                   {info}
                 </div>
               )}
 
               {error && (
-                <div className="forgot-password-error" role="alert">
+                <div className="alert alert--error" role="alert">
                   {error}
                 </div>
               )}
 
               <button
-                className="btn primary-btn forgot-password-submit"
+                className="btn primary-btn btn--full"
                 type="submit"
                 disabled={sendLoading || submitLoading}
               >

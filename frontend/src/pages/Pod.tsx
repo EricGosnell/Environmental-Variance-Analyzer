@@ -201,7 +201,7 @@ export default function Pod() {
 
   return (
     <div className="pod-page">
-      <section className="pod-panel pod-header">
+      <section className="card card--compact pod-header">
         <div className="pod-header-left">
           <h1 className="pod-title">{podMeta?.nickname ?? `Pod ${podMeta?.id ?? podId ?? ""}`} Full Data</h1>
           <p className="pod-subtitle">Pod ID: {podMeta?.id ?? podId ?? "—"}</p>
@@ -263,7 +263,7 @@ export default function Pod() {
               }
 
               return stats.map((s) => (
-                <div key={s.label} className="pod-stat">
+                <div key={s.label} className="card card--compact card--sm pod-stat">
                   <div className="pod-stat-label">{s.label}</div>
                   <div className="pod-stat-value">
                     {s.valueText}
@@ -274,8 +274,8 @@ export default function Pod() {
             })()}
           </section>
 
-          <section className="pod-panel">
-            <div className="pod-section-header">
+          <section className="card card--compact">
+            <div className="section-header">
               <h2 className="pod-section-title">Sensor Trends</h2>
               <div className="pod-filters">
                 <MultiSensorDropdown
@@ -284,7 +284,7 @@ export default function Pod() {
                   onChange={setSelectedSensorsOverall}
                   placeholder="Select sensors"
                 />
-                <select value={selectedRange} className="sensor-trend-date-dropdown" onChange={(e) => setSelectedRange(e.target.value)}>
+                <select value={selectedRange} className="select-control sensor-trend-date-dropdown" onChange={(e) => setSelectedRange(e.target.value)}>
                   <option value="Last 7 Days">Last 7 Days</option>
                   <option value="Last 30 Days">Last 30 Days</option>
                   <option value="All Time">All Time</option>
@@ -320,8 +320,8 @@ export default function Pod() {
           </section>
 
           {selectedDay ? (
-            <section className="pod-panel">
-              <div className="pod-section-header">
+            <section className="card card--compact">
+              <div className="section-header">
                 <h2 className="pod-section-title">{`${formatDateMDY(new Date(selectedDay + "T00:00:00"))} Sensor Trends`}</h2>
                 <div className="pod-filters">
                   <MultiSensorDropdown

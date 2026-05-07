@@ -10,7 +10,7 @@ export default function About_TheEVAPod() {
                 <div className="info-header">
                     <h1 className="info-title">About the EVA Pod</h1>
                 </div>
-                <div className="info-body">
+                <div className="card info-body">
                     <div className="info-text-with-image">
                         <div>
                             <h2 className="info-subheader">What It Is</h2>

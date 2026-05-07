@@ -85,7 +85,7 @@
     top: 100%;
     display: none;
     flex-direction: column;
-    background-color: #1f1f1f;
+    background-color: var(--panel-bg-dark);
     border-radius: 16px;
     min-width: 220px;
     padding: 8px 0;

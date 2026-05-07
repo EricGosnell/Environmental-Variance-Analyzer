@@ -144,11 +144,11 @@ export default function Home() {
     return (
         <div className="homepage-container">
             <div className="sidebar">
-                <div className={`controls-container ${isAuthenticated === false ? "controls-container--unauthenticated" : ""}`}>
+                <div className={`card card--compact card--no-border controls-container ${isAuthenticated === false ? "controls-container--unauthenticated" : ""}`}>
                     {showVerifiedBanner && (
-                        <div className="home-info-banner" role="status">
+                        <div className="alert alert--info home-info-banner" role="status">
                             <p>Email verified. Please log in to continue.</p>
-                            <button type="button" className="home-info-banner-dismiss" onClick={() => setShowVerifiedBanner(false)}>
+                            <button type="button" className="dismiss-btn" onClick={() => setShowVerifiedBanner(false)}>
                                 Dismiss
                             </button>
                         </div>

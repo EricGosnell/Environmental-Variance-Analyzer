@@ -144,10 +144,10 @@ export default function AuthPanel({
             <h3 className="auth-title">Log in</h3>
           </div>
 
-          <label className="auth-label">
+          <label className="form-label">
             Email
             <input
-              className="auth-input"
+              className="form-input"
               type="email"
               value={loginEmail}
               onChange={(e) => setLoginEmail(e.target.value)}
@@ -157,10 +157,10 @@ export default function AuthPanel({
             />
           </label>
 
-          <label className="auth-label">
+          <label className="form-label">
             Password
             <input
-              className="auth-input"
+              className="form-input"
               type="password"
               value={loginPassword}
               onChange={(e) => setLoginPassword(e.target.value)}
@@ -172,7 +172,7 @@ export default function AuthPanel({
 
           <button
             type="button"
-            className="auth-link auth-forgot-link"
+            className="ghost-link auth-forgot-link"
             onClick={openResetModal}
             disabled={loading}
           >
@@ -191,13 +191,13 @@ export default function AuthPanel({
             </div>
           )}
 
-          <button className="btn primary-btn auth-submit" type="submit" disabled={loading}>
+          <button className="btn primary-btn btn--full" type="submit" disabled={loading}>
             {loading ? "Logging in..." : "Log in"}
           </button>
 
           <button
             type="button"
-            className="btn secondary-btn auth-secondary"
+            className="btn secondary-btn btn--full"
             onClick={() => switchMode("signup")}
             disabled={loading}
           >
@@ -211,7 +211,7 @@ export default function AuthPanel({
           <div className="auth-header">
             <button
               type="button"
-              className="auth-link"
+              className="ghost-link"
               onClick={() => switchMode("login")}
               disabled={loading}
             >
@@ -221,10 +221,10 @@ export default function AuthPanel({
             <h3 className="auth-title">Sign up</h3>
           </div>
 
-          <label className="auth-label">
+          <label className="form-label">
             Username
             <input
-              className="auth-input"
+              className="form-input"
               type="text"
               value={signupUsername}
               onChange={(e) => setSignupUsername(e.target.value)}
@@ -234,10 +234,10 @@ export default function AuthPanel({
             />
           </label>
 
-          <label className="auth-label">
+          <label className="form-label">
             Email
             <input
-              className="auth-input"
+              className="form-input"
               type="email"
               value={signupEmail}
               onChange={(e) => setSignupEmail(e.target.value)}
@@ -247,10 +247,10 @@ export default function AuthPanel({
             />
           </label>
 
-          <label className="auth-label">
+          <label className="form-label">
             Phone number
             <input
-              className="auth-input"
+              className="form-input"
               type="tel"
               value={signupPhone}
               onChange={(e) => setSignupPhone(e.target.value)}
@@ -261,10 +261,10 @@ export default function AuthPanel({
             />
           </label>
 
-          <label className="auth-label">
+          <label className="form-label">
             Password
             <input
-              className="auth-input"
+              className="form-input"
               type="password"
               value={signupPassword}
               onChange={(e) => setSignupPassword(e.target.value)}
@@ -274,10 +274,10 @@ export default function AuthPanel({
             />
           </label>
 
-          <label className="auth-label">
+          <label className="form-label">
             Retype password
             <input
-              className="auth-input"
+              className="form-input"
               type="password"
               value={signupPasswordRetype}
               onChange={(e) => setSignupPasswordRetype(e.target.value)}
@@ -293,7 +293,7 @@ export default function AuthPanel({
             </div>
           )}
 
-          <button className="btn primary-btn auth-submit" type="submit" disabled={loading}>
+          <button className="btn primary-btn btn--full" type="submit" disabled={loading}>
             {loading ? "Creating..." : "Create account"}
           </button>
         </form>
