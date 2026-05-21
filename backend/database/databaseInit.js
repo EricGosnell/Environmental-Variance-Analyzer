@@ -92,12 +92,18 @@ const verifyDatabase = async (db) => {
   const emailVerificationTable = await db.get(
     "SELECT name FROM sqlite_master WHERE type='table' AND name='email_verification'"
   );
+  const invitationTokensTable = await db.get(
+    "SELECT name FROM sqlite_master WHERE type='table' AND name='invitation_tokens'"
+  );
 
   if (!usersTable) {
     throw new Error("Users table not found in database");
   }
   if (!emailVerificationTable) {
     throw new Error("email_verification table not found in database");
+  }
+  if (!invitationTokensTable) {
+    throw new Error("invitation_tokens table not found in database");
   }
 
   console.log("Database schema verified successfully");

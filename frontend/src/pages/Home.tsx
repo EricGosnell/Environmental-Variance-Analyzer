@@ -1,6 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useSearchParams } from "react-router-dom";
 import MapView from "../components/Map.tsx";
+
+import { useNavigate } from "react-router-dom";
 import PodTable from "../components/PodTable.tsx";
 
 import { getMe, getMeSilent, getPodsLatestReadings } from "../utils/api.ts";
@@ -37,6 +39,8 @@ export default function Home() {
     const emailParam = searchParams.get("email") ?? "";
     const verifiedParam = searchParams.get("verified");
     const authPanelKey = authParam === "login" ? `login:${emailParam}` : "default";
+
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (verifiedParam !== "1") return;
@@ -75,6 +79,10 @@ export default function Home() {
 
         return () => ac.abort();
     }, []);
+
+    function handleManagePods() {
+        navigate(`/profile`);
+    }
 
     useEffect(() => {
         if (visiblePods.length === 0) {
@@ -161,7 +169,7 @@ export default function Home() {
                             )}
                             <button className="btn primary-btn" disabled={(user.pods?.length ?? 0) === 0}>Upload EVA Data</button>
                             <br />
-                            <button className="btn primary-btn">Manage EVA Pods</button>
+                            <button className="btn secondary-btn" onClick={handleManagePods}>Manage EVA Pods</button>
                         </>
                     ) : null}
 
@@ -192,9 +200,8 @@ export default function Home() {
                 />
             </div>
 
-
             <div className="map-container">
-                <div className="map-content" style={{flex: isPodTableOpen ? `0 0 ${100 - podTableHeight}%` : '1'}}>
+                <div className="map-content" style={{ flex: isPodTableOpen ? `0 0 ${100 - podTableHeight}%` : "1" }}>
                     <MapView
                         mapRef={mapRef}
                         onVisiblePodsChange={handleVisiblePodsChange}
